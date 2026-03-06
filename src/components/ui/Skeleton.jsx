@@ -8,7 +8,7 @@ const Skeleton = ({ className, ...props }) => {
   return (
     <div
       className={clsx(
-        'animate-pulse bg-gray-700 rounded-lg',
+        'animate-pulse bg-[var(--border-color)] rounded-lg',
         className
       )}
       {...props}

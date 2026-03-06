@@ -12,12 +12,26 @@ const defaultState = {
     name: '',
     expectedMileage: 15,
     tankCapacity: 50,
+    country: 'US', // Default to US
+    currency: 'USD',
+    // EPA vehicle data (populated when user selects from database)
+    vehicleId: null,
+    year: null,
+    make: null,
+    model: null,
+    variant: null,
+    epaCity: null,
+    epaHighway: null,
+    epaCombined: null,
+    fuelType: null,
   },
   stats: {
     avgMileage: 15,
     totalFuel: 0,
     totalDistance: 0,
   },
+  // Last known GPS location for distance tracking
+  lastLocation: null,
 };
 
 export const FuelProvider = ({ children }) => {
@@ -133,7 +147,6 @@ export const FuelProvider = ({ children }) => {
     }));
   }, []);
 
-  // Inject demo data for demonstration
   const injectDemoData = useCallback(() => {
     const now = new Date();
     const demoLogs = [
@@ -288,8 +301,20 @@ export const FuelProvider = ({ children }) => {
         name: 'Sample Vehicle',
         expectedMileage: 15,
         tankCapacity: 50,
+        country: 'US',
+        currency: 'USD',
+        vehicleId: null,
+        year: null,
+        make: null,
+        model: null,
+        variant: null,
+        epaCity: null,
+        epaHighway: null,
+        epaCombined: null,
+        fuelType: null,
       },
       stats,
+      lastLocation: null,
     });
   }, [calculateStats]);
 

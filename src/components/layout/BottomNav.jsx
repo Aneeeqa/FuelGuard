@@ -12,8 +12,12 @@ const navItems = [
 const BottomNav = () => {
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 bg-[#1E293B] border-t border-gray-700 z-50"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="fixed bottom-0 left-0 right-0 border-t z-50 transition-colors duration-300"
+      style={{ 
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        backgroundColor: 'var(--bg-secondary)',
+        borderColor: 'var(--border-color)'
+      }}
     >
       <div className="flex justify-around items-center h-16">
         {navItems.map(({ to, icon: Icon, label }) => (
@@ -23,20 +27,22 @@ const BottomNav = () => {
             className={({ isActive }) =>
               clsx(
                 'flex flex-col items-center justify-center w-full h-full min-w-[48px] min-h-[48px]',
-                'transition-colors duration-200 no-select touchable',
-                isActive
-                  ? 'text-[#60A5FA]'
-                  : 'text-[#9CA3AF] hover:text-[#D1D5DB] active:text-[#60A5FA]'
+                'transition-colors duration-200 no-select touchable'
               )
             }
+            style={({ isActive }) => ({
+              color: isActive ? 'var(--accent-blue)' : 'var(--text-muted)'
+            })}
           >
             {({ isActive }) => (
               <>
                 <div
                   className={clsx(
-                    'flex items-center justify-center w-12 h-8 rounded-full transition-colors duration-200',
-                    isActive && 'bg-[#60A5FA]/20'
+                    'flex items-center justify-center w-12 h-8 rounded-full transition-colors duration-200'
                   )}
+                  style={{
+                    backgroundColor: isActive ? 'color-mix(in srgb, var(--accent-blue) 20%, transparent)' : 'transparent'
+                  }}
                 >
                   <Icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
                 </div>

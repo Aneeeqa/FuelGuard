@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 
 const Layout = () => {
   return (
-    <div className="min-h-screen bg-[#121212]">
+    <div className="min-h-screen transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {/* Desktop Sidebar - hidden on mobile, visible on lg+ */}
       <Sidebar />
 

@@ -22,10 +22,10 @@ const Card = ({
   };
 
   const variants = {
-    default: 'bg-[#1E293B] border border-gray-700',
-    elevated: 'bg-[#1E293B] shadow-md shadow-black/20',
-    outlined: 'bg-[#1E293B] border-2 border-gray-600',
-    filled: 'bg-[#0f172a] border border-gray-700',
+    default: 'bg-[var(--bg-secondary)] border border-[var(--border-color)]',
+    elevated: 'bg-[var(--bg-secondary)] shadow-md shadow-[var(--shadow-color)]',
+    outlined: 'bg-[var(--bg-secondary)] border-2 border-[var(--border-color-strong)]',
+    filled: 'bg-[var(--bg-input)] border border-[var(--border-color)]',
   };
 
   return (
@@ -46,13 +46,13 @@ const Card = ({
 
 // Card subcomponents for structured layouts
 Card.Header = ({ children, className, ...props }) => (
-  <div className={clsx('pb-3 border-b border-gray-700', className)} {...props}>
+  <div className={clsx('pb-3 border-b border-[var(--border-color)]', className)} {...props}>
     {children}
   </div>
 );
 
 Card.Title = ({ children, className, ...props }) => (
-  <h3 className={clsx('font-semibold text-[#F3F4F6]', className)} {...props}>
+  <h3 className={clsx('font-semibold text-[var(--text-primary)]', className)} {...props}>
     {children}
   </h3>
 );
@@ -64,7 +64,7 @@ Card.Body = ({ children, className, ...props }) => (
 );
 
 Card.Footer = ({ children, className, ...props }) => (
-  <div className={clsx('pt-3 border-t border-gray-700', className)} {...props}>
+  <div className={clsx('pt-3 border-t border-[var(--border-color)]', className)} {...props}>
     {children}
   </div>
 );

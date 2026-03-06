@@ -1,14 +1,64 @@
 @import "tailwindcss";
 
-/* ===== Dark Theme - Fuel Guard ===== */
-@theme {
-  /* Background Colors */
-  --color-bg-primary: #121212;    /* Off-Black / Crude Oil */
-  --color-bg-secondary: #1E293B;  /* Dark Slate Blue / Night Sky */
-  --color-bg-card: #1E293B;
-  --color-bg-card-hover: #2D3B4F;
-  --color-bg-input: #0f172a;
+/* ===== Theme System with CSS Variables ===== */
+:root {
+  /* DEFAULT TO LIGHT MODE */
+  --bg-primary: #F8FAFC;       /* Slate 50 */
+  --bg-secondary: #FFFFFF;     /* White */
+  --bg-input: #F1F5F9;         /* Slate 100 */
   
+  --text-primary: #0F172A;     /* Slate 900 */
+  --text-secondary: #334155;   /* Slate 700 */
+  --text-muted: #64748B;       /* Slate 500 */
+  
+  --accent-blue: #2563EB;      /* Darker Blue for Light Mode */
+  --accent-blue-hover: #1D4ED8;
+  --accent-blue-light: #3B82F6;
+
+  --accent-alert: #DC2626;     /* Darker Red for Light Mode */
+  --accent-alert-light: #EF4444;
+
+  --accent-fuel: #D97706;      /* Dark Amber for Light Mode */
+  
+  --accent-success: #16A34A;   /* Green */
+  
+  --border-color: #E2E8F0;     /* Slate 200 */
+  --border-color-strong: #CBD5E1; /* Slate 300 */
+  
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* WHEN CLASS "dark-mode" IS ADDED TO BODY */
+body.dark-mode {
+  --bg-primary: #121212;       /* Your Dark Base */
+  --bg-secondary: #1E293B;     /* Your Dark Card */
+  --bg-input: #0f172a;         /* Darker input */
+  
+  --text-primary: #F3F4F6;     /* Light Grey */
+  --text-secondary: #D1D5DB;   /* Mid Grey */
+  --text-muted: #9CA3AF;       /* Muted Grey */
+  
+  --accent-blue: #60A5FA;      /* Lighter Blue for Dark Mode */
+  --accent-blue-hover: #93C5FD;
+  --accent-blue-light: #3B82F6;
+
+  --accent-alert: #EF4444;     /* Lighter Red for Dark Mode */
+  --accent-alert-light: #F87171;
+
+  --accent-fuel: #EAB308;      /* Bright Gold for Dark Mode */
+
+  --accent-success: #22C55E;   /* Bright Green */
+  
+  --border-color: #374151;     /* Gray 700 */
+  --border-color-strong: #4B5563; /* Gray 600 */
+  
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== Tailwind Theme Override ===== */
+@theme {
   /* Primary Accent - Electric Blue / Technology */
   --color-primary-50: #1e3a5f;
   --color-primary-100: #1e40af;
@@ -101,8 +151,9 @@ body {
                'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #121212;
-  color: #f1f5f9;
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {

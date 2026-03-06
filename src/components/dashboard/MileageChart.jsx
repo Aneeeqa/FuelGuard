@@ -2,18 +2,18 @@ import React, { memo, lazy, Suspense } from 'react';
 import Skeleton from '../ui/Skeleton';
 
 // Lazy load recharts components
-const LazyChart = lazy(() => 
+const LazyChart = lazy(() =>
   import('recharts').then(module => ({
     default: ({ data }) => {
-      const { 
-        LineChart, 
-        Line, 
-        XAxis, 
-        YAxis, 
-        Tooltip, 
+      const {
+        LineChart,
+        Line,
+        XAxis,
+        YAxis,
+        Tooltip,
         ResponsiveContainer,
         ReferenceLine,
-        CartesianGrid 
+        CartesianGrid
       } = module;
 
       // Format date for display
@@ -42,9 +42,9 @@ const LazyChart = lazy(() =>
         if (active && payload && payload.length) {
           const data = payload[0].payload;
           return (
-            <div className="bg-[#1E293B] p-3 rounded-lg shadow-lg border border-gray-700 min-w-[120px]">
-              <p className="text-xs text-gray-400 mb-1">{data.dateFormatted}</p>
-              <p className={`text-lg font-bold ${data.isFlagged ? 'text-danger-500' : 'text-primary-500'}`}>
+            <div className="bg-[var(--bg-secondary)] p-3 rounded-lg shadow-lg border border-[var(--border-color)] min-w-[120px]">
+              <p className="text-xs text-[var(--text-muted)] mb-1">{data.dateFormatted}</p>
+              <p className={`text-lg font-bold ${data.isFlagged ? 'text-danger-500' : 'text-[var(--accent-blue)]'}`}>
                 {data.mileage.toFixed(1)} km/L
               </p>
               {data.isFlagged && (
@@ -58,34 +58,34 @@ const LazyChart = lazy(() =>
 
       return (
         <ResponsiveContainer width="100%" height={250}>
-          <LineChart 
-            data={chartData} 
+          <LineChart
+            data={chartData}
             margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis 
-              dataKey="dateFormatted" 
-              tick={{ fontSize: 11, fill: '#9ca3af' }}
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+            <XAxis
+              dataKey="dateFormatted"
+              tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
               tickLine={false}
-              axisLine={{ stroke: '#4b5563' }}
+              axisLine={{ stroke: 'var(--border-color-strong)' }}
             />
-            <YAxis 
+            <YAxis
               domain={['auto', 'auto']}
-              tick={{ fontSize: 11, fill: '#9ca3af' }}
+              tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
               tickLine={false}
-              axisLine={{ stroke: '#4b5563' }}
+              axisLine={{ stroke: 'var(--border-color-strong)' }}
               tickFormatter={(value) => `${value}`}
             />
             <Tooltip content={<CustomTooltip />} />
-            <ReferenceLine 
-              y={avgMileage} 
-              stroke="#6b7280" 
+            <ReferenceLine
+              y={avgMileage}
+              stroke="var(--text-muted)"
               strokeDasharray="5 5"
-              label={{ 
-                value: `Avg: ${avgMileage.toFixed(1)}`, 
+              label={{
+                value: `Avg: ${avgMileage.toFixed(1)}`,
                 position: 'right',
                 fontSize: 10,
-                fill: '#9ca3af'
+                fill: 'var(--text-muted)'
               }}
             />
             <Line
@@ -100,8 +100,8 @@ const LazyChart = lazy(() =>
                     cx={cx}
                     cy={cy}
                     r={payload.isFlagged ? 6 : 4}
-                    fill={payload.isFlagged ? '#dc2626' : '#3b82f6'}
-                    stroke={payload.isFlagged ? '#dc2626' : '#3b82f6'}
+                    fill={payload.isFlagged ? 'var(--accent-alert)' : 'var(--accent-blue)'}
+                    stroke={payload.isFlagged ? 'var(--accent-alert)' : 'var(--accent-blue)'}
                     strokeWidth={2}
                   />
                 );
@@ -120,8 +120,8 @@ const chartPropsAreEqual = (prevProps, nextProps) => {
   if (prevProps.data.length !== nextProps.data.length) return false;
   if (prevProps.data.length === 0) return true;
   // Compare last item ID to detect new entries
-  return prevProps.data[prevProps.data.length - 1]?.id === 
-         nextProps.data[nextProps.data.length - 1]?.id;
+  return prevProps.data[prevProps.data.length - 1]?.id ===
+    nextProps.data[nextProps.data.length - 1]?.id;
 };
 
 /**
@@ -134,8 +134,8 @@ const chartPropsAreEqual = (prevProps, nextProps) => {
 const MileageChart = memo(({ data, className }) => {
   if (!data || data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[250px] bg-gray-800 rounded-xl">
-        <p className="text-gray-400 text-sm">No data to display</p>
+      <div className="flex items-center justify-center h-[250px] rounded-xl border border-[var(--border-color)] bg-[var(--bg-input)]">
+        <p className="text-sm text-[var(--text-muted)]">No data to display</p>
       </div>
     );
   }
