@@ -19,9 +19,9 @@ const StatCard = ({
 }) => {
   const statusStyles = {
     default: {
-      container: 'bg-[#1E293B] border-gray-700',
-      icon: 'text-[#9CA3AF]',
-      value: 'text-[#F3F4F6]',
+      container: 'bg-[var(--bg-secondary)] border-[var(--border-color)]',
+      icon: 'text-[var(--text-muted)]',
+      value: 'text-[var(--text-primary)]',
     },
     success: {
       container: 'bg-success-600/20 border-success-600/30',
@@ -71,7 +71,7 @@ const StatCard = ({
           {value}
         </span>
         {unit && (
-          <span className="text-sm font-normal text-[#9CA3AF]">{unit}</span>
+          <span className="text-sm font-normal text-[var(--text-muted)]">{unit}</span>
         )}
       </div>
 

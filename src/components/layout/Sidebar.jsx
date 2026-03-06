@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { Home, PlusCircle, History, Settings, Fuel, Shield } from 'lucide-react';
 import { clsx } from 'clsx';
+import ThemeToggle from '../ui/ThemeToggle';
 
 const navItems = [
   { to: '/', icon: Home, label: 'Dashboard' },
@@ -11,15 +12,24 @@ const navItems = [
 
 const Sidebar = () => {
   return (
-    <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-[#1E293B] border-r border-gray-700">
+    <aside
+      className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 border-r transition-colors duration-300"
+      style={{
+        backgroundColor: 'var(--bg-secondary)',
+        borderColor: 'var(--border-color)'
+      }}
+    >
       {/* Logo/Brand */}
-      <div className="flex items-center gap-3 h-16 px-6 border-b border-gray-700">
-        <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
+      <div
+        className="flex items-center gap-3 h-16 px-6 border-b transition-colors duration-300"
+        style={{ borderColor: 'var(--border-color)' }}
+      >
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'var(--accent-blue)' }}>
           <Shield className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h1 className="font-bold text-[#F3F4F6]">Fuel Guard</h1>
-          <p className="text-xs text-[#9CA3AF]">Theft Detection</p>
+          <h1 className="font-bold" style={{ color: 'var(--text-primary)' }}>Fuel Guard</h1>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Theft Detection</p>
         </div>
       </div>
 
@@ -33,12 +43,13 @@ const Sidebar = () => {
             className={({ isActive }) =>
               clsx(
                 'flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200',
-                'hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-[#1E293B]',
-                isActive
-                  ? 'bg-[#60A5FA]/20 text-[#60A5FA] shadow-sm'
-                  : 'text-[#D1D5DB] hover:text-[#F3F4F6]'
+                'focus:outline-none focus:ring-2 focus:ring-offset-2'
               )
             }
+            style={({ isActive }) => ({
+              backgroundColor: isActive ? 'color-mix(in srgb, var(--accent-blue) 15%, transparent)' : 'transparent',
+              color: isActive ? 'var(--accent-blue)' : 'var(--text-secondary)'
+            })}
           >
             <Icon className="w-5 h-5" />
             <span>{label}</span>
@@ -46,13 +57,29 @@ const Sidebar = () => {
         ))}
       </nav>
 
+      {/* Theme Toggle */}
+      <div
+        className="px-4 py-4 border-t transition-colors duration-300"
+        style={{ borderColor: 'var(--border-color)' }}
+      >
+        <div className="flex items-center justify-between px-4 py-2">
+          <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Theme</span>
+          <ThemeToggle />
+        </div>
+      </div>
+
       {/* Footer */}
-      <div className="p-4 border-t border-gray-700">
-        <div className="flex items-center gap-3 px-4 py-3 bg-gray-800 rounded-xl">
-          <Fuel className="w-5 h-5 text-warning-500" />
+      <div
+        className="p-4 border-t transition-colors duration-300"
+        style={{ borderColor: 'var(--border-color)' }}
+      >
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-300"
+          style={{ backgroundColor: 'var(--bg-primary)' }}
+        >
+          <Fuel className="w-5 h-5" style={{ color: 'var(--accent-fuel)' }} />
           <div className="text-sm">
-            <p className="font-medium text-[#F3F4F6]">Fuel Guard</p>
-            <p className="text-[#9CA3AF]">Theft Detection System</p>
+            <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Fuel Guard</p>
           </div>
         </div>
       </div>

@@ -19,24 +19,24 @@ const Alert = ({
 }) => {
   const variants = {
     success: {
-      container: 'bg-success-600/20 border-success-600/30 text-success-400',
+      container: 'bg-success-600/20 border-success-600/30 text-[var(--accent-success)]',
       icon: CheckCircle,
-      iconColor: 'text-success-500',
+      iconColor: 'text-[var(--accent-success)]',
     },
     warning: {
-      container: 'bg-warning-500/20 border-warning-500/30 text-warning-400',
+      container: 'bg-warning-500/20 border-warning-500/30 text-[var(--accent-fuel)]',
       icon: AlertTriangle,
-      iconColor: 'text-warning-500',
+      iconColor: 'text-[var(--accent-fuel)]',
     },
     danger: {
-      container: 'bg-danger-600/20 border-danger-600/30 text-danger-400',
+      container: 'bg-danger-600/20 border-danger-600/30 text-[var(--accent-alert)]',
       icon: XCircle,
-      iconColor: 'text-danger-500',
+      iconColor: 'text-[var(--accent-alert)]',
     },
     info: {
-      container: 'bg-primary-600/20 border-primary-600/30 text-primary-400',
+      container: 'bg-primary-600/20 border-primary-600/30 text-[var(--accent-blue)]',
       icon: Info,
-      iconColor: 'text-primary-500',
+      iconColor: 'text-[var(--accent-blue)]',
     },
   };
 
@@ -54,7 +54,7 @@ const Alert = ({
       {...props}
     >
       <Icon className={clsx('w-5 h-5 flex-shrink-0 mt-0.5', config.iconColor)} />
-      
+
       <div className="flex-1 min-w-0">
         {title && (
           <h4 className="font-semibold mb-1">{title}</h4>
