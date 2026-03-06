@@ -1,6 +1,57 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* ===== Dark Theme - Fuel Guard ===== */
+@theme {
+  /* Background Colors */
+  --color-bg-primary: #121212;    /* Off-Black / Crude Oil */
+  --color-bg-secondary: #1E293B;  /* Dark Slate Blue / Night Sky */
+  --color-bg-card: #1E293B;
+  --color-bg-card-hover: #2D3B4F;
+  --color-bg-input: #0f172a;
+  
+  /* Primary Accent - Electric Blue / Technology */
+  --color-primary-50: #1e3a5f;
+  --color-primary-100: #1e40af;
+  --color-primary-200: #1d4ed8;
+  --color-primary-300: #2563eb;
+  --color-primary-400: #3B82F6;
+  --color-primary-500: #3B82F6;
+  --color-primary-600: #3B82F6;
+  --color-primary-700: #60a5fa;
+  --color-primary-800: #93c5fd;
+  --color-primary-900: #dbeafe;
+
+  /* Alert Color - Alarm Red (Theft) */
+  --color-danger-50: #450a0a;
+  --color-danger-100: #7f1d1d;
+  --color-danger-200: #991b1b;
+  --color-danger-300: #b91c1c;
+  --color-danger-400: #dc2626;
+  --color-danger-500: #EF4444;
+  --color-danger-600: #EF4444;
+  --color-danger-700: #f87171;
+  --color-danger-800: #fca5a5;
+
+  /* Success (Green) */
+  --color-success-50: #052e16;
+  --color-success-100: #166534;
+  --color-success-200: #15803d;
+  --color-success-500: #22c55e;
+  --color-success-600: #22c55e;
+  --color-success-700: #4ade80;
+
+  /* Fuel Level - Liquid Gold / Diesel */
+  --color-warning-50: #422006;
+  --color-warning-100: #713f12;
+  --color-warning-200: #a16207;
+  --color-warning-400: #EAB308;
+  --color-warning-500: #EAB308;
+  --color-warning-600: #EAB308;
+  --color-warning-700: #facc15;
+
+  /* Fuel color alias */
+  --color-fuel: #EAB308;
+}
 
 /* ===== Mobile-First Base Styles ===== */
 
@@ -50,8 +101,8 @@ body {
                'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8fafc;
-  color: #1e293b;
+  background-color: #121212;
+  color: #f1f5f9;
 }
 
 #root {
@@ -61,78 +112,25 @@ body {
 }
 
 /* ===== Custom Utilities ===== */
-@layer utilities {
-  /* Touch target minimum size (48x48px per Material Design) */
-  .touch-target {
-    min-height: 48px;
-    min-width: 48px;
-  }
-  
-  /* Larger touch target for primary actions */
-  .touch-target-lg {
-    min-height: 56px;
-    min-width: 56px;
-  }
-
-  /* Hide scrollbar but allow scrolling */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+/* Touch target minimum size (48x48px per Material Design) */
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
 }
 
-/* ===== Component Styles ===== */
-@layer components {
-  /* Card base style */
-  .card {
-    @apply bg-white rounded-xl shadow-sm border border-slate-200 p-4;
-  }
-
-  /* Input base style */
-  .input {
-    @apply w-full min-h-touch px-4 py-3 text-base border border-slate-300 
-           rounded-lg bg-white focus:outline-none focus:ring-2 
-           focus:ring-primary-500 focus:border-transparent
-           placeholder:text-slate-400;
-  }
-
-  /* Button base styles */
-  .btn {
-    @apply inline-flex items-center justify-center min-h-touch px-6 py-3 
-           text-base font-medium rounded-lg transition-colors duration-200
-           focus:outline-none focus:ring-2 focus:ring-offset-2
-           disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-
-  .btn-primary {
-    @apply btn bg-primary-500 text-white hover:bg-primary-600 
-           focus:ring-primary-500 active:bg-primary-700;
-  }
-
-  .btn-secondary {
-    @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200 
-           focus:ring-slate-500 active:bg-slate-300;
-  }
-
-  .btn-danger {
-    @apply btn bg-danger-500 text-white hover:bg-danger-600 
-           focus:ring-danger-500 active:bg-danger-700;
-  }
-
-  /* Alert/Badge styles */
-  .alert-danger {
-    @apply bg-danger-50 text-danger-700 border border-danger-200;
-  }
-
-  .alert-warning {
-    @apply bg-warning-50 text-warning-700 border border-warning-200;
-  }
-
-  .alert-success {
-    @apply bg-success-50 text-success-600 border border-success-200;
-  }
+/* Larger touch target for primary actions */
+.touch-target-lg {
+  min-height: 56px;
+  min-width: 56px;
 }
+
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
