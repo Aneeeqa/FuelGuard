@@ -1,7 +1,6 @@
 {
   "name": "fuel-guard",
   "private": true,
-  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -20,6 +19,8 @@
     "autoprefixer": "^10.4.23",
     "clsx": "^2.1.1",
     "idb-keyval": "^6.2.2",
+    "jspdf": "^4.0.0",
+    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.562.0",
     "postcss": "^8.5.6",
     "react": "^19.2.3",
@@ -30,6 +31,7 @@
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18",
     "vite-plugin-compression": "^0.5.1",
-    "vite-plugin-pwa": "^1.2.0"
+    "vite-plugin-pwa": "^1.2.0",
+    "xlsx": "^0.18.5"
   }
 }

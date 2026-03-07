@@ -1,0 +1,1187 @@
+{
+    "country": "PK",
+    "countryName": "Pakistan",
+    "vehicles": [
+        {
+            "make": "Suzuki",
+            "model": "Alto",
+            "years": [
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "VX",
+                    "expectedMileage": 18,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 27,
+                    "engine": "660cc"
+                },
+                {
+                    "name": "VXR",
+                    "expectedMileage": 17,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 27,
+                    "engine": "660cc"
+                },
+                {
+                    "name": "VXL",
+                    "expectedMileage": 16,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 27,
+                    "engine": "660cc"
+                },
+                {
+                    "name": "VXL AGS",
+                    "expectedMileage": 15,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 27,
+                    "engine": "660cc"
+                }
+            ]
+        },
+        {
+            "make": "Suzuki",
+            "model": "Cultus",
+            "years": [
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "VXR",
+                    "expectedMileage": 14,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 37,
+                    "engine": "1000cc"
+                },
+                {
+                    "name": "VXL",
+                    "expectedMileage": 13,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 37,
+                    "engine": "1000cc"
+                },
+                {
+                    "name": "AGS",
+                    "expectedMileage": 12,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 37,
+                    "engine": "1000cc"
+                }
+            ]
+        },
+        {
+            "make": "Suzuki",
+            "model": "Swift",
+            "years": [
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "1.2L MT",
+                    "expectedMileage": 14,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 42,
+                    "engine": "1200cc"
+                },
+                {
+                    "name": "1.2L CVT",
+                    "expectedMileage": 13,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 42,
+                    "engine": "1200cc"
+                }
+            ]
+        },
+        {
+            "make": "Suzuki",
+            "model": "Wagon R",
+            "years": [
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "VXR",
+                    "expectedMileage": 15,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 32,
+                    "engine": "1000cc"
+                },
+                {
+                    "name": "VXL",
+                    "expectedMileage": 14,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 32,
+                    "engine": "1000cc"
+                },
+                {
+                    "name": "AGS",
+                    "expectedMileage": 13,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 32,
+                    "engine": "1000cc"
+                }
+            ]
+        },
+        {
+            "make": "Suzuki",
+            "model": "Bolan",
+            "years": [
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "Cargo Van",
+                    "expectedMileage": 12,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 40,
+                    "engine": "800cc"
+                },
+                {
+                    "name": "VX",
+                    "expectedMileage": 11,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 40,
+                    "engine": "800cc"
+                }
+            ]
+        },
+        {
+            "make": "Suzuki",
+            "model": "Ravi",
+            "years": [
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "Standard",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 40,
+                    "engine": "800cc"
+                }
+            ]
+        },
+        {
+            "make": "Suzuki",
+            "model": "APV",
+            "years": [
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "Standard",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 46,
+                    "engine": "1500cc"
+                }
+            ]
+        },
+        {
+            "make": "Toyota",
+            "model": "Corolla",
+            "years": [
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "XLi",
+                    "expectedMileage": 12,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 55,
+                    "engine": "1300cc"
+                },
+                {
+                    "name": "GLi",
+                    "expectedMileage": 11,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 55,
+                    "engine": "1300cc"
+                },
+                {
+                    "name": "Altis 1.6",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 55,
+                    "engine": "1600cc"
+                },
+                {
+                    "name": "Altis Grande 1.8",
+                    "expectedMileage": 9,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 55,
+                    "engine": "1800cc"
+                },
+                {
+                    "name": "Grande X CVT-i",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 55,
+                    "engine": "1800cc"
+                }
+            ]
+        },
+        {
+            "make": "Toyota",
+            "model": "Yaris",
+            "years": [
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "GLi 1.3 MT",
+                    "expectedMileage": 13,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 42,
+                    "engine": "1300cc"
+                },
+                {
+                    "name": "GLi 1.3 CVT",
+                    "expectedMileage": 12,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 42,
+                    "engine": "1300cc"
+                },
+                {
+                    "name": "ATIV X 1.5 CVT",
+                    "expectedMileage": 11,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 42,
+                    "engine": "1500cc"
+                }
+            ]
+        },
+        {
+            "make": "Toyota",
+            "model": "Fortuner",
+            "years": [
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "2.7V Petrol",
+                    "expectedMileage": 8,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 80,
+                    "engine": "2700cc"
+                },
+                {
+                    "name": "Sigma 4 Diesel",
+                    "expectedMileage": 10,
+                    "fuelType": "Diesel",
+                    "tankCapacity": 80,
+                    "engine": "2800cc"
+                },
+                {
+                    "name": "Legender 2.8 Diesel",
+                    "expectedMileage": 9,
+                    "fuelType": "Diesel",
+                    "tankCapacity": 80,
+                    "engine": "2800cc"
+                }
+            ]
+        },
+        {
+            "make": "Toyota",
+            "model": "Hilux",
+            "years": [
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "Revo G MT",
+                    "expectedMileage": 9,
+                    "fuelType": "Diesel",
+                    "tankCapacity": 80,
+                    "engine": "2800cc"
+                },
+                {
+                    "name": "Revo V AT",
+                    "expectedMileage": 8,
+                    "fuelType": "Diesel",
+                    "tankCapacity": 80,
+                    "engine": "2800cc"
+                },
+                {
+                    "name": "Rocco",
+                    "expectedMileage": 8,
+                    "fuelType": "Diesel",
+                    "tankCapacity": 80,
+                    "engine": "2800cc"
+                }
+            ]
+        },
+        {
+            "make": "Toyota",
+            "model": "Land Cruiser",
+            "years": [
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "VX",
+                    "expectedMileage": 6,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 93,
+                    "engine": "4600cc"
+                },
+                {
+                    "name": "ZX",
+                    "expectedMileage": 6,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 93,
+                    "engine": "4600cc"
+                },
+                {
+                    "name": "GR Sport",
+                    "expectedMileage": 7,
+                    "fuelType": "Diesel",
+                    "tankCapacity": 93,
+                    "engine": "3300cc"
+                }
+            ]
+        },
+        {
+            "make": "Toyota",
+            "model": "Camry",
+            "years": [
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "2.5L",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 60,
+                    "engine": "2500cc"
+                },
+                {
+                    "name": "Hybrid",
+                    "expectedMileage": 18,
+                    "fuelType": "Hybrid",
+                    "tankCapacity": 50,
+                    "engine": "2500cc"
+                }
+            ]
+        },
+        {
+            "make": "Honda",
+            "model": "Civic",
+            "years": [
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "1.5 Turbo Oriel",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 47,
+                    "engine": "1500cc Turbo"
+                },
+                {
+                    "name": "1.5 Turbo RS",
+                    "expectedMileage": 9,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 47,
+                    "engine": "1500cc Turbo"
+                },
+                {
+                    "name": "1.8 i-VTEC",
+                    "expectedMileage": 11,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 47,
+                    "engine": "1800cc"
+                }
+            ]
+        },
+        {
+            "make": "Honda",
+            "model": "City",
+            "years": [
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "1.2L MT",
+                    "expectedMileage": 14,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 40,
+                    "engine": "1200cc"
+                },
+                {
+                    "name": "1.2L CVT",
+                    "expectedMileage": 13,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 40,
+                    "engine": "1200cc"
+                },
+                {
+                    "name": "1.5L Aspire CVT",
+                    "expectedMileage": 11,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 40,
+                    "engine": "1500cc"
+                }
+            ]
+        },
+        {
+            "make": "Honda",
+            "model": "BR-V",
+            "years": [
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "S",
+                    "expectedMileage": 12,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 42,
+                    "engine": "1500cc"
+                },
+                {
+                    "name": "i-VTEC S",
+                    "expectedMileage": 11,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 42,
+                    "engine": "1500cc"
+                }
+            ]
+        },
+        {
+            "make": "Honda",
+            "model": "HR-V",
+            "years": [
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "1.5L CVT",
+                    "expectedMileage": 12,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 40,
+                    "engine": "1500cc"
+                }
+            ]
+        },
+        {
+            "make": "Honda",
+            "model": "Accord",
+            "years": [
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "1.5T",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 56,
+                    "engine": "1500cc Turbo"
+                },
+                {
+                    "name": "Hybrid",
+                    "expectedMileage": 16,
+                    "fuelType": "Hybrid",
+                    "tankCapacity": 48,
+                    "engine": "2000cc"
+                }
+            ]
+        },
+        {
+            "make": "Kia",
+            "model": "Sportage",
+            "years": [
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "Alpha",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 62,
+                    "engine": "2000cc"
+                },
+                {
+                    "name": "FWD",
+                    "expectedMileage": 9,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 62,
+                    "engine": "2000cc"
+                },
+                {
+                    "name": "AWD",
+                    "expectedMileage": 8,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 62,
+                    "engine": "2000cc"
+                }
+            ]
+        },
+        {
+            "make": "Kia",
+            "model": "Picanto",
+            "years": [
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "MT",
+                    "expectedMileage": 16,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 35,
+                    "engine": "1000cc"
+                },
+                {
+                    "name": "AT",
+                    "expectedMileage": 14,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 35,
+                    "engine": "1000cc"
+                }
+            ]
+        },
+        {
+            "make": "Kia",
+            "model": "Sorento",
+            "years": [
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "2.5L FWD",
+                    "expectedMileage": 9,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 67,
+                    "engine": "2500cc"
+                },
+                {
+                    "name": "2.5L AWD",
+                    "expectedMileage": 8,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 67,
+                    "engine": "2500cc"
+                }
+            ]
+        },
+        {
+            "make": "Kia",
+            "model": "Stonic",
+            "years": [
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "EX",
+                    "expectedMileage": 12,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 45,
+                    "engine": "1400cc"
+                },
+                {
+                    "name": "EX+",
+                    "expectedMileage": 11,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 45,
+                    "engine": "1400cc"
+                }
+            ]
+        },
+        {
+            "make": "Hyundai",
+            "model": "Tucson",
+            "years": [
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "GLS Sport FWD",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 62,
+                    "engine": "2000cc"
+                },
+                {
+                    "name": "Ultimate AWD",
+                    "expectedMileage": 8,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 62,
+                    "engine": "2000cc"
+                }
+            ]
+        },
+        {
+            "make": "Hyundai",
+            "model": "Elantra",
+            "years": [
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "GLS",
+                    "expectedMileage": 12,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 50,
+                    "engine": "1600cc"
+                },
+                {
+                    "name": "SEL",
+                    "expectedMileage": 11,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 50,
+                    "engine": "2000cc"
+                }
+            ]
+        },
+        {
+            "make": "Hyundai",
+            "model": "Sonata",
+            "years": [
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "2.5L",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 60,
+                    "engine": "2500cc"
+                }
+            ]
+        },
+        {
+            "make": "Changan",
+            "model": "Alsvin",
+            "years": [
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "1.37L MT Comfort",
+                    "expectedMileage": 14,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 44,
+                    "engine": "1370cc"
+                },
+                {
+                    "name": "1.37L DCT Comfort",
+                    "expectedMileage": 12,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 44,
+                    "engine": "1370cc"
+                },
+                {
+                    "name": "1.5L DCT Lumiere",
+                    "expectedMileage": 11,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 44,
+                    "engine": "1500cc"
+                }
+            ]
+        },
+        {
+            "make": "Changan",
+            "model": "Karvaan",
+            "years": [
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "Base",
+                    "expectedMileage": 11,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 45,
+                    "engine": "1000cc"
+                },
+                {
+                    "name": "Plus",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 45,
+                    "engine": "1000cc"
+                }
+            ]
+        },
+        {
+            "make": "Changan",
+            "model": "M9 Pickup",
+            "years": [
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "Standard",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 50,
+                    "engine": "1000cc"
+                }
+            ]
+        },
+        {
+            "make": "DFSK",
+            "model": "Glory 580",
+            "years": [
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "1.5T CVT",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 52,
+                    "engine": "1500cc Turbo"
+                },
+                {
+                    "name": "Pro",
+                    "expectedMileage": 9,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 52,
+                    "engine": "1500cc Turbo"
+                }
+            ]
+        },
+        {
+            "make": "Prince",
+            "model": "Pearl REX7",
+            "years": [
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "Standard",
+                    "expectedMileage": 18,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 25,
+                    "engine": "800cc"
+                }
+            ]
+        },
+        {
+            "make": "United",
+            "model": "Bravo",
+            "years": [
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "Standard",
+                    "expectedMileage": 17,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 28,
+                    "engine": "800cc"
+                }
+            ]
+        },
+        {
+            "make": "United",
+            "model": "Alpha",
+            "years": [
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "Standard",
+                    "expectedMileage": 16,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 30,
+                    "engine": "1000cc"
+                }
+            ]
+        },
+        {
+            "make": "MG",
+            "model": "HS",
+            "years": [
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "1.5T MT",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 55,
+                    "engine": "1500cc Turbo"
+                },
+                {
+                    "name": "1.5T DCT",
+                    "expectedMileage": 9,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 55,
+                    "engine": "1500cc Turbo"
+                },
+                {
+                    "name": "Essence 2.0T AWD",
+                    "expectedMileage": 8,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 55,
+                    "engine": "2000cc Turbo"
+                }
+            ]
+        },
+        {
+            "make": "MG",
+            "model": "ZS",
+            "years": [
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "1.5L CVT",
+                    "expectedMileage": 12,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 45,
+                    "engine": "1500cc"
+                },
+                {
+                    "name": "EV Standard Range",
+                    "expectedMileage": 0,
+                    "fuelType": "Electric",
+                    "tankCapacity": 0,
+                    "engine": "Electric"
+                }
+            ]
+        },
+        {
+            "make": "MG",
+            "model": "GT",
+            "years": [
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "1.5T DCT",
+                    "expectedMileage": 11,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 50,
+                    "engine": "1500cc Turbo"
+                }
+            ]
+        },
+        {
+            "make": "Proton",
+            "model": "Saga",
+            "years": [
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "Standard MT",
+                    "expectedMileage": 15,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 40,
+                    "engine": "1300cc"
+                },
+                {
+                    "name": "Standard AT",
+                    "expectedMileage": 13,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 40,
+                    "engine": "1300cc"
+                },
+                {
+                    "name": "Ace AT",
+                    "expectedMileage": 12,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 40,
+                    "engine": "1300cc"
+                }
+            ]
+        },
+        {
+            "make": "Proton",
+            "model": "X70",
+            "years": [
+                2021,
+                2022,
+                2023,
+                2024,
+                2025,
+                2026
+            ],
+            "variants": [
+                {
+                    "name": "Executive FWD",
+                    "expectedMileage": 10,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 55,
+                    "engine": "1500cc Turbo"
+                },
+                {
+                    "name": "Premium FWD",
+                    "expectedMileage": 9,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 55,
+                    "engine": "1500cc Turbo"
+                },
+                {
+                    "name": "Premium X AWD",
+                    "expectedMileage": 8,
+                    "fuelType": "Petrol",
+                    "tankCapacity": 55,
+                    "engine": "1500cc Turbo"
+                }
+            ]
+        }
+    ]
+}
