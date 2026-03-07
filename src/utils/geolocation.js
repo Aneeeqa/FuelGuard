@@ -105,15 +105,15 @@ export const requestLocationPermission = async () => {
  * Get current GPS position with mobile optimization
  * 
  * @param {Object} options - Geolocation options
- * @param {number} options.timeout - Timeout in milliseconds (default: 15000)
- * @param {boolean} options.highAccuracy - Use high accuracy mode (default: true)
+ * @param {number} options.timeout - Timeout in milliseconds (default: 8000 - faster!)
+ * @param {boolean} options.highAccuracy - Use high accuracy mode (default: false - faster!)
  * @param {number} options.maxAge - Maximum age of cached position in ms (default: 60000)
  * @returns {Promise<{lat: number, lng: number, accuracy: number, timestamp: number}>}
  */
 export const getCurrentPosition = (options = {}) => {
     const {
-        timeout = 15000,
-        highAccuracy = true,
+        timeout = 8000, // Reduced from 15000ms for faster acquisition
+        highAccuracy = false, // Default to false for faster GPS lock
         maxAge = 60000,
     } = options;
 
@@ -168,6 +168,33 @@ export const getCurrentPosition = (options = {}) => {
                 maximumAge: maxAge,
             }
         );
+    });
+};
+
+/**
+ * Get current GPS position with QUICK mode (very fast, lower accuracy)
+ * Use this for initial position fix, then get accurate position if needed
+ * 
+ * @returns {Promise<{lat: number, lng: number, accuracy: number, timestamp: number}>}
+ */
+export const getQuickPosition = () => {
+    return getCurrentPosition({
+        timeout: 5000, // 5 second timeout
+        highAccuracy: false, // Low accuracy for speed
+        maxAge: 300000, // Accept 5-minute old positions
+    });
+};
+
+/**
+ * Get current GPS position with HIGH accuracy mode (slower but precise)
+ * 
+ * @returns {Promise<{lat: number, lng: number, accuracy: number, timestamp: number}>}
+ */
+export const getAccuratePosition = () => {
+    return getCurrentPosition({
+        timeout: 12000, // 12 second timeout
+        highAccuracy: true, // High accuracy GPS
+        maxAge: 0, // Get fresh position only
     });
 };
 

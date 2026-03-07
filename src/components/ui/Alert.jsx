@@ -6,6 +6,8 @@ import { AlertTriangle, CheckCircle, Info, XCircle, X } from 'lucide-react';
  * - Color-coded: success (green), warning (yellow), danger (red), info (blue)
  * - Optional dismiss button
  * - Icon support
+ * - Fade-in animation
+ * - Glow effects for danger variant
  */
 const Alert = ({
   children,
@@ -19,24 +21,40 @@ const Alert = ({
 }) => {
   const variants = {
     success: {
-      container: 'bg-success-600/20 border-success-600/30 text-[var(--accent-success)]',
+      container: 'glass border-l-4 animate-fade-in',
+      borderClass: 'border-l-success-500',
       icon: CheckCircle,
-      iconColor: 'text-[var(--accent-success)]',
+      iconColor: 'text-success-500',
+      iconBg: 'bg-success-500/10',
+      textColor: 'text-[var(--text-secondary)]',
+      titleColor: 'text-[var(--text-primary)]',
     },
     warning: {
-      container: 'bg-warning-500/20 border-warning-500/30 text-[var(--accent-fuel)]',
+      container: 'glass border-l-4 animate-fade-in',
+      borderClass: 'border-l-warning-500',
       icon: AlertTriangle,
-      iconColor: 'text-[var(--accent-fuel)]',
+      iconColor: 'text-warning-500',
+      iconBg: 'bg-warning-500/10',
+      textColor: 'text-[var(--text-secondary)]',
+      titleColor: 'text-[var(--text-primary)]',
     },
     danger: {
-      container: 'bg-danger-600/20 border-danger-600/30 text-[var(--accent-alert)]',
+      container: 'glass border-l-4 shadow-glow-danger animate-fade-in-up',
+      borderClass: 'border-l-danger-500',
       icon: XCircle,
-      iconColor: 'text-[var(--accent-alert)]',
+      iconColor: 'text-danger-500',
+      iconBg: 'bg-danger-500/10',
+      textColor: 'text-[var(--text-secondary)]',
+      titleColor: 'text-[var(--text-primary)]',
     },
     info: {
-      container: 'bg-primary-600/20 border-primary-600/30 text-[var(--accent-blue)]',
+      container: 'glass border-l-4 animate-fade-in',
+      borderClass: 'border-l-primary-500',
       icon: Info,
-      iconColor: 'text-[var(--accent-blue)]',
+      iconColor: 'text-primary-500',
+      iconBg: 'bg-primary-500/10',
+      textColor: 'text-[var(--text-secondary)]',
+      titleColor: 'text-[var(--text-primary)]',
     },
   };
 
@@ -46,30 +64,41 @@ const Alert = ({
   return (
     <div
       className={clsx(
-        'rounded-xl border p-4 flex items-start gap-3',
+        'rounded-xl border p-4 flex items-start gap-3 transition-all duration-200',
         config.container,
+        config.borderClass,
+        dismissible && 'pr-10',
         className
       )}
+      style={{
+        borderColor: `var(--accent-${variant === 'info' ? 'blue' : variant})`,
+        backgroundColor: `color-mix(in srgb, var(--accent-${variant === 'info' ? 'blue' : variant}) 5%, var(--bg-secondary))`,
+      }}
       role="alert"
       {...props}
     >
-      <Icon className={clsx('w-5 h-5 flex-shrink-0 mt-0.5', config.iconColor)} />
+      <div 
+        className={clsx('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5', config.iconBg)}
+      >
+        <Icon className={clsx('w-5 h-5', config.iconColor)} />
+      </div>
 
       <div className="flex-1 min-w-0">
         {title && (
-          <h4 className="font-semibold mb-1">{title}</h4>
+          <h4 className={clsx('font-semibold mb-1', config.titleColor)}>{title}</h4>
         )}
-        <div className="text-sm">{children}</div>
+        <div className={clsx('text-sm leading-relaxed', config.textColor)}>{children}</div>
       </div>
 
       {dismissible && onDismiss && (
         <button
           onClick={onDismiss}
           className={clsx(
-            'flex-shrink-0 p-1 rounded-lg transition-colors',
+            'flex-shrink-0 p-2 rounded-xl transition-colors absolute top-4 right-4',
             'hover:bg-black/5 active:bg-black/10',
             'min-w-[32px] min-h-[32px] flex items-center justify-center'
           )}
+          style={{ color: 'var(--text-muted)' }}
           aria-label="Dismiss"
         >
           <X className="w-4 h-4" />

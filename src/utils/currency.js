@@ -48,13 +48,13 @@ export const getDefaultCurrencyForCountry = (countryCode) => {
  * @param {string} currencyCode - Currency code (INR, USD, EUR, GBP)
  * @returns {string} Formatted currency string
  */
-export const formatCurrency = (amount, currencyCode = 'INR') => {
+export const formatCurrency = (amount, currencyCode = 'USD') => {
     if (amount === null || amount === undefined || isNaN(amount)) {
         return '—';
     }
 
     const currency = SUPPORTED_CURRENCIES.find(c => c.code === currencyCode)
-        || SUPPORTED_CURRENCIES[0];
+        || SUPPORTED_CURRENCIES.find(c => c.code === 'USD');
 
     try {
         return new Intl.NumberFormat(currency.locale, {
@@ -71,11 +71,11 @@ export const formatCurrency = (amount, currencyCode = 'INR') => {
 
 /**
  * Format price per liter with currency
- * @param {number} pricePerLiter 
- * @param {string} currencyCode 
+ * @param {number} pricePerLiter
+ * @param {string} currencyCode
  * @returns {string}
  */
-export const formatPricePerLiter = (pricePerLiter, currencyCode = 'INR') => {
+export const formatPricePerLiter = (pricePerLiter, currencyCode = 'USD') => {
     if (pricePerLiter === null || pricePerLiter === undefined || isNaN(pricePerLiter)) {
         return '—';
     }
@@ -84,12 +84,12 @@ export const formatPricePerLiter = (pricePerLiter, currencyCode = 'INR') => {
 
 /**
  * Get currency symbol for a currency code
- * @param {string} currencyCode 
+ * @param {string} currencyCode
  * @returns {string}
  */
-export const getCurrencySymbol = (currencyCode = 'INR') => {
+export const getCurrencySymbol = (currencyCode = 'USD') => {
     const currency = SUPPORTED_CURRENCIES.find(c => c.code === currencyCode);
-    return currency ? currency.symbol : '₹';
+    return currency ? currency.symbol : '$';
 };
 
 /**
@@ -107,10 +107,148 @@ export const parseCurrencyValue = (value) => {
     return isNaN(parsed) ? null : parsed;
 };
 
+// ============================================================================
+// EXCHANGE RATE MANAGEMENT
+// ============================================================================
+
+const EXCHANGE_RATES_KEY = 'fuelGuardExchangeRates';
+const EXCHANGE_RATES_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+/**
+ * Fetch exchange rates from free API (open.er-api.com)
+ * @param {string} baseCurrency - Base currency code (default: 'USD')
+ * @returns {Promise<Object>} Object with rates and timestamp
+ */
+export const fetchExchangeRates = async (baseCurrency = 'USD') => {
+    try {
+        const response = await fetch(`https://open.er-api.com/v6/latest/${baseCurrency}`);
+        const data = await response.json();
+
+        if (data.result === 'success') {
+            const ratesWithTimestamp = {
+                rates: data.rates,
+                timestamp: Date.now(),
+                base: baseCurrency
+            };
+
+            // Cache the rates
+            if (typeof window !== 'undefined') {
+                localStorage.setItem(EXCHANGE_RATES_KEY, JSON.stringify(ratesWithTimestamp));
+            }
+
+            return ratesWithTimestamp;
+        } else {
+            throw new Error('Failed to fetch exchange rates');
+        }
+    } catch (error) {
+        console.error('Error fetching exchange rates:', error);
+        // Return cached rates if available
+        return getCachedExchangeRates();
+    }
+};
+
+/**
+ * Get cached exchange rates
+ * @returns {Object|null} Cached rates object or null if expired/not found
+ */
+export const getCachedExchangeRates = () => {
+    try {
+        if (typeof window === 'undefined') return null;
+
+        const cached = localStorage.getItem(EXCHANGE_RATES_KEY);
+        if (!cached) return null;
+
+        const data = JSON.parse(cached);
+        const age = Date.now() - data.timestamp;
+
+        // Return cached rates if they're not too old
+        if (age < EXCHANGE_RATES_CACHE_DURATION) {
+            return data;
+        }
+
+        return null;
+    } catch (error) {
+        console.error('Error reading cached exchange rates:', error);
+        return null;
+    }
+};
+
+/**
+ * Convert amount from one currency to another
+ * @param {number} amount - Amount to convert
+ * @param {string} fromCurrency - Source currency code
+ * @param {string} toCurrency - Target currency code
+ * @param {Object} rates - Exchange rates object (optional, will fetch if not provided)
+ * @returns {Promise<number>} Converted amount
+ */
+export const convertCurrency = async (amount, fromCurrency, toCurrency, rates = null) => {
+    if (!amount || isNaN(amount)) return amount;
+    if (fromCurrency === toCurrency) return amount;
+
+    let exchangeRates = rates;
+
+    // If no rates provided, try to get cached rates
+    if (!exchangeRates) {
+        exchangeRates = getCachedExchangeRates();
+    }
+
+    // If still no rates, fetch fresh rates
+    if (!exchangeRates) {
+        exchangeRates = await fetchExchangeRates(fromCurrency);
+    }
+
+    if (!exchangeRates || !exchangeRates.rates) {
+        console.warn('Could not get exchange rates, returning original amount');
+        return amount;
+    }
+
+    // Get the conversion rate
+    const rate = exchangeRates.rates[toCurrency];
+
+    if (!rate) {
+        console.warn(`Exchange rate for ${toCurrency} not found, returning original amount`);
+        return amount;
+    }
+
+    return amount * rate;
+};
+
+/**
+ * Convert amount synchronously using cached rates
+ * @param {number} amount - Amount to convert
+ * @param {string} fromCurrency - Source currency code
+ * @param {string} toCurrency - Target currency code
+ * @returns {number} Converted amount (or original if rates unavailable)
+ */
+export const convertCurrencySync = (amount, fromCurrency, toCurrency) => {
+    if (!amount || isNaN(amount)) return amount;
+    if (fromCurrency === toCurrency) return amount;
+
+    const exchangeRates = getCachedExchangeRates();
+
+    if (!exchangeRates || !exchangeRates.rates) {
+        console.warn('No cached exchange rates available, returning original amount');
+        return amount;
+    }
+
+    const rate = exchangeRates.rates[toCurrency];
+
+    if (!rate) {
+        console.warn(`Exchange rate for ${toCurrency} not found, returning original amount`);
+        return amount;
+    }
+
+    return amount * rate;
+};
+
 export default {
     SUPPORTED_CURRENCIES,
     formatCurrency,
     formatPricePerLiter,
     getCurrencySymbol,
     parseCurrencyValue,
+    fetchExchangeRates,
+    getCachedExchangeRates,
+    convertCurrency,
+    convertCurrencySync,
 };

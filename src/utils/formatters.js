@@ -15,30 +15,49 @@ export const formatNumber = (value, decimals = 1) => {
 
 /**
  * Format mileage value with unit
- * @param {number} mileage - Mileage in km/L
+ * @param {number} mileage - Mileage
+ * @param {Object} vehicleProfile - Vehicle profile with unit settings
  * @returns {string} Formatted mileage (e.g., "14.5 km/L")
  */
-export const formatMileage = (mileage) => {
-  return `${formatNumber(mileage)} km/L`;
+export const formatMileage = (mileage, vehicleProfile) => {
+  const fuelVolumeUnit = vehicleProfile?.fuelVolumeUnit || 'L';
+  const efficiencyUnit = fuelVolumeUnit === 'gal' ? 'mpg' : 'km/L';
+  return `${formatNumber(mileage)} ${efficiencyUnit}`;
 };
 
 /**
  * Format distance with thousand separators
  * @param {number} distance - Distance in km
+ * @param {Object} vehicleProfile - Vehicle profile with unit settings
  * @returns {string} Formatted distance (e.g., "12,500 km")
  */
-export const formatDistance = (distance) => {
-  if (!distance) return '0 km';
+export const formatDistance = (distance, vehicleProfile) => {
+  const distanceUnit = vehicleProfile?.distanceUnit || 'km';
+  if (!distance) return `0 ${distanceUnit}`;
+
+  if (distanceUnit === 'mi') {
+    const miles = distance * 0.621371;
+    return `${Number(miles).toLocaleString()} mi`;
+  }
+
   return `${Number(distance).toLocaleString()} km`;
 };
 
 /**
  * Format fuel volume
  * @param {number} liters - Volume in liters
+ * @param {Object} vehicleProfile - Vehicle profile with unit settings
  * @returns {string} Formatted volume (e.g., "35 L")
  */
-export const formatFuel = (liters) => {
-  if (!liters) return '0 L';
+export const formatFuel = (liters, vehicleProfile) => {
+  const fuelVolumeUnit = vehicleProfile?.fuelVolumeUnit || 'L';
+  if (!liters) return `0 ${fuelVolumeUnit}`;
+
+  if (fuelVolumeUnit === 'gal') {
+    const gallons = liters * 0.264172;
+    return `${formatNumber(gallons, 0)} gal`;
+  }
+
   return `${formatNumber(liters, 0)} L`;
 };
 
@@ -112,10 +131,18 @@ export const getRelativeTime = (date) => {
 /**
  * Format odometer reading
  * @param {number} odometer - Odometer reading
+ * @param {Object} vehicleProfile - Vehicle profile with unit settings
  * @returns {string} Formatted odometer (e.g., "12,500 km")
  */
-export const formatOdometer = (odometer) => {
-  if (!odometer) return '0 km';
+export const formatOdometer = (odometer, vehicleProfile) => {
+  const distanceUnit = vehicleProfile?.distanceUnit || 'km';
+  if (!odometer) return `0 ${distanceUnit}`;
+
+  if (distanceUnit === 'mi') {
+    const miles = odometer * 0.621371;
+    return `${Number(miles).toLocaleString()} mi`;
+  }
+
   return `${Number(odometer).toLocaleString()} km`;
 };
 
