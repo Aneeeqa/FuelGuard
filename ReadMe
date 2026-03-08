@@ -1,9 +1,9 @@
 # FuelGuard
 
-**Catches fleet fuel theft and leaks as they happen — not weeks later in a spreadsheet.**
+Catches fleet fuel theft and leaks as they happen — not weeks later in a spreadsheet.
 
-**Live Demo:** Will Upload Soon
-**Demo Video:** Will Upload Soon
+**Live Demo:** Will Upload Soon  
+**Demo Video:** Will Upload Soon  
 
 **Stack:** React 19 · TypeScript · Vite · Tailwind CSS · Recharts · Leaflet
 
@@ -29,11 +29,11 @@ There's also a basic eco-score per driver, calculated from fuel burn rate vs. di
 
 ## Why We Picked These Tools
 
-We went with **Recharts** over Chart.js because it's built as React components — so each chart re-renders properly when state changes without us manually destroying and redrawing canvas elements. We'd been burned by that pattern before and didn't want to fight it at 2am.
+We went with Recharts over Chart.js because it's built as React components — so each chart re-renders properly when state changes without us manually destroying and redrawing canvas elements. We'd been burned by that pattern before and didn't want to fight it at 2am.
 
-**Leaflet** was the obvious call for the map view. Mapbox would've been overkill for what is essentially "show me where my trucks are" — and it would've required an API key, which breaks our no-.env-needed setup goal.
+Leaflet was the obvious call for the map view. Mapbox would've been overkill for what is essentially "show me where my trucks are" — and it would've required an API key, which breaks our no-.env-needed setup goal.
 
-We used **React Context** for state rather than pulling in Redux or Zustand. The data flow is simple enough (simulated feed → dashboard → alert panel) that a full state management library would've been more ceremony than it's worth.
+We used React Context for state rather than pulling in Redux or Zustand. The data flow is simple enough (simulated feed → dashboard → alert panel) that a full state management library would've been more ceremony than it's worth.
 
 ---
 
@@ -45,7 +45,7 @@ Getting Recharts to feel genuinely real-time took longer than expected. The libr
 
 ## What's Next
 
-The frontend and detection logic are done. The next step is replacing the simulation script with a real data source. We're looking at the **Samsara API** first — they expose CAN bus data over REST which maps cleanly to what our dashboard already expects. Geotab is an alternative but their SDK has more overhead than we need for a read-only dashboard.
+The frontend and detection logic are done. The next step is replacing the simulation script with a real data source. We're looking at the Samsara API first — they expose CAN bus data over REST which maps cleanly to what our dashboard already expects. Geotab is an alternative but their SDK has more overhead than we need for a read-only dashboard.
 
 A small Node backend to handle auth and proxy the telematics feed is probably a week of work at most.
 
@@ -59,6 +59,3 @@ No `.env` files, no API keys, no accounts needed — everything is client-side w
 git clone https://github.com/Aneeeqa/FuelGuard.git
 npm install
 npm run dev
-```
-
-Built at Circuit Break Hackathon.
