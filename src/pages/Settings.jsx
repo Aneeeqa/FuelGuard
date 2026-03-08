@@ -37,6 +37,7 @@ const Settings = () => {
     distanceUnit: data.vehicleProfile?.distanceUnit || 'km',
     fuelVolumeUnit: data.vehicleProfile?.fuelVolumeUnit || 'L',
     efficiencyUnit: data.vehicleProfile?.efficiencyUnit || 'km/L',
+    theftThreshold: data.vehicleProfile?.theftThreshold ?? 0.75,
   });
 
   useEffect(() => {
@@ -50,6 +51,7 @@ const Settings = () => {
         distanceUnit: data.vehicleProfile.distanceUnit || 'km',
         fuelVolumeUnit: data.vehicleProfile.fuelVolumeUnit || 'L',
         efficiencyUnit: data.vehicleProfile.efficiencyUnit || 'km/L',
+        theftThreshold: data.vehicleProfile.theftThreshold ?? 0.75,
       });
     }
   }, [data.vehicleProfile]);
@@ -66,6 +68,7 @@ const Settings = () => {
       distanceUnit: vehicleForm.distanceUnit,
       fuelVolumeUnit: vehicleForm.fuelVolumeUnit,
       efficiencyUnit: vehicleForm.efficiencyUnit || derivedEfficiencyUnit,
+      theftThreshold: parseFloat(vehicleForm.theftThreshold) || 0.75,
     });
   };
 
@@ -91,7 +94,6 @@ const Settings = () => {
 
   const handleCurrencyChange = async (newCurrency) => {
     const oldCurrency = vehicleForm.currency;
-    console.log(`Currency change: ${oldCurrency} -> ${newCurrency}`);
     setVehicleForm(prev => ({ ...prev, currency: newCurrency }));
 
     try {
@@ -99,7 +101,6 @@ const Settings = () => {
         ...data.vehicleProfile,
         currency: newCurrency
       });
-      console.log('Currency conversion completed');
     } catch (error) {
       console.error('Currency conversion failed:', error);
       setVehicleForm(prev => ({ ...prev, currency: oldCurrency }));
@@ -201,6 +202,106 @@ const Settings = () => {
     }
   };
 
+  const handleCountryChange = async (newCountry) => {
+    const defaultCurrency = getDefaultCurrencyForCountry(newCountry);
+    const oldCurrency = vehicleForm.currency;
+
+    setVehicleForm(prev => ({
+      ...prev,
+      country: newCountry,
+      currency: defaultCurrency
+    }));
+
+    // Use currency conversion if currency is actually changing
+    if (oldCurrency !== defaultCurrency) {
+      await updateVehicleProfileWithCurrencyConversion({
+        ...data.vehicleProfile,
+        country: newCountry,
+        currency: defaultCurrency
+      });
+    } else {
+      // Just update country, no currency conversion needed
+      updateVehicleProfile({
+        ...data.vehicleProfile,
+        country: newCountry,
+      });
+    }
+  };
+
+  const handleInjectDemo = () => {
+    injectDemoData();
+    setDemoInjected(true);
+    setVehicleForm({
+      name: 'Sample Vehicle',
+      expectedMileage: 15,
+      tankCapacity: 50,
+      currency: 'USD',
+      country: 'US',
+      distanceUnit: 'km',
+      fuelVolumeUnit: 'L',
+      efficiencyUnit: 'km/L',
+    });
+    setTimeout(() => setDemoInjected(false), 2000);
+  };
+
+  const handleClearData = async () => {
+    await clearAllData();
+    setConfirmClear(false);
+    setVehicleForm({
+      name: '',
+      expectedMileage: 15,
+      tankCapacity: 50,
+      currency: 'USD',
+      country: 'US',
+      distanceUnit: 'km',
+      fuelVolumeUnit: 'L',
+      efficiencyUnit: 'km/L',
+    });
+    setGeofences([]);
+  };
+
+  // Geofencing handlers
+  const handleAddGeofence = () => {
+    const lat = parseFloat(newGeofence.lat);
+    const lng = parseFloat(newGeofence.lng);
+    const radius = parseFloat(newGeofence.radius);
+
+    if (!isValidGeofence(lat, lng) || isNaN(radius) || radius <= 0) {
+      return;
+    }
+
+    const fence = createGeofence(lat, lng, radius, newGeofence.name);
+    const updatedFences = [...geofences, fence];
+    setGeofences(updatedFences);
+    updateVehicleProfile({ ...data.vehicleProfile, geofences: updatedFences });
+
+    // Reset form
+    setNewGeofence({ name: 'Home', lat: '', lng: '', radius: 0.5 });
+    setShowGeofenceForm(false);
+  };
+
+  const handleRemoveGeofence = (index) => {
+    const updatedFences = geofences.filter((_, i) => i !== index);
+    setGeofences(updatedFences);
+    updateVehicleProfile({ ...data.vehicleProfile, geofences: updatedFences });
+  };
+
+  const handleUseCurrentLocation = async () => {
+    try {
+      // Import getCurrentPosition dynamically to avoid circular dependency
+      const { getCurrentPosition } = await import('../utils/geolocation');
+      const position = await getCurrentPosition({ timeout: 15000, highAccuracy: true });
+      setNewGeofence(prev => ({
+        ...prev,
+        lat: position.lat.toString(),
+        lng: position.lng.toString(),
+      }));
+    } catch (error) {
+      console.error('Failed to get current location:', error);
+      alert('Could not get your location. Please enter coordinates manually.');
+    }
+  };
+
   const handleEmergencyContactUpdate = () => {
     updateVehicleProfile({
       emergencyContact: { ...emergencyContact },
@@ -223,6 +324,7 @@ const Settings = () => {
 
   const storage = getStorageLabel();
 
+  // Get current vehicle display info
   const hasEpaData = data.vehicleProfile?.vehicleId && data.vehicleProfile?.epaCombined;
 
   return (
@@ -351,6 +453,39 @@ const Settings = () => {
                   color: 'var(--text-primary)'
                 }}
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                Theft Alert Threshold
+                <span className="block text-xs font-normal mt-1" style={{ color: 'var(--text-muted)' }}>
+                  Flag efficiency below this % of average
+                </span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={(vehicleForm.theftThreshold * 100).toFixed(0)}
+                  onChange={(e) => setVehicleForm({ ...vehicleForm, theftThreshold: parseFloat(e.target.value) / 100 })}
+                  onBlur={handleVehicleUpdate}
+                  placeholder="75"
+                  min="1"
+                  max="100"
+                  className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors duration-300 pr-12"
+                  style={{
+                    backgroundColor: 'var(--bg-input)',
+                    borderColor: 'var(--border-color)',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+                <span
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  %
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -499,20 +634,25 @@ const Settings = () => {
           <div className="flex-1">
             <h2 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>Demo Mode</h2>
             <p className="text-sm mt-1 mb-4" style={{ color: 'var(--text-secondary)' }}>
-              Load sample data with theft detection scenarios for demonstration
+              Generate random realistic data with <span style={{ color: 'var(--accent-alert)', fontWeight: '600' }}>3 alerts</span> (fuel theft scenarios). Click multiple times for different random data!
             </p>
             <button
               onClick={handleInjectDemo}
               disabled={demoInjected}
-              className="w-full px-4 py-3 rounded-xl font-semibold min-h-[48px] transition-all text-white"
+              className="w-full px-4 py-3 rounded-xl font-semibold min-h-[48px] transition-all text-white hover-lift active-scale"
               style={{
                 backgroundColor: demoInjected ? 'var(--text-muted)' : 'var(--accent-blue)',
                 opacity: demoInjected ? 0.6 : 1,
                 cursor: demoInjected ? 'not-allowed' : 'pointer'
               }}
             >
-              {demoInjected ? '✓ Demo Data Loaded!' : 'Load Demo Data'}
+              {demoInjected ? '✓ Data Generated!' : '🎲 Generate Random Demo Data'}
             </button>
+            {demoInjected && (
+              <p className="text-xs mt-2 text-center" style={{ color: 'var(--text-muted)' }}>
+                Dashboard has {data.logs.filter(log => log.isFlagged).length} flagged entries • Click again for new random data
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -1025,7 +1165,6 @@ const Settings = () => {
           <Info className="w-4 h-4" />
           <span>Fuel Guard</span>
         </div>
-        <p>Fuel Management System</p>
         <div className="mt-3 flex items-center justify-center gap-2">
           <a
             href="/privacy"

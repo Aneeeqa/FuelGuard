@@ -6,16 +6,16 @@ import { ThemeProvider } from './context/ThemeContext.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import './index.css';
 
-const root = document.getElementById('root');
+let root = document.getElementById('root');
 
 if (!root) {
   console.error('Root element not found!');
-  const newRoot = document.createElement('div');
-  newRoot.id = 'root';
-  document.body.appendChild(newRoot);
+  root = document.createElement('div');
+  root.id = 'root';
+  document.body.appendChild(root);
 }
 
-const rootElement = root || document.getElementById('root');
+const rootElement = root;
 
 try {
   ReactDOM.createRoot(rootElement).render(

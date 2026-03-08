@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Leaflet Map CSS (for OpenStreetMap fallback - no API key needed) */
+@import "leaflet/dist/leaflet.css";
+
 /* ===== Theme System with CSS Variables ===== */
 :root {
   /* DEFAULT TO LIGHT MODE */

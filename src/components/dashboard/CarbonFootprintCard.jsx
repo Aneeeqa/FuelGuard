@@ -10,11 +10,6 @@ import {
   calculateMonthlyCO2,
 } from '../../utils/carbonCalculations';
 
-/**
- * CarbonFootprintCard component
- * Displays CO2 emissions, comparison with average, and eco-driving score
- * Mobile-first design with collapsible eco-driving tips
- */
 const CarbonFootprintCard = ({
   logs = [],
   totalCO2 = 0,
@@ -25,25 +20,18 @@ const CarbonFootprintCard = ({
 }) => {
   const [showTips, setShowTips] = useState(false);
 
-  // Ensure values are numbers, default to 0 if undefined
   const safeTotalCO2 = Number(totalCO2) || 0;
   const safeTotalDistance = Number(totalDistance) || 0;
   const safeCo2PerKm = Number(co2PerKm) || 0;
 
-  console.log('CarbonFootprintCard - Props:', { totalCO2, co2PerKm, logs, fuelType, vehicleType });
-  console.log('CarbonFootprintCard - Safe values:', { safeTotalCO2, safeCo2PerKm, safeTotalDistance });
-
-  // Calculate comparisons
   const comparison = compareWithAverage(safeCo2PerKm, vehicleType);
   const ecoData = calculateEcoDrivingScore(logs);
   const ecoBadge = getEcoBadge(ecoData.score);
   const monthlyData = calculateMonthlyCO2(logs, fuelType);
 
-  // Get current month's CO2
   const currentMonthData = monthlyData.length > 0 ? monthlyData[monthlyData.length - 1] : null;
   const previousMonthData = monthlyData.length > 1 ? monthlyData[monthlyData.length - 2] : null;
 
-  // Calculate monthly trend
   const monthlyTrend = currentMonthData && previousMonthData
     ? {
         direction: currentMonthData.co2 > previousMonthData.co2 ? 'up' : 'down',

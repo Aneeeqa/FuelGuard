@@ -128,7 +128,6 @@ const Sidebar = () => {
           />
           <div className="text-sm">
             <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Fuel Guard</p>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Fuel Guard</p>
           </div>
         </div>
       </div>

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFuelData } from '../hooks/useFuelData';
-import { Car, Plus, Edit } from 'lucide-react';
+import { Car, Plus, Edit, Search, Database, Check } from 'lucide-react';
 import VehicleCard from '../components/VehicleCard';
+import VehicleSelector from '../components/VehicleSelector';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 
@@ -13,6 +14,9 @@ const Vehicles = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
+  const [modalTab, setModalTab] = useState('search'); // 'search' or 'manual'
+  const [selectedVehicleFromDb, setSelectedVehicleFromDb] = useState(null);
+
   const [formData, setFormData] = useState({
     name: '',
     make: '',
@@ -21,6 +25,7 @@ const Vehicles = () => {
     fuelType: 'gasoline',
     tankCapacity: 50,
     expectedMileage: 15,
+    theftThreshold: 0.75,
     licensePlate: '',
     status: 'Active',
   });
@@ -59,6 +64,8 @@ const Vehicles = () => {
 
   const handleOpenAddModal = () => {
     setEditingVehicle(null);
+    setModalTab('search');
+    setSelectedVehicleFromDb(null);
     setFormData({
       name: '',
       make: '',
@@ -67,6 +74,7 @@ const Vehicles = () => {
       fuelType: 'gasoline',
       tankCapacity: 50,
       expectedMileage: 15,
+      theftThreshold: 0.75,
       licensePlate: '',
       status: 'Active',
     });
@@ -80,6 +88,8 @@ const Vehicles = () => {
     }
 
     setEditingVehicle(vehicle);
+    setModalTab('manual'); // Always use manual tab for editing
+    setSelectedVehicleFromDb(null);
     setFormData({
       name: vehicle.name || '',
       make: vehicle.make || '',
@@ -88,6 +98,7 @@ const Vehicles = () => {
       fuelType: vehicle.fuelType || 'gasoline',
       tankCapacity: vehicle.tankCapacity || 50,
       expectedMileage: vehicle.expectedMileage || 15,
+      theftThreshold: vehicle.theftThreshold ?? 0.75,
       licensePlate: vehicle.licensePlate || '',
       status: vehicle.status || 'Active',
     });
@@ -121,6 +132,23 @@ const Vehicles = () => {
 
   const handleEdit = (vehicle) => {
     handleOpenEditModal(vehicle);
+  };
+
+  const handleVehicleFromDbSelect = (vehicleData) => {
+    setSelectedVehicleFromDb(vehicleData);
+    setFormData(prev => ({
+      ...prev,
+      name: vehicleData.name || '',
+      make: vehicleData.make || '',
+      model: vehicleData.model || '',
+      year: vehicleData.year || new Date().getFullYear(),
+      fuelType: vehicleData.fuelType === 'Electric' ? 'electric' :
+                vehicleData.fuelType === 'Diesel' ? 'diesel' :
+                vehicleData.fuelType === 'Hybrid' ? 'hybrid' : 'gasoline',
+      tankCapacity: vehicleData.tankCapacity || 50,
+      expectedMileage: vehicleData.epaCombined || vehicleData.expectedMileage || 15,
+      theftThreshold: prev.theftThreshold || 0.75,
+    }));
   };
 
   return (
@@ -235,37 +263,170 @@ const Vehicles = () => {
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           title={editingVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
-          size="md"
+          size="lg"
         >
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                Vehicle Name *
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., My Car, Work Truck"
-                className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
+          {/* Tab Switcher - Only show for new vehicles, not editing */}
+          {!editingVehicle && (
+            <div className="flex gap-2 mb-6 p-1 rounded-xl" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+              <button
+                onClick={() => setModalTab('search')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all min-h-[48px] ${
+                  modalTab === 'search' ? 'shadow-md' : ''
+                }`}
                 style={{
-                  backgroundColor: 'var(--bg-input)',
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--text-primary)',
+                  backgroundColor: modalTab === 'search' ? 'var(--accent-blue)' : 'transparent',
+                  color: modalTab === 'search' ? 'white' : 'var(--text-secondary)',
                 }}
+              >
+                <Database className="w-4 h-4" />
+                Search Database
+              </button>
+              <button
+                onClick={() => setModalTab('manual')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all min-h-[48px] ${
+                  modalTab === 'manual' ? 'shadow-md' : ''
+                }`}
+                style={{
+                  backgroundColor: modalTab === 'manual' ? 'var(--accent-fuel)' : 'transparent',
+                  color: modalTab === 'manual' ? 'white' : 'var(--text-secondary)',
+                }}
+              >
+                <Edit className="w-4 h-4" />
+                Manual Entry
+              </button>
+            </div>
+          )}
+
+          {/* Search Database Tab */}
+          {modalTab === 'search' && !editingVehicle && (
+            <div className="space-y-4">
+              <VehicleSelector
+                value={selectedVehicleFromDb}
+                onVehicleSelect={handleVehicleFromDbSelect}
               />
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
+              {/* Selected Vehicle Confirmation */}
+              {selectedVehicleFromDb && (
+                <div
+                  className="p-4 rounded-xl border-2 animate-in fade-in slide-in-from-top-2"
+                  style={{
+                    backgroundColor: 'color-mix(in srgb, var(--accent-success) 10%, var(--bg-secondary))',
+                    borderColor: 'var(--accent-success)'
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: 'var(--accent-success)' }}
+                    >
+                      <Check className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+                        Vehicle Selected
+                      </h4>
+                      <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                        {selectedVehicleFromDb.name}
+                      </p>
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span style={{ color: 'var(--text-muted)' }}>Fuel Type:</span>{' '}
+                          <span style={{ color: 'var(--text-primary)' }}>
+                            {selectedVehicleFromDb.fuelType}
+                          </span>
+                        </div>
+                        <div>
+                          <span style={{ color: 'var(--text-muted)' }}>Tank Capacity:</span>{' '}
+                          <span style={{ color: 'var(--text-primary)' }}>
+                            {selectedVehicleFromDb.tankCapacity} L
+                          </span>
+                        </div>
+                        <div>
+                          <span style={{ color: 'var(--text-muted)' }}>Est. Mileage:</span>{' '}
+                          <span style={{ color: 'var(--text-primary)' }}>
+                            {selectedVehicleFromDb.epaCombined} km/L
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Form Fields (Optional) */}
+              {selectedVehicleFromDb && (
+                <div className="space-y-4 pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                      Vehicle Name (Editable)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g., My Car, Work Truck"
+                      className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
+                      style={{
+                        backgroundColor: 'var(--bg-input)',
+                        borderColor: 'var(--border-color)',
+                        color: 'var(--text-primary)',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                      License Plate
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.licensePlate}
+                      onChange={(e) => setFormData({ ...formData, licensePlate: e.target.value })}
+                      placeholder="e.g., ABC 123"
+                      className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
+                      style={{
+                        backgroundColor: 'var(--bg-input)',
+                        borderColor: 'var(--border-color)',
+                        color: 'var(--text-primary)',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                      Status
+                    </label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
+                      style={{
+                        backgroundColor: 'var(--bg-input)',
+                        borderColor: 'var(--border-color)',
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Manual Entry Tab / Edit Mode */}
+          {modalTab === 'manual' && (
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  Make
+                  Vehicle Name *
                 </label>
                 <input
                   type="text"
-                  value={formData.make}
-                  onChange={(e) => setFormData({ ...formData, make: e.target.value })}
-                  placeholder="e.g., Toyota"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g., My Car, Work Truck"
                   className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                   style={{
                     backgroundColor: 'var(--bg-input)',
@@ -273,144 +434,196 @@ const Vehicles = () => {
                     color: 'var(--text-primary)',
                   }}
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    Make
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.make}
+                    onChange={(e) => setFormData({ ...formData, make: e.target.value })}
+                    placeholder="e.g., Toyota"
+                    className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
+                    style={{
+                      backgroundColor: 'var(--bg-input)',
+                      borderColor: 'var(--border-color)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    Model
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.model}
+                    onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                    placeholder="e.g., Corolla"
+                    className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
+                    style={{
+                      backgroundColor: 'var(--bg-input)',
+                      borderColor: 'var(--border-color)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    Year
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.year}
+                    onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+                    placeholder="e.g., 2020"
+                    className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
+                    style={{
+                      backgroundColor: 'var(--bg-input)',
+                      borderColor: 'var(--border-color)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    License Plate
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.licensePlate}
+                    onChange={(e) => setFormData({ ...formData, licensePlate: e.target.value })}
+                    placeholder="e.g., ABC 123"
+                    className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
+                    style={{
+                      backgroundColor: 'var(--bg-input)',
+                      borderColor: 'var(--border-color)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  Model
+                  Fuel Type
                 </label>
-                <input
-                  type="text"
-                  value={formData.model}
-                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                  placeholder="e.g., Corolla"
+                <select
+                  value={formData.fuelType}
+                  onChange={(e) => setFormData({ ...formData, fuelType: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                   style={{
                     backgroundColor: 'var(--bg-input)',
                     borderColor: 'var(--border-color)',
                     color: 'var(--text-primary)',
                   }}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  Year
-                </label>
-                <input
-                  type="number"
-                  value={formData.year}
-                  onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                  placeholder="e.g., 2020"
-                  className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
-                  style={{
-                    backgroundColor: 'var(--bg-input)',
-                    borderColor: 'var(--border-color)',
-                    color: 'var(--text-primary)',
-                  }}
-                />
+                >
+                  <option value="gasoline">Gasoline</option>
+                  <option value="diesel">Diesel</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="electric">Electric</option>
+                </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  License Plate
-                </label>
-                <input
-                  type="text"
-                  value={formData.licensePlate}
-                  onChange={(e) => setFormData({ ...formData, licensePlate: e.target.value })}
-                  placeholder="e.g., ABC 123"
-                  className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
-                  style={{
-                    backgroundColor: 'var(--bg-input)',
-                    borderColor: 'var(--border-color)',
-                    color: 'var(--text-primary)',
-                  }}
-                />
-              </div>
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    Tank Capacity (L)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.tankCapacity}
+                    onChange={(e) => setFormData({ ...formData, tankCapacity: parseFloat(e.target.value) })}
+                    placeholder="e.g., 50"
+                    className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
+                    style={{
+                      backgroundColor: 'var(--bg-input)',
+                      borderColor: 'var(--border-color)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                Fuel Type
-              </label>
-              <select
-                value={formData.fuelType}
-                onChange={(e) => setFormData({ ...formData, fuelType: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
-                style={{
-                  backgroundColor: 'var(--bg-input)',
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--text-primary)',
-                }}
-              >
-                <option value="gasoline">Gasoline</option>
-                <option value="diesel">Diesel</option>
-                <option value="hybrid">Hybrid</option>
-                <option value="electric">Electric</option>
-              </select>
-            </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    Expected Mileage (km/L)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={formData.expectedMileage}
+                    onChange={(e) => setFormData({ ...formData, expectedMileage: parseFloat(e.target.value) })}
+                    placeholder="e.g., 15"
+                    className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
+                    style={{
+                      backgroundColor: 'var(--bg-input)',
+                      borderColor: 'var(--border-color)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  Tank Capacity (L)
-                </label>
-                <input
-                  type="number"
-                  value={formData.tankCapacity}
-                  onChange={(e) => setFormData({ ...formData, tankCapacity: parseFloat(e.target.value) })}
-                  placeholder="e.g., 50"
-                  className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
-                  style={{
-                    backgroundColor: 'var(--bg-input)',
-                    borderColor: 'var(--border-color)',
-                    color: 'var(--text-primary)',
-                  }}
-                />
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    Theft Alert Threshold
+                    <span className="block text-xs font-normal mt-1" style={{ color: 'var(--text-muted)' }}>
+                      Flag efficiency below this % of average
+                    </span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="1"
+                      min="1"
+                      max="100"
+                      value={(formData.theftThreshold * 100).toFixed(0)}
+                      onChange={(e) => setFormData({ ...formData, theftThreshold: parseFloat(e.target.value) / 100 })}
+                      placeholder="75"
+                      className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors pr-12"
+                      style={{
+                        backgroundColor: 'var(--bg-input)',
+                        borderColor: 'var(--border-color)',
+                        color: 'var(--text-primary)',
+                      }}
+                    />
+                    <span
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      %
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                  Expected Mileage (km/L)
+                  Status
                 </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={formData.expectedMileage}
-                  onChange={(e) => setFormData({ ...formData, expectedMileage: parseFloat(e.target.value) })}
-                  placeholder="e.g., 15"
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                   style={{
                     backgroundColor: 'var(--bg-input)',
                     borderColor: 'var(--border-color)',
                     color: 'var(--text-primary)',
                   }}
-                />
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
               </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                Status
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
-                style={{
-                  backgroundColor: 'var(--bg-input)',
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--text-primary)',
-                }}
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-          </div>
+          )}
 
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowModal(false)}>

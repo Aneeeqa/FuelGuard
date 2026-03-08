@@ -57,6 +57,7 @@ const Contact = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     console.log('Contact form submitted:', formData);
     setSubmitted(true);
 
@@ -76,7 +77,6 @@ const Contact = () => {
 
   return (
     <div className="p-4 lg:p-8 space-y-8 pb-24 max-w-4xl mx-auto">
-      {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-3xl lg:text-4xl font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
           Help & Support
@@ -86,7 +86,6 @@ const Contact = () => {
         </p>
       </div>
 
-      {/* FAQ Section */}
       <div
         className="rounded-xl p-6"
         style={{
@@ -313,7 +312,7 @@ const Contact = () => {
       {/* Alternative Contact Methods */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <a
-          href="mailto:contact@example.com"
+          href="mailto:support@fuelguard.app"
           className="flex items-center gap-3 p-4 rounded-xl border transition-all duration-200 hover-lift"
           style={{
             backgroundColor: 'var(--bg-secondary)',
@@ -331,7 +330,7 @@ const Contact = () => {
               Email Us
             </p>
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              contact@example.com
+              support@fuelguard.app
             </p>
           </div>
         </a>

@@ -25,6 +25,7 @@ const TopNavigationBar = () => {
     const { logs, vehicleProfile, stats } = data;
     const newNotifications = [];
 
+    // Theft alert
     const flaggedCount = logs.filter((log) => log.isFlagged).length;
     if (flaggedCount > 0) {
       newNotifications.push({
@@ -35,6 +36,7 @@ const TopNavigationBar = () => {
       });
     }
 
+    // Fuel drain alert
     const drainAnalysis = analyzeFuelDrain(logs || [], vehicleProfile?.tankCapacity);
     if (drainAnalysis.hasAlert) {
       newNotifications.push({
@@ -45,6 +47,7 @@ const TopNavigationBar = () => {
       });
     }
 
+    // Fuel level alert
     const lastFuelLog = logs.length > 0 ? logs[0] : null;
     const currentFuelAmount = lastFuelLog ? lastFuelLog.liters : 0;
     const fuelLevelAnalysis = getFuelStatus(
@@ -61,6 +64,7 @@ const TopNavigationBar = () => {
       });
     }
 
+    // Budget alert
     const currency = vehicleProfile?.currency || 'USD';
     const currencySymbol = getCurrencySymbol(currency);
     const monthlyBudget = vehicleProfile?.monthlyBudget || 200;

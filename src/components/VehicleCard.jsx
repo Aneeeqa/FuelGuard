@@ -70,35 +70,46 @@ const VehicleCard = ({
             </div>
           )}
 
-          <div className="flex items-center gap-2 mt-3">
-            {vehicle.status === 'Active' ? (
-              <span
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
-                style={{
-                  backgroundColor: 'color-mix(in srgb, var(--accent-success) 15%, transparent)',
-                  color: 'var(--accent-success)',
-                }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                Active
-              </span>
-            ) : (
-              <span
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
-                style={{
-                  backgroundColor: 'color-mix(in srgb, var(--text-muted) 10%, transparent)',
-                  color: 'var(--text-muted)',
-                }}
-              >
-                Inactive
-              </span>
-            )}
-            {vehicle.fuelType && (
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                {vehicle.fuelType.charAt(0).toUpperCase() + vehicle.fuelType.slice(1)}
-              </span>
-            )}
-          </div>
+           <div className="flex items-center gap-2 mt-3">
+             {vehicle.status === 'Active' ? (
+               <span
+                 className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+                 style={{
+                   backgroundColor: 'color-mix(in srgb, var(--accent-success) 15%, transparent)',
+                   color: 'var(--accent-success)',
+                 }}
+               >
+                 <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                 Active
+               </span>
+             ) : (
+               <span
+                 className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+                 style={{
+                   backgroundColor: 'color-mix(in srgb, var(--text-muted) 10%, transparent)',
+                   color: 'var(--text-muted)',
+                 }}
+               >
+                 Inactive
+               </span>
+             )}
+             {vehicle.fuelType && (
+               <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                 {vehicle.fuelType.charAt(0).toUpperCase() + vehicle.fuelType.slice(1)}
+               </span>
+             )}
+             {vehicle.theftThreshold && (
+               <span
+                 className="text-xs px-2 py-1 rounded-full font-medium"
+                 style={{
+                   backgroundColor: 'color-mix(in srgb, var(--accent-alert) 15%, transparent)',
+                   color: 'var(--accent-alert)',
+                 }}
+               >
+                 Alert: {(vehicle.theftThreshold * 100).toFixed(0)}%
+               </span>
+             )}
+           </div>
         </div>
 
         <div className="flex gap-2">

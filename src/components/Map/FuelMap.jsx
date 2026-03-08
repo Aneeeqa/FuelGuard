@@ -1,6 +1,9 @@
-import React, { useState, useCallback, memo, useEffect } from 'react';
+import React, { useState, useCallback, memo, useEffect, Suspense, lazy } from 'react';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 import Skeleton from '../ui/Skeleton';
+
+// Lazy load OSMMap to avoid issues when Google Maps is available
+const OSMMap = lazy(() => import('./OSMMap'));
 
 const containerStyle = {
   width: '100%',
@@ -13,8 +16,8 @@ const defaultCenter = {
   lng: 0
 };
 
-// 3-second timeout for Google Maps loading
-const GOOGLE_MAPS_TIMEOUT = 3000;
+// 2-second timeout for Google Maps loading (reduced for faster fallback)
+const GOOGLE_MAPS_TIMEOUT = 2000;
 
 const FuelMap = ({ currentLocation, destination, onDestinationSelect, showFallback }) => {
   const { isLoaded, loadError } = useJsApiLoader({
@@ -25,6 +28,7 @@ const FuelMap = ({ currentLocation, destination, onDestinationSelect, showFallba
   const [map, setMap] = useState(null);
   const [isTimedOut, setIsTimedOut] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [useOSMFallback, setUseOSMFallback] = useState(false);
 
   // Check if API key is configured
   useEffect(() => {
@@ -32,27 +36,34 @@ const FuelMap = ({ currentLocation, destination, onDestinationSelect, showFallba
     const configured = apiKey && apiKey !== '' && apiKey !== 'your_google_maps_api_key_here';
     setHasApiKey(configured);
 
-    // If no API key, immediately show fallback
+    // If no API key or load error, use OSM fallback immediately
     if (!configured) {
+      setUseOSMFallback(true);
       setIsTimedOut(true);
     }
   }, []);
 
-  // 3-second timeout for Google Maps loading
+  // 2-second timeout for Google Maps loading
   useEffect(() => {
-    if (hasApiKey && !isLoaded && !loadError) {
+    if (hasApiKey && !isLoaded && !loadError && !useOSMFallback) {
       const timeout = setTimeout(() => {
         setIsTimedOut(true);
+        setUseOSMFallback(true);
       }, GOOGLE_MAPS_TIMEOUT);
 
       return () => clearTimeout(timeout);
     }
 
     // Clear timeout if loaded or error occurs
-    if (isLoaded || loadError) {
+    if (isLoaded) {
       setIsTimedOut(false);
     }
-  }, [hasApiKey, isLoaded, loadError]);
+
+    // On load error, use OSM fallback
+    if (loadError) {
+      setUseOSMFallback(true);
+    }
+  }, [hasApiKey, isLoaded, loadError, useOSMFallback]);
 
   const onLoad = useCallback(function callback(map) {
     if (currentLocation) {
@@ -88,110 +99,30 @@ const FuelMap = ({ currentLocation, destination, onDestinationSelect, showFallba
     }
   }, [onDestinationSelect]);
 
-  // Loading state
-  if (!isLoaded && !isTimedOut && !loadError) {
+  // Loading state for Google Maps
+  if (!isLoaded && !isTimedOut && !loadError && !useOSMFallback) {
     return <Skeleton className="w-full h-full rounded-xl" />;
   }
 
-  // Fallback: No API key, timeout, or load error
-  if (!hasApiKey || isTimedOut || loadError) {
+  // Use OpenStreetMap fallback (Free, No API Key Required)
+  if (useOSMFallback || !hasApiKey || isTimedOut || loadError) {
     return (
-      <div
-        className="w-full h-full rounded-xl flex flex-col items-center justify-center p-6 text-center"
-        style={{
-          backgroundColor: 'var(--bg-secondary)',
-          border: '2px dashed var(--border-color)',
-        }}
-      >
-        <div className="w-16 h-16 mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'color-mix(in srgb, var(--accent-fuel) 20%, transparent)' }}>
-          <svg
-            className="w-8 h-8"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            style={{ color: 'var(--accent-fuel)' }}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-        </div>
-
-        <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-          {loadError ? 'Map Unavailable' : 'Map Loading Timeout'}
-        </h3>
-
-        <p className="text-sm mb-4 max-w-xs" style={{ color: 'var(--text-muted)' }}>
-          {loadError
-            ? 'Google Maps failed to load. Using location coordinates instead.'
-            : 'Map took longer than 3 seconds to load. Showing location data instead.'}
-        </p>
-
-        {currentLocation && (
-          <div className="space-y-2 w-full max-w-xs">
-            <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-input)' }}>
-              <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Current Location</p>
-              <p className="font-mono text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
-              </p>
+      <Suspense
+        fallback={
+          <div className="w-full h-full rounded-xl flex items-center justify-center" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+            <div className="text-center">
+              <div className="w-8 h-8 mx-auto mb-2 rounded-full animate-spin border-2 border-t-transparent" style={{ borderColor: 'var(--accent-fuel)', borderTopColor: 'transparent' }}></div>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading free map...</p>
             </div>
-
-            {destination && (
-              <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-input)' }}>
-                <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Destination</p>
-                <p className="font-mono text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  {destination.lat.toFixed(6)}, {destination.lng.toFixed(6)}
-                </p>
-              </div>
-            )}
           </div>
-        )}
-
-        {!hasApiKey && !loadError && (
-          <div className="mt-4 p-3 rounded-lg text-xs" style={{ backgroundColor: 'color-mix(in srgb, var(--accent-warning) 10%, transparent)' }}>
-            <p className="font-medium" style={{ color: 'var(--accent-warning)' }}>
-              No Google Maps API Key
-            </p>
-            <p className="mt-1" style={{ color: 'var(--text-muted)' }}>
-              Add VITE_GOOGLE_MAPS_API_KEY to .env.local for full map functionality.
-            </p>
-          </div>
-        )}
-
-        {isTimedOut && onDestinationSelect && (
-          <button
-            onClick={() => {
-              if (currentLocation && destination) {
-                // Both locations are already set
-                return;
-              }
-              // Allow user to manually enter coordinates
-              const lat = prompt('Enter latitude:', currentLocation?.lat || '');
-              const lon = prompt('Enter longitude:', currentLocation?.lng || '');
-              if (lat && lon) {
-                onDestinationSelect({ lat: parseFloat(lat), lng: parseFloat(lon) });
-              }
-            }}
-            className="mt-4 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{
-              backgroundColor: 'var(--bg-input)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-color)',
-            }}
-          >
-            Enter Coordinates Manually
-          </button>
-        )}
-      </div>
+        }
+      >
+        <OSMMap
+          currentLocation={currentLocation}
+          destination={destination}
+          onDestinationSelect={onDestinationSelect}
+        />
+      </Suspense>
     );
   }
 

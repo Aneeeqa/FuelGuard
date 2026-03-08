@@ -1,10 +1,5 @@
 import React, { Component } from 'react';
 
-/**
- * Error Boundary Component
- * Catches JavaScript errors in child components
- * Displays a user-friendly error message
- */
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -13,23 +8,19 @@ class ErrorBoundary extends Component {
 
   static getDerivedStateFromError(error) {
     console.log('ErrorBoundary.getDerivedStateFromError called with:', error);
-    // Only show error boundary if there's an actual error object
     if (!error) {
       return { hasError: false };
     }
-    // Update state so the next render will show the fallback UI
     return { hasError: true, error: error };
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log the error to console for debugging
     console.error('===== Error Boundary caught an error =====');
     console.error('Error:', error);
     console.error('Error Info:', errorInfo);
     console.error('Error Stack:', errorInfo.componentStack);
     console.error('========================================');
 
-    // Store error in state
     this.setState({
       error: error,
       errorInfo: errorInfo
@@ -41,12 +32,10 @@ class ErrorBoundary extends Component {
   }
 
   render() {
-    // Only show error boundary if we actually caught an error
     if (!this.state.hasError || !this.state.error) {
       return this.props.children;
     }
 
-    // Fallback UI for when error exists
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center p-6"
@@ -137,7 +126,6 @@ class ErrorBoundary extends Component {
           </details>
         )}
 
-        {/* Fallback UI */}
         <div
           className="text-center mb-6 mt-6"
           style={{ color: 'var(--text-muted)' }}

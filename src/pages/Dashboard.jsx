@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useFuelData } from '../hooks/useFuelData';
-import { Drop, TrendUp, Warning, Path, Lightning, Leaf, CurrencyDollar, Wallet, Phone, DropHalf } from '@phosphor-icons/react';
+import { Drop, TrendUp, Warning, Path, Lightning, Leaf, CurrencyDollar, Wallet, Phone, DropHalf, Star } from '@phosphor-icons/react';
 import Skeleton from '../components/ui/Skeleton';
 import StatCard from '../components/dashboard/StatCard';
 import MileageChart from '../components/dashboard/MileageChart';
@@ -68,7 +68,7 @@ const Dashboard = () => {
 
   const costStats = getCostStatistics(logs, currencySymbol);
   const { vehicleProfile } = data;
-  const monthlyBudget = vehicleProfile?.monthlyBudget || 200;
+  const monthlyBudget = data.monthlyBudget || 200;
 
   const budgetAlert = checkBudgetAlert(costStats.totalExpenditure, monthlyBudget);
   const currentDate = new Date();
@@ -81,7 +81,6 @@ const Dashboard = () => {
     .reduce((sum, log) => sum + (log.price || 0), 0);
   const monthlyBudgetAlert = checkBudgetAlert(currentMonthExpenditure, monthlyBudget);
 
-  // Empty state
   if (logs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center animate-fade-in">
@@ -98,21 +97,34 @@ const Dashboard = () => {
           Welcome to Fuel Guard
         </h1>
         <p className="mb-8 max-w-md text-lg animate-fade-in-up delay-200" style={{ color: 'var(--text-secondary)' }}>
-          Start tracking your fuel consumption to detect anomalies and prevent theft.
+          Track fuel consumption, detect anomalies, and prevent theft with AI-powered monitoring.
         </p>
-        <a
-          href="/add"
-          className="inline-flex items-center justify-center gap-2 px-8 py-4 text-white font-semibold rounded-xl min-h-[56px] transition-all duration-300 hover-lift active-scale animate-fade-in-up delay-300"
-          style={{
-            background: 'var(--gradient-primary)',
-            boxShadow: 'var(--shadow-glow-blue)'
-          }}
-        >
-          <Lightning size={20} weight="duotone" color="white" />
-          Add Your First Entry
-        </a>
+        <div className="flex flex-col sm:flex-row gap-3 animate-fade-in-up delay-300">
+          <a
+            href="/settings"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 text-white font-semibold rounded-xl min-h-[56px] transition-all duration-300 hover-lift active-scale"
+            style={{
+              background: 'var(--gradient-primary)',
+              boxShadow: 'var(--shadow-glow-blue)'
+            }}
+          >
+            <Star size={20} weight="duotone" color="white" />
+            Generate Demo Data
+          </a>
+          <a
+            href="/add"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 font-semibold rounded-xl min-h-[56px] transition-all duration-300 hover-lift active-scale"
+            style={{
+              border: '2px solid var(--accent-blue)',
+              color: 'var(--accent-blue)',
+            }}
+          >
+            <Lightning size={20} weight="duotone" />
+            Add First Entry
+          </a>
+        </div>
         <p className="text-sm mt-4 animate-fade-in delay-400" style={{ color: 'var(--text-muted)' }}>
-          Or go to <a href="/settings" className="underline font-medium hover-lift" style={{ color: 'var(--accent-blue)' }}>Settings</a> to load demo data
+          🎲 Demo data generates <span style={{ color: 'var(--accent-alert)', fontWeight: '600' }}>3 random theft alerts</span> - Click multiple times for different data!
         </p>
       </div>
     );
@@ -210,7 +222,7 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Stats Grid - Using StatCard component */}
+           {/* Stats Grid - Using StatCard component */}
           <div className="flex flex-row sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 overflow-x-auto sm:overflow-visible snap-x snap-mandatory px-4 sm:px-0 -mx-4 sm:mx-0 gap-4 sm:gap-4" style={{
             scrollPaddingLeft: '1rem',
             scrollPaddingRight: 'calc(100% - 1rem - 80px)',
@@ -218,13 +230,13 @@ const Dashboard = () => {
             scrollbarWidth: 'none',
             WebkitScrollbarDisplay: 'none',
           }}>
-            {/* Cost Cards - New */}
+            {/* Cost Cards - Using actual data */}
              <div className="animate-fade-in-up delay-100 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
                <StatCard
                  icon={CurrencyDollar}
                  label="Total Spent"
-                 value="1,250"
-                 unit="$"
+                 value={(costStats?.totalExpenditure || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                 unit={currencySymbol}
                  gradientId={0}
                />
              </div>
@@ -233,8 +245,8 @@ const Dashboard = () => {
                <StatCard
                  icon={Wallet}
                  label="Cost/Km"
-                 value="0.12"
-                 unit="$"
+                 value={(costStats?.costPerKm || 0).toFixed(3)}
+                 unit={currencySymbol}
                  gradientId={1}
                />
              </div>
@@ -243,8 +255,8 @@ const Dashboard = () => {
                <StatCard
                  icon={TrendUp}
                  label="Avg Mileage"
-                 value="18.5"
-                 unit="km/L"
+                 value={(stats?.avgMileage || 0).toFixed(1)}
+                 unit={efficiencyUnit}
                  gradientId={2}
                />
               </div>
@@ -253,8 +265,8 @@ const Dashboard = () => {
                <StatCard
                  icon={Drop}
                  label="Total Fuel"
-                 value="245"
-                 unit="L"
+                 value={(stats?.totalFuel || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                 unit={fuelDisplayUnit}
                  gradientId={3}
                />
              </div>
@@ -263,8 +275,8 @@ const Dashboard = () => {
                <StatCard
                  icon={Path}
                  label="Distance"
-                 value="12,450"
-                 unit="km"
+                 value={(stats?.totalDistance || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                 unit={distanceUnit}
                  gradientId={4}
                />
              </div>
@@ -273,8 +285,8 @@ const Dashboard = () => {
              <StatCard
                icon={DropHalf}
                label="Fuel Drain"
-               value="0.5"
-               unit="L/day"
+               value={(drainAnalysis?.drainRate || 0).toFixed(2)}
+               unit={`${fuelDisplayUnit}/day`}
                gradientId={5}
              />
            </div>
@@ -283,9 +295,10 @@ const Dashboard = () => {
              <StatCard
                icon={Warning}
                label="Alerts"
-               value="0"
+               value={flaggedCount.toString()}
                unit="flagged"
                gradientId={6}
+               trend={flaggedCount > 0 ? { direction: 'up', value: flaggedCount } : undefined}
              />
            </div>
 
@@ -293,9 +306,10 @@ const Dashboard = () => {
              <StatCard
                icon={CurrencyDollar}
                label="Budget"
-               value="62"
+               value={Math.round((currentMonthExpenditure / monthlyBudget) * 100).toString()}
                unit="%"
                gradientId={7}
+               trend={budgetAlert?.triggered ? { direction: 'up', value: '⚠' } : undefined}
              />
            </div>
            <div className="flex-shrink-0 w-12 sm:hidden"></div>

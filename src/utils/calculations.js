@@ -21,42 +21,31 @@ export const calculateMileage = (distance, liters) => {
  */
 export const calculateDistance = (currentOdometer, previousOdometer) => {
   if (!currentOdometer || !previousOdometer) return 0;
-  return Math.max(0, currentOdometer - previousOdometer);
+
+  const distance = currentOdometer - previousOdometer;
+
+  if (distance < 0) {
+    console.warn(`Odometer decreased from ${previousOdometer.toLocaleString()} to ${currentOdometer.toLocaleString()} km. Please verify your data entry. This may indicate an odometer reset or incorrect values.`);
+  }
+
+  return Math.max(0, distance);
 };
 
-/**
- * Check if mileage indicates potential theft
- * Theft is flagged if efficiency is 25% below average
- * @param {number} mileage - Current mileage
- * @param {number} avgMileage - Average mileage
- * @param {number} threshold - Threshold percentage (default 0.75 = 25% below)
- * @returns {boolean} True if theft is suspected
- */
 export const isTheftSuspected = (mileage, avgMileage, threshold = 0.75) => {
   if (!mileage || !avgMileage || mileage <= 0) return false;
   return mileage < avgMileage * threshold;
 };
 
-/**
- * Calculate average mileage from logs
- * @param {Array} logs - Array of log entries
- * @returns {number} Average mileage
- */
 export const calculateAverageMileage = (logs) => {
-  if (!logs || logs.length === 0) return 15; // Default expected mileage
-  
+  if (!logs || logs.length === 0) return 15;
+
   const validLogs = logs.filter(log => log.mileage && log.mileage > 0);
   if (validLogs.length === 0) return 15;
-  
+
   const sum = validLogs.reduce((acc, log) => acc + log.mileage, 0);
   return sum / validLogs.length;
 };
 
-/**
- * Calculate total fuel consumed
- * @param {Array} logs - Array of log entries
- * @returns {number} Total liters consumed
- */
 export const calculateTotalFuel = (logs) => {
   if (!logs || logs.length === 0) return 0;
   return logs.reduce((sum, log) => sum + (log.liters || 0), 0);
@@ -103,15 +92,17 @@ export const calculatePricePerLiter = (price, liters) => {
  * Get theft severity level
  * @param {number} mileage - Current mileage
  * @param {number} avgMileage - Average mileage
+ * @param {number} warningThreshold - Warning threshold ratio (default 0.75)
+ * @param {number} criticalThreshold - Critical threshold ratio (default 0.5)
  * @returns {string} 'normal' | 'warning' | 'critical'
  */
-export const getTheftSeverity = (mileage, avgMileage) => {
+export const getTheftSeverity = (mileage, avgMileage, warningThreshold = 0.75, criticalThreshold = 0.5) => {
   if (!mileage || !avgMileage) return 'normal';
 
   const ratio = mileage / avgMileage;
 
-  if (ratio < 0.5) return 'critical';  // More than 50% below average
-  if (ratio < 0.75) return 'warning';  // 25-50% below average
+  if (ratio < criticalThreshold) return 'critical';  // Below critical threshold
+  if (ratio < warningThreshold) return 'warning';    // Below warning threshold
   return 'normal';
 };
 

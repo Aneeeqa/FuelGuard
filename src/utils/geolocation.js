@@ -69,6 +69,10 @@ export const checkLocationPermission = async () => {
 // Cached position to avoid repeated GPS wakeups
 let lastKnownPosition = null;
 
+// Track pending GPS requests to prevent race conditions
+let pendingPositionPromise = null;
+
+
 /**
  * Request location permission with optimized settings for mobile
  * 
@@ -96,14 +100,20 @@ export const requestLocationPermission = async () => {
         if (error.code === 1) { // PERMISSION_DENIED
             return { success: false, permission: 'denied', error: 'Location permission denied' };
         }
-        // Other errors (timeout, etc) still mean permission was granted or at least not blocked
-        return { success: false, permission: 'granted', error: error.message };
+        if (error.code === 2) { // POSITION_UNAVAILABLE
+            return { success: false, permission: 'unknown', error: error.message };
+        }
+        if (error.code === 3) { // TIMEOUT
+            return { success: false, permission: 'unknown', error: error.message };
+        }
+        // Other errors - unknown status
+        return { success: false, permission: 'unknown', error: error.message };
     }
 };
 
 /**
  * Get current GPS position with mobile optimization
- * 
+ *
  * @param {Object} options - Geolocation options
  * @param {number} options.timeout - Timeout in milliseconds (default: 8000 - faster!)
  * @param {boolean} options.highAccuracy - Use high accuracy mode (default: false - faster!)
@@ -132,42 +142,68 @@ export const getCurrentPosition = (options = {}) => {
             }
         }
 
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const pos = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                    accuracy: position.coords.accuracy,
-                    timestamp: position.timestamp,
-                };
-                lastKnownPosition = pos;
-                resolve(pos);
-            },
-            (error) => {
-                let message;
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        message = 'Please allow location access in your browser settings.';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        message = 'GPS signal lost. Please go outdoors or enable Wi-Fi.';
-                        break;
-                    case error.TIMEOUT:
-                        message = 'Acquiring GPS signal timed out. Please try again.';
-                        break;
-                    default:
-                        message = 'Could not get location. Please try manual entry.';
+        // Prevent race conditions: check if there's already a pending request with similar options
+        // If so, we'll wait for that one instead of starting a new GPS fetch
+        const requestOptions = JSON.stringify({ timeout, highAccuracy, maxAge });
+        if (pendingPositionPromise && pendingPositionPromise.options === requestOptions) {
+            pendingPositionPromise.promise.then(resolve).catch(reject);
+            return;
+        }
+
+        // Create new GPS request
+        const positionPromise = new Promise((innerResolve, innerReject) => {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const pos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                        accuracy: position.coords.accuracy,
+                        timestamp: position.timestamp,
+                    };
+                    lastKnownPosition = pos;
+                    innerResolve(pos);
+                },
+                (error) => {
+                    let message;
+                    const errorCode = error.code || 0;
+
+                    switch (errorCode) {
+                        case 1:  // PERMISSION_DENIED
+                            message = 'Please allow location access in your browser settings.';
+                            break;
+                        case 2:  // POSITION_UNAVAILABLE
+                            message = 'GPS signal lost. Please go outdoors or enable Wi-Fi.';
+                            break;
+                        case 3:  // TIMEOUT
+                            message = 'Acquiring GPS signal timed out. Please try again.';
+                            break;
+                        default:
+                            message = 'Could not get location. Please try manual entry.';
+                    }
+                    const err = new Error(message);
+                    err.code = errorCode;
+                    innerReject(err);
+                },
+                {
+                    enableHighAccuracy: highAccuracy,
+                    timeout,
+                    maximumAge: maxAge,
                 }
-                const err = new Error(message);
-                err.code = error.code;
-                reject(err);
-            },
-            {
-                enableHighAccuracy: highAccuracy,
-                timeout,
-                maximumAge: maxAge,
-            }
-        );
+            );
+        });
+
+        // Track this pending request
+        pendingPositionPromise = {
+            promise: positionPromise,
+            options: requestOptions
+        };
+
+        // Clear pending tracking when complete
+        positionPromise.finally(() => {
+            pendingPositionPromise = null;
+        });
+
+        positionPromise.then(resolve).catch(reject);
     });
 };
 
@@ -200,7 +236,7 @@ export const getAccuratePosition = () => {
 
 /**
  * Calculate distance between current position and a saved location
- * 
+ *
  * @param {Object} savedLocation - Previously saved location {lat, lng}
  * @returns {Promise<{distance: number, currentLocation: Object}|null>}
  */
@@ -226,6 +262,63 @@ export const calculateDistanceFromSaved = async (savedLocation) => {
     } catch (err) {
         console.error("GPS Calc Error:", err);
         return null;
+    }
+};
+
+/**
+ * Start watching GPS position for real-time updates
+ *
+ * @param {Function} onSuccess - Callback called with new position
+ * @param {Function} onError - Callback called on error
+ * @returns {number} Watch ID to stop watching
+ */
+export const watchPosition = (onSuccess, onError) => {
+    return navigator.geolocation.watchPosition(
+        (position) => {
+            const pos = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                timestamp: position.timestamp,
+            };
+            lastKnownPosition = pos;
+            onSuccess(pos);
+        },
+        (error) => {
+            let message;
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    message = 'Please allow location access in your browser settings.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = 'GPS signal lost. Please go outdoors or enable Wi-Fi.';
+                    break;
+                case error.TIMEOUT:
+                    message = 'Acquiring GPS signal timed out. Please try again.';
+                    break;
+                default:
+                    message = 'Could not get location. Please try manual entry.';
+            }
+            const err = new Error(message);
+            err.code = error.code;
+            onError(err);
+        },
+        {
+            enableHighAccuracy: false,  // Use all sources (GPS, Wi-Fi, cell) for speed
+            timeout: 8000,
+            maximumAge: 60000,
+        }
+    );
+};
+
+/**
+ * Stop watching GPS position
+ *
+ * @param {number} watchId - The watch ID returned by watchPosition
+ */
+export const clearWatch = (watchId) => {
+    if (watchId !== null && watchId !== undefined) {
+        navigator.geolocation.clearWatch(watchId);
     }
 };
 
