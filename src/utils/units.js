@@ -2,14 +2,12 @@
  * Unit conversion utilities for fuel volume and cost calculations
  */
 
-// Conversion factors
-const LITERS_TO_US_GALLONS = 0.264172; // 1 liter = 0.264172 US gallons
-const LITERS_TO_IMPERIAL_GALLONS = 0.219969; // 1 liter = 0.219969 imperial gallons
-const GALLONS_TO_LITERS = 3.78541; // 1 US gallon = 3.78541 liters
-const KILOMETERS_TO_MILES = 0.621371; // 1 km = 0.621371 miles
-const MILES_TO_KILOMETERS = 1.60934; // 1 mile = 1.60934 km
+const LITERS_TO_US_GALLONS = 0.264172;
+const LITERS_TO_IMPERIAL_GALLONS = 0.219969;
+const GALLONS_TO_LITERS = 3.78541;
+const KILOMETERS_TO_MILES = 0.621371;
+const MILES_TO_KILOMETERS = 1.60934;
 
-// USC/Metric system constants
 export const UNIT_SYSTEMS = {
   USCS: 'USC',
   METRIC: 'Metric'

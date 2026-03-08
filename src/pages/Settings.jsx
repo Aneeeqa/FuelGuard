@@ -14,17 +14,15 @@ const Settings = () => {
   const [demoInjected, setDemoInjected] = useState(false);
   const [showVehicleSelector, setShowVehicleSelector] = useState(false);
 
-  // Geofencing state
   const [showGeofenceForm, setShowGeofenceForm] = useState(false);
   const [newGeofence, setNewGeofence] = useState({
     name: 'Home',
     lat: '',
     lng: '',
-    radius: 0.5, // 500m default
+    radius: 0.5,
   });
   const [geofences, setGeofences] = useState(data.vehicleProfile?.geofences || []);
 
-  // Emergency contact state
   const [showEmergencyForm, setShowEmergencyForm] = useState(false);
   const [emergencyContact, setEmergencyContact] = useState(
     data.vehicleProfile?.emergencyContact || { name: '', phone: '', relationship: '' }
@@ -41,7 +39,6 @@ const Settings = () => {
     efficiencyUnit: data.vehicleProfile?.efficiencyUnit || 'km/L',
   });
 
-  // Sync vehicleForm with data.vehicleProfile when it changes (e.g., from other tabs)
   useEffect(() => {
     if (data.vehicleProfile) {
       setVehicleForm({
@@ -58,7 +55,6 @@ const Settings = () => {
   }, [data.vehicleProfile]);
 
   const handleVehicleUpdate = () => {
-    // Derive efficiencyUnit from fuelVolumeUnit if not explicitly set
     const derivedEfficiencyUnit = vehicleForm.fuelVolumeUnit === 'gal' ? 'mpg' : 'km/L';
 
     updateVehicleProfile({
@@ -74,7 +70,6 @@ const Settings = () => {
   };
 
   const handleVehicleSelect = (vehicleData) => {
-    // Update both local form and context with EPA data
     setVehicleForm(prev => ({
       ...prev,
       name: vehicleData.name || prev.name,
@@ -100,7 +95,6 @@ const Settings = () => {
     setVehicleForm(prev => ({ ...prev, currency: newCurrency }));
 
     try {
-      // Use the currency conversion function to update profile and convert all logs
       await updateVehicleProfileWithCurrencyConversion({
         ...data.vehicleProfile,
         currency: newCurrency
@@ -108,7 +102,6 @@ const Settings = () => {
       console.log('Currency conversion completed');
     } catch (error) {
       console.error('Currency conversion failed:', error);
-      // Revert the form currency if conversion failed
       setVehicleForm(prev => ({ ...prev, currency: oldCurrency }));
     }
   };
@@ -123,7 +116,6 @@ const Settings = () => {
       currency: defaultCurrency
     }));
 
-    // Use currency conversion if currency is actually changing
     if (oldCurrency !== defaultCurrency) {
       await updateVehicleProfileWithCurrencyConversion({
         ...data.vehicleProfile,
@@ -131,7 +123,6 @@ const Settings = () => {
         currency: defaultCurrency
       });
     } else {
-      // Just update country, no currency conversion needed
       updateVehicleProfile({
         ...data.vehicleProfile,
         country: newCountry,
@@ -171,7 +162,6 @@ const Settings = () => {
     setGeofences([]);
   };
 
-  // Geofencing handlers
   const handleAddGeofence = () => {
     const lat = parseFloat(newGeofence.lat);
     const lng = parseFloat(newGeofence.lng);
@@ -186,7 +176,6 @@ const Settings = () => {
     setGeofences(updatedFences);
     updateVehicleProfile({ ...data.vehicleProfile, geofences: updatedFences });
 
-    // Reset form
     setNewGeofence({ name: 'Home', lat: '', lng: '', radius: 0.5 });
     setShowGeofenceForm(false);
   };
@@ -199,7 +188,6 @@ const Settings = () => {
 
   const handleUseCurrentLocation = async () => {
     try {
-      // Import getCurrentPosition dynamically to avoid circular dependency
       const { getCurrentPosition } = await import('../utils/geolocation');
       const position = await getCurrentPosition({ timeout: 15000, highAccuracy: true });
       setNewGeofence(prev => ({
@@ -235,7 +223,6 @@ const Settings = () => {
 
   const storage = getStorageLabel();
 
-  // Get current vehicle display info
   const hasEpaData = data.vehicleProfile?.vehicleId && data.vehicleProfile?.epaCombined;
 
   return (
@@ -790,7 +777,7 @@ const Settings = () => {
                 type="text"
                 value={emergencyContact.name}
                 onChange={(e) => setEmergencyContact({ ...emergencyContact, name: e.target.value })}
-                placeholder="e.g., Driver Name"
+                placeholder="e.g., John Doe"
                 className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-secondary)',
@@ -808,7 +795,7 @@ const Settings = () => {
                 type="tel"
                 value={emergencyContact.phone}
                 onChange={(e) => setEmergencyContact({ ...emergencyContact, phone: e.target.value })}
-                placeholder="e.g., +1 555 123 4567"
+                placeholder="e.g., +1 234 567 8900"
                 className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-secondary)',
@@ -1038,6 +1025,7 @@ const Settings = () => {
           <Info className="w-4 h-4" />
           <span>Fuel Guard</span>
         </div>
+        <p>Fuel Management System</p>
         <div className="mt-3 flex items-center justify-center gap-2">
           <a
             href="/privacy"

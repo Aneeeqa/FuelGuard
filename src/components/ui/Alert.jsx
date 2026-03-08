@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { AlertTriangle, CheckCircle, Info, XCircle, X } from 'lucide-react';
+import { CheckCircle, Warning, WarningCircle, Info, XCircle, X } from '@phosphor-icons/react';
 
 /**
  * Alert component for status banners
@@ -32,7 +32,7 @@ const Alert = ({
     warning: {
       container: 'glass border-l-4 animate-fade-in',
       borderClass: 'border-l-warning-500',
-      icon: AlertTriangle,
+      icon: Warning,
       iconColor: 'text-warning-500',
       iconBg: 'bg-warning-500/10',
       textColor: 'text-[var(--text-secondary)]',
@@ -41,7 +41,7 @@ const Alert = ({
     danger: {
       container: 'glass border-l-4 shadow-glow-danger animate-fade-in-up',
       borderClass: 'border-l-danger-500',
-      icon: XCircle,
+      icon: WarningCircle,
       iconColor: 'text-danger-500',
       iconBg: 'bg-danger-500/10',
       textColor: 'text-[var(--text-secondary)]',
@@ -77,15 +77,19 @@ const Alert = ({
       role="alert"
       {...props}
     >
-      <div 
+      <div
         className={clsx('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5', config.iconBg)}
       >
-        <Icon className={clsx('w-5 h-5', config.iconColor)} />
+        <Icon
+          size={20}
+          weight={variant === 'danger' || variant === 'warning' ? 'fill' : 'regular'}
+          className={clsx(config.iconColor)}
+        />
       </div>
 
       <div className="flex-1 min-w-0">
         {title && (
-          <h4 className={clsx('font-semibold mb-1', config.titleColor)}>{title}</h4>
+          <h4 className={clsx('font-semibold mb-1', config.titleColor)} style={{ fontWeight: '600' }}>{title}</h4>
         )}
         <div className={clsx('text-sm leading-relaxed', config.textColor)}>{children}</div>
       </div>
@@ -101,7 +105,7 @@ const Alert = ({
           style={{ color: 'var(--text-muted)' }}
           aria-label="Dismiss"
         >
-          <X className="w-4 h-4" />
+          <X size={16} />
         </button>
       )}
     </div>

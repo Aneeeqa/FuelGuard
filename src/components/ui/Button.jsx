@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { Loader2 } from 'lucide-react';
+import { Spinner } from '@phosphor-icons/react';
 
 /**
  * Mobile-optimized Button component
@@ -24,7 +24,7 @@ const Button = ({
   const baseStyles = clsx(
     'inline-flex items-center justify-center font-semibold rounded-xl',
     'transition-all duration-200 touchable no-select active-scale',
-    'focus:outline-none focus:ring-2 focus:ring-offset-2',
+    'focus:outline-none',
     'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
     'relative overflow-hidden'
   );
@@ -88,19 +88,19 @@ const Button = ({
     >
       {/* Ripple effect overlay */}
       <span className="absolute inset-0 ripple" />
-      
+
       {loading && (
-        <Loader2 className="w-5 h-5 animate-spin" />
+        <Spinner size={20} className="animate-spin" />
       )}
-      
+
       {!loading && Icon && iconPosition === 'left' && (
-        <Icon className="w-5 h-5 mr-2" />
+        <Icon size={20} className="mr-2" />
       )}
-      
+
       {children}
-      
+
       {!loading && Icon && iconPosition === 'right' && (
-        <Icon className="w-5 h-5 ml-2" />
+        <Icon size={20} className="ml-2" />
       )}
     </button>
   );

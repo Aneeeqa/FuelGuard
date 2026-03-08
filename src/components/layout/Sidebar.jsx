@@ -1,14 +1,14 @@
 import { NavLink } from 'react-router-dom';
-import { Home, PlusCircle, History, Settings, Fuel, Shield, Zap, Truck } from 'lucide-react';
+import { SquaresFour, PlusCircle, ClockCounterClockwise, GearSix, Truck, Drop, Shield, WarningCircle, Lightning } from '@phosphor-icons/react';
 import { clsx } from 'clsx';
 import ThemeToggle from '../ui/ThemeToggle';
 
 const navItems = [
-  { to: '/', icon: Home, label: 'Dashboard' },
+  { to: '/', icon: SquaresFour, label: 'Dashboard' },
   { to: '/add', icon: PlusCircle, label: 'Add Entry' },
-  { to: '/history', icon: History, label: 'History' },
+  { to: '/history', icon: ClockCounterClockwise, label: 'History' },
   { to: '/fleet', icon: Truck, label: 'Fleet' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/settings', icon: GearSix, label: 'Settings' },
 ];
 
 const Sidebar = () => {
@@ -26,15 +26,14 @@ const Sidebar = () => {
         className="flex items-center gap-3 h-16 px-6 border-b hover-lift"
         style={{ borderColor: 'var(--border-color)' }}
       >
-        <div 
-          className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md"
-          style={{ 
-            background: 'var(--gradient-primary)',
+        <img
+          src="/logo.png"
+          alt="FuelGuard Logo"
+          className="w-10 h-10 rounded-xl object-cover shadow-md"
+          style={{
             boxShadow: 'var(--shadow-glow-blue)'
           }}
-        >
-          <Shield className="w-6 h-6 text-white" />
-        </div>
+        />
         <div>
           <h1 className="font-bold gradient-text-primary" style={{ color: 'var(--accent-blue)' }}>Fuel Guard</h1>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Theft Detection</p>
@@ -51,23 +50,22 @@ const Sidebar = () => {
             className={({ isActive }) =>
               clsx(
                 'flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200',
-                'focus:outline-none focus:ring-2 focus:ring-offset-2',
+                'focus:outline-none',
                 'hover-lift active-scale',
                 isActive && 'shadow-md'
               )
             }
             style={({ isActive }) => ({
-              backgroundColor: isActive 
-                ? 'color-mix(in srgb, var(--accent-blue) 15%, transparent)' 
+              background: isActive 
+                ? 'linear-gradient(to right, color-mix(in srgb, var(--accent-blue) 10%, transparent) 0%, transparent 100%)'
                 : 'transparent',
-              color: isActive ? 'var(--accent-blue)' : 'var(--text-secondary)',
-              borderColor: isActive ? 'var(--accent-blue)' : 'transparent',
-              borderWidth: isActive ? '1px' : '0',
+              borderLeft: isActive ? '3px solid var(--accent-blue)' : '3px solid transparent',
+              color: isActive ? '#3B82F6' : '#64748B',
             })}
           >
             <Icon 
-              className="w-5 h-5 transition-transform duration-200"
-              strokeWidth={2}
+              size={20}
+              weight={({ isActive }) => isActive ? 'fill' : 'regular'}
             />
             <span className="relative">
               {label}
@@ -83,12 +81,12 @@ const Sidebar = () => {
       </nav>
 
       {/* Quick Stats Summary */}
-      <div className="mx-4 mb-4 p-4 rounded-xl animate-fade-in" style={{ 
+      <div className="mx-4 mb-4 p-4 rounded-xl animate-fade-in" style={{
         background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent-blue) 10%, var(--bg-primary)) 0%, color-mix(in srgb, var(--accent-blue) 5%, var(--bg-primary)) 100%)',
         border: '1px solid color-mix(in srgb, var(--accent-blue) 20%, transparent)'
       }}>
         <div className="flex items-center gap-2 mb-2">
-          <Zap className="w-4 h-4" style={{ color: 'var(--accent-blue)' }} />
+          <Lightning className="w-4 h-4" weight="duotone" style={{ color: 'var(--accent-blue)' }} />
           <span className="text-xs font-semibold" style={{ color: 'var(--accent-blue)' }}>Quick Stats</span>
         </div>
         <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Active</p>
@@ -115,19 +113,22 @@ const Sidebar = () => {
       >
         <div
           className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover-lift"
-          style={{ 
+          style={{
             backgroundColor: 'var(--bg-primary)',
             border: '1px solid var(--border-color)'
           }}
         >
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ 
-            background: 'var(--gradient-fuel)',
-            boxShadow: 'var(--shadow-glow-fuel)'
-          }}>
-            <Fuel className="w-4 h-4 text-white" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="FuelGuard Logo"
+            className="w-8 h-8 rounded-lg object-cover"
+            style={{
+              boxShadow: 'var(--shadow-glow-fuel)'
+            }}
+          />
           <div className="text-sm">
             <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Fuel Guard</p>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Fuel Guard</p>
           </div>
         </div>
       </div>

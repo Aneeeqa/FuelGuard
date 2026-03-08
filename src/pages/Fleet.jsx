@@ -443,7 +443,7 @@ const Fleet = () => {
                 type="text"
                 value={driverFormData.name}
                 onChange={(e) => setDriverFormData({ ...driverFormData, name: e.target.value })}
-                placeholder="e.g., Driver Name"
+                placeholder="e.g., John Smith"
                 className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-input)',
@@ -461,7 +461,7 @@ const Fleet = () => {
                 type="email"
                 value={driverFormData.email}
                 onChange={(e) => setDriverFormData({ ...driverFormData, email: e.target.value })}
-                placeholder="e.g., driver@example.com"
+                placeholder="e.g., user@example.com"
                 className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-input)',
@@ -479,7 +479,7 @@ const Fleet = () => {
                 type="tel"
                 value={driverFormData.phone}
                 onChange={(e) => setDriverFormData({ ...driverFormData, phone: e.target.value })}
-                placeholder="e.g., +1 555 123 4567"
+                placeholder="e.g., +1 234 567 8900"
                 className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-input)',
@@ -601,7 +601,7 @@ const Fleet = () => {
                   type="number"
                   value={vehicleFormData.year}
                   onChange={(e) => setVehicleFormData({ ...vehicleFormData, year: parseInt(e.target.value) })}
-                  placeholder="Year"
+                  placeholder="e.g., 2020"
                   className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                   style={{
                     backgroundColor: 'var(--bg-input)',

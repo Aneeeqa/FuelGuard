@@ -57,13 +57,9 @@ const Contact = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // In a real app, this would send to a backend
-    // For demo purposes, we'll just show success
     console.log('Contact form submitted:', formData);
     setSubmitted(true);
 
-    // Reset form after 3 seconds
     setTimeout(() => {
       setSubmitted(false);
       setFormData({ name: '', email: '', subject: '', message: '' });
@@ -242,7 +238,7 @@ const Contact = () => {
                   id="email"
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
-                  placeholder="email@example.com"
+                  placeholder="your.email@example.com"
                   required
                   className="w-full px-4 py-3 rounded-xl min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                   style={{
@@ -317,7 +313,7 @@ const Contact = () => {
       {/* Alternative Contact Methods */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <a
-          href="mailto:support@fuelguard.app"
+          href="mailto:contact@example.com"
           className="flex items-center gap-3 p-4 rounded-xl border transition-all duration-200 hover-lift"
           style={{
             backgroundColor: 'var(--bg-secondary)',
@@ -335,7 +331,7 @@ const Contact = () => {
               Email Us
             </p>
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              support@fuelguard.app
+              contact@example.com
             </p>
           </div>
         </a>

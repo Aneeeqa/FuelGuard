@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { Bell, Menu, Fuel, Phone, X } from 'lucide-react';
+import { Bell, List, Phone, X } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import EmergencyContact from '../EmergencyContact';
 import { FuelContext } from '../../context/FuelContext';
@@ -25,7 +25,6 @@ const TopNavigationBar = () => {
     const { logs, vehicleProfile, stats } = data;
     const newNotifications = [];
 
-    // Theft alert
     const flaggedCount = logs.filter((log) => log.isFlagged).length;
     if (flaggedCount > 0) {
       newNotifications.push({
@@ -36,7 +35,6 @@ const TopNavigationBar = () => {
       });
     }
 
-    // Fuel drain alert
     const drainAnalysis = analyzeFuelDrain(logs || [], vehicleProfile?.tankCapacity);
     if (drainAnalysis.hasAlert) {
       newNotifications.push({
@@ -47,7 +45,6 @@ const TopNavigationBar = () => {
       });
     }
 
-    // Fuel level alert
     const lastFuelLog = logs.length > 0 ? logs[0] : null;
     const currentFuelAmount = lastFuelLog ? lastFuelLog.liters : 0;
     const fuelLevelAnalysis = getFuelStatus(
@@ -64,7 +61,6 @@ const TopNavigationBar = () => {
       });
     }
 
-    // Budget alert
     const currency = vehicleProfile?.currency || 'USD';
     const currencySymbol = getCurrencySymbol(currency);
     const monthlyBudget = vehicleProfile?.monthlyBudget || 200;
@@ -118,14 +114,11 @@ const TopNavigationBar = () => {
     >
       <div className="max-w-7xl mx-auto px-4 md:px-6 h-full flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{
-              background: 'var(--gradient-primary)',
-            }}
-          >
-            <Fuel className="w-6 h-6 text-white" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="FuelGuard Logo"
+            className="w-10 h-10 rounded-full object-cover"
+          />
           <div>
             <h1
               className="text-xl md:text-2xl font-bold"
@@ -145,7 +138,7 @@ const TopNavigationBar = () => {
         <div className="flex items-center gap-2 md:gap-4">
           <button
             onClick={() => setShowEmergency(true)}
-            className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg transition-transform hover:scale-105 active:scale-95"
+            className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg transition-transform hover:scale-105 active:scale-95 focus:outline-none"
             style={{
               border: 'none',
               backgroundColor: 'transparent',
@@ -153,7 +146,8 @@ const TopNavigationBar = () => {
             aria-label="Emergency Contact"
           >
             <Phone
-              className="w-5 h-5"
+              size={20}
+              weight="duotone"
               style={{ color: 'var(--accent-alert)' }}
             />
           </button>
@@ -163,12 +157,13 @@ const TopNavigationBar = () => {
           <div className="relative">
             <button
               onClick={handleNotificationClick}
-              className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg transition-transform hover:scale-105 active:scale-95"
+              className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg transition-transform hover:scale-105 active:scale-95 focus:outline-none"
               style={{ border: 'none', backgroundColor: 'transparent' }}
               aria-label="Notifications"
             >
               <Bell
-                className="w-5 h-5"
+                size={20}
+                weight="regular"
                 style={{ color: 'var(--text-primary)' }}
               />
             </button>
@@ -242,7 +237,7 @@ const TopNavigationBar = () => {
                               e.currentTarget.style.color = 'var(--text-muted)';
                             }}
                           >
-                            <X className="w-4 h-4" />
+                            <X size={16} />
                           </button>
                           <p className="font-medium text-sm pr-6" style={{ color: 'var(--text-primary)' }}>
                             {notification.title}
@@ -261,15 +256,16 @@ const TopNavigationBar = () => {
 
           <button
             onClick={handleMenuClick}
-            className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg transition-transform hover:scale-105 active:scale-95"
+            className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg transition-transform hover:scale-105 active:scale-95 focus:outline-none"
             style={{
               border: 'none',
               backgroundColor: 'transparent',
             }}
             aria-label="Settings"
           >
-            <Menu
-              className="w-5 h-5"
+            <List
+              size={20}
+              weight="regular"
               style={{ color: 'var(--text-primary)' }}
             />
           </button>

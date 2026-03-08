@@ -1,6 +1,6 @@
 import { forwardRef, useState } from 'react';
 import { clsx } from 'clsx';
-import { Eye, EyeOff, Search, MapPin, Fuel, Calendar } from 'lucide-react';
+import { Eye, EyeSlash, MagnifyingGlass, MapPin, Drop, Calendar } from '@phosphor-icons/react';
 
 /**
  * Mobile-optimized Input component
@@ -45,9 +45,9 @@ const Input = forwardRef(({
   };
 
   const getIcon = () => {
-    if (icon === 'search') return Search;
+    if (icon === 'search') return MagnifyingGlass;
     if (icon === 'map-pin') return MapPin;
-    if (icon === 'fuel') return Fuel;
+    if (icon === 'fuel') return Drop;
     if (icon === 'calendar') return Calendar;
     return null;
   };
@@ -102,16 +102,16 @@ const Input = forwardRef(({
         >
           {label}
         </label>
-        {type === 'password' && (
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 transition-colors"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-          </button>
-        )}
+         {type === 'password' && (
+           <button
+             type="button"
+             onClick={() => setShowPassword(!showPassword)}
+             className="absolute right-4 top-1/2 -translate-y-1/2 p-2 transition-colors"
+             style={{ color: 'var(--text-muted)' }}
+           >
+             {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+           </button>
+         )}
         {error && (
           <p className="mt-1.5 text-sm" style={{ color: 'var(--accent-alert)' }}>{error}</p>
         )}
@@ -129,13 +129,14 @@ const Input = forwardRef(({
           {label}
         </label>
       )}
-      <div className="relative">
-        {Icon && (
-          <Icon 
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-200"
-            style={{ color: 'var(--text-muted)' }}
-          />
-        )}
+       <div className="relative">
+         {Icon && (
+           <Icon
+             size={20}
+             className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200"
+             style={{ color: 'var(--text-muted)' }}
+           />
+         )}
         <input
           ref={ref}
           type={inputType}
@@ -160,16 +161,16 @@ const Input = forwardRef(({
           onBlur={handleBlur}
           {...props}
         />
-        {type === 'password' && (
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 transition-colors rounded-lg hover:bg-black/5 active:bg-black/10"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-          </button>
-        )}
+         {type === 'password' && (
+           <button
+             type="button"
+             onClick={() => setShowPassword(!showPassword)}
+             className="absolute right-4 top-1/2 -translate-y-1/2 p-1 transition-colors rounded-lg hover:bg-black/5 active:bg-black/10"
+             style={{ color: 'var(--text-muted)' }}
+           >
+             {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+           </button>
+         )}
       </div>
       {error && (
         <p className="mt-1.5 text-sm flex items-center gap-1.5" style={{ color: 'var(--accent-alert)' }}>

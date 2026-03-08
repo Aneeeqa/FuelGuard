@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Leaf, TrendingUp, TrendingDown, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Leaf, TrendUp, TrendDown, WarningCircle, CaretDown, CaretUp } from '@phosphor-icons/react';
 import { clsx } from 'clsx';
 import Card from '../ui/Card';
 import {
@@ -84,7 +84,7 @@ const CarbonFootprintCard = ({
                 backgroundColor: 'color-mix(in srgb, #22c55e 15%, transparent)',
               }}
             >
-              <Leaf className="w-5 h-5 text-success-500" />
+              <Leaf size={20} weight="duotone" className="text-success-500" color="#22c55e" />
             </div>
             <div>
               <Card.Title>Carbon Footprint</Card.Title>
@@ -156,9 +156,9 @@ const CarbonFootprintCard = ({
               )}
             >
               {comparison.status === 'excellent' || comparison.status === 'good' ? (
-                <TrendingDown className="w-3 h-3" />
+                <TrendDown size={12} weight="duotone" />
               ) : (
-                <TrendingUp className="w-3 h-3" />
+                <TrendUp size={12} weight="duotone" />
               )}
               <span>
                 {comparison.percentage >= 0 ? '+' : ''}
@@ -274,13 +274,13 @@ const CarbonFootprintCard = ({
             }}
           >
             <span className="text-sm font-medium flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-              <AlertCircle className="w-4 h-4" style={{ color: 'var(--accent-blue)' }} />
+              <WarningCircle size={16} weight="duotone" style={{ color: 'var(--accent-blue)' }} />
               {showTips ? 'Hide' : 'View'} Eco-Tips
             </span>
             {showTips ? (
-              <ChevronUp className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+              <CaretUp size={16} />
             ) : (
-              <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+              <CaretDown size={16} />
             )}
           </button>
 

@@ -1,0 +1,201 @@
+/* StatCard Wave Animation Styles */
+
+/* Hide scrollbar for mobile horizontal scroll */
+.grid::-webkit-scrollbar {
+  display: none;
+}
+
+.grid {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.e-card {
+  margin: 0 auto;
+  background: transparent;
+  box-shadow: 0px 8px 28px -9px rgba(0, 0, 0, 0.45);
+  position: relative;
+  width: 160px;
+  height: 200px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .e-card {
+    width: 200px;
+    height: 120px;
+  }
+}
+
+.wave {
+  position: absolute;
+  width: 200px;
+  height: 300px;
+  opacity: 0.6;
+  left: 0;
+  top: 0;
+  margin-left: -20%;
+  margin-top: -50%;
+}
+
+@media (min-width: 640px) {
+  .wave {
+    width: 300px;
+    height: 200px;
+    margin-left: -50%;
+    margin-top: -70%;
+  }
+}
+
+.icon {
+  width: 2.5em;
+  height: 2.5em;
+  margin-top: 0;
+  padding-bottom: 0;
+  fill: white;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .icon {
+    width: 1.8em;
+    margin-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+.infotop {
+  text-align: center;
+  font-size: 13px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  color: rgb(255, 255, 255);
+  font-weight: 600;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0 0.5em;
+  gap: 0.5em;
+}
+
+@media (min-width: 640px) {
+  .content-wrapper {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 1em;
+    gap: 0.7em;
+  }
+}
+
+.text-content {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .text-content {
+    text-align: left;
+    display: block;
+  }
+}
+
+.value {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0.2em 0;
+  color: white;
+  text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
+  line-height: 1.2;
+}
+
+.unit {
+  font-size: 14px;
+  font-weight: 600;
+  margin-left: 0.2em;
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.2em;
+  color: white;
+  text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.name {
+  font-size: 10px;
+  font-weight: 600;
+  position: relative;
+  top: 0.2em;
+  text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.wave:nth-child(2),
+.wave:nth-child(3) {
+  top: 60px;
+}
+
+@media (min-width: 640px) {
+  .wave:nth-child(2),
+  .wave:nth-child(3) {
+    top: 60px;
+  }
+}
+
+.playing .wave {
+  border-radius: 40%;
+  animation: wave 25000ms infinite linear;
+}
+
+.wave {
+  border-radius: 40%;
+  animation: wave 55s infinite linear;
+}
+
+.playing .wave:nth-child(2) {
+  animation-duration: 30000ms;
+}
+
+.wave:nth-child(2) {
+  animation-duration: 50s;
+}
+
+.playing .wave:nth-child(3) {
+  animation-duration: 35000ms;
+}
+
+.wave:nth-child(3) {
+  animation-duration: 45s;
+}
+
+@keyframes wave {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}

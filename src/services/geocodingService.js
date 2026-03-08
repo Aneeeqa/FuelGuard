@@ -57,7 +57,7 @@ export const reverseGeocode = async (lat, lon) => {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'FuelGuard (fuel-tracking-app)', // Required by Nominatim policy
+          'User-Agent': 'FuelGuard/1.0 (fuel-tracking-app)', // Required by Nominatim policy
         },
       });
 
@@ -136,7 +136,7 @@ export const geocode = async (query) => {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'FuelGuard (fuel-tracking-app)',
+          'User-Agent': 'FuelGuard/1.0 (fuel-tracking-app)',
         },
       });
 

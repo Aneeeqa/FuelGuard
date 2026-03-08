@@ -1,13 +1,13 @@
 import { NavLink } from 'react-router-dom';
-import { Home, PlusCircle, History, Settings, Users, Car, Truck } from 'lucide-react';
+import { SquaresFour, PlusCircle, ClockCounterClockwise, GearSix, Truck } from '@phosphor-icons/react';
 import { clsx } from 'clsx';
 
 const navItems = [
-  { to: '/', icon: Home, label: 'Dashboard' },
+  { to: '/', icon: SquaresFour, label: 'Dashboard' },
   { to: '/add', icon: PlusCircle, label: 'Add' },
-  { to: '/history', icon: History, label: 'History' },
+  { to: '/history', icon: ClockCounterClockwise, label: 'History' },
   { to: '/fleet', icon: Truck, label: 'Fleet' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/settings', icon: GearSix, label: 'Settings' },
 ];
 
 const BottomNav = () => {
@@ -65,9 +65,10 @@ const BottomNav = () => {
                       style={{ opacity: 0.2 }}
                     />
                   ) : null}
-                  <Icon 
-                    className="w-6 h-6 relative z-10" 
-                    strokeWidth={isActive ? 2.5 : 2} 
+                  <Icon
+                    size={24}
+                    weight={isActive ? 'fill' : 'regular'}
+                    className="relative z-10"
                   />
                 </div>
                 <span 

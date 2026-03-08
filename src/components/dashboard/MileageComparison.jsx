@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Minus, Users, Award, Loader2 } from 'lucide-react';
+import { TrendUp, TrendDown, Minus, Users, Trophy, Spinner } from '@phosphor-icons/react';
 import { fetchCommunityMpg, convertCommunityToKmL } from '../../services/communityMpgService';
 
 /**
@@ -63,7 +63,7 @@ const MileageComparison = ({
             case 'excellent':
                 return {
                     color: 'var(--accent-success)',
-                    icon: TrendingUp,
+                    icon: TrendUp,
                     label: 'Excellent',
                     description: 'Your mileage exceeds EPA rating!'
                 };
@@ -77,14 +77,14 @@ const MileageComparison = ({
             case 'below':
                 return {
                     color: 'var(--accent-fuel)',
-                    icon: TrendingDown,
+                    icon: TrendDown,
                     label: 'Below Average',
                     description: 'Slightly below EPA rating'
                 };
             case 'alert':
                 return {
                     color: 'var(--accent-alert)',
-                    icon: TrendingDown,
+                    icon: TrendDown,
                     label: 'Low Efficiency',
                     description: 'Significantly below EPA rating - check for issues'
                 };
@@ -126,7 +126,7 @@ const MileageComparison = ({
                         color: statusConfig.color
                     }}
                 >
-                    <StatusIcon className="w-3 h-3" />
+                    <StatusIcon size={12} weight="duotone" />
                     {statusConfig.label}
                 </div>
             </div>
@@ -162,7 +162,7 @@ const MileageComparison = ({
                     <div>
                         <div className="flex justify-between text-sm mb-1">
                             <span className="flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
-                                <Award className="w-3 h-3" />
+                                <Trophy size={12} weight="duotone" />
                                 EPA Combined
                             </span>
                             <span className="font-semibold" style={{ color: 'var(--accent-blue)' }}>
@@ -187,14 +187,14 @@ const MileageComparison = ({
                 {/* Community Average */}
                 {loading ? (
                     <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Spinner size={16} className="animate-spin" />
                         Loading community data...
                     </div>
                 ) : communityData ? (
                     <div>
                         <div className="flex justify-between text-sm mb-1">
                             <span className="flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
-                                <Users className="w-3 h-3" />
+                                <Users size={12} weight="duotone" />
                                 Community Avg ({communityData.count} users)
                             </span>
                             <span className="font-semibold" style={{ color: 'var(--text-muted)' }}>

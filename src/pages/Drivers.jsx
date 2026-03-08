@@ -185,7 +185,7 @@ const Drivers = () => {
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Driver Name"
+                placeholder="e.g., John Smith"
                 className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-input)',
@@ -203,7 +203,7 @@ const Drivers = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="e.g., driver@example.com"
+                placeholder="e.g., user@example.com"
                 className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-input)',
@@ -221,7 +221,7 @@ const Drivers = () => {
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="e.g., +1 555 123 4567"
+                placeholder="e.g., +1 234 567 8900"
                 className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-input)',

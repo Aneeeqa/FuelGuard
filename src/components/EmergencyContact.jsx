@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Phone, MapPin, PhoneCall, Share2, X } from 'lucide-react';
+import { Phone, MapPin, PhoneCall, ShareNetwork, X } from '@phosphor-icons/react';
 import { useFuelData } from '../hooks/useFuelData';
 import Button from './ui/Button';
 import Modal from './ui/Modal';
@@ -67,7 +67,7 @@ const EmergencyContact = ({ onClose }) => {
     return (
       <Modal isOpen={true} onClose={onClose} title="Emergency Contact">
         <div className="text-center py-8">
-          <Phone className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--accent-alert)' }} />
+          <Phone size={64} weight="duotone" className="mx-auto mb-4" style={{ color: 'var(--accent-alert)' }} />
           <p className="text-lg mb-4" style={{ color: 'var(--text-primary)' }}>
             No Emergency Contact Configured
           </p>
@@ -92,7 +92,7 @@ const EmergencyContact = ({ onClose }) => {
               backgroundColor: 'color-mix(in srgb, var(--accent-alert) 15%, transparent)',
             }}
           >
-            <Phone className="w-8 h-8" style={{ color: 'var(--accent-alert)' }} />
+            <Phone size={32} weight="duotone" style={{ color: 'var(--accent-alert)' }} />
           </div>
           <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
             {emergencyContact.name}
@@ -113,7 +113,7 @@ const EmergencyContact = ({ onClose }) => {
               border: '1px solid var(--accent-success)',
             }}
           >
-            <MapPin className="w-5 h-5 mx-auto mb-2" style={{ color: 'var(--accent-success)' }} />
+            <MapPin size={20} weight="duotone" className="mx-auto mb-2" style={{ color: 'var(--accent-success)' }} />
             <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
               Location Shared Successfully!
             </p>
@@ -135,7 +135,7 @@ const EmergencyContact = ({ onClose }) => {
               fontWeight: 'bold',
             }}
           >
-            <PhoneCall className="w-6 h-6" />
+            <PhoneCall size={24} weight="duotone" />
             Emergency Call
           </Button>
 
@@ -148,7 +148,7 @@ const EmergencyContact = ({ onClose }) => {
               fontSize: '16px',
             }}
           >
-            <Share2 className="w-5 h-5" />
+            <ShareNetwork size={20} weight="duotone" />
             Share Location
           </Button>
         </div>
