@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icon-192.svg', 'icon-512.svg'],
+      includeAssets: ['favicon.svg', 'icon-192.svg', 'icon-512.svg', 'logo.png'],
       manifest: {
         name: 'Fuel Guard',
         short_name: 'FuelGuard',
@@ -36,6 +36,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {

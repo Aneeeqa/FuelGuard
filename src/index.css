@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Leaflet Map CSS (for OpenStreetMap fallback - no API key needed) */
+@import "leaflet/dist/leaflet.css";
+
 /* ===== Theme System with CSS Variables ===== */
 :root {
   /* DEFAULT TO LIGHT MODE */
@@ -186,7 +189,7 @@ html {
 body {
   margin: 0;
   min-height: 100%;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
                'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -256,6 +259,11 @@ body {
 .touch-target-lg {
   min-height: 56px;
   min-width: 56px;
+}
+
+/* Tabular numerals for data displays - ensures numbers align vertically */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Hide scrollbar but allow scrolling */

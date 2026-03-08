@@ -307,7 +307,7 @@ const VehicleSelector = ({
                         value={manualName}
                         onChange={(e) => setManualName(e.target.value)}
                         onBlur={handleManualSubmit}
-                        placeholder="e.g., My Car"
+                        placeholder="e.g., 2020 Toyota Camry"
                         className="w-full px-4 py-3 rounded-xl min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                         style={{
                             backgroundColor: 'var(--bg-input)',

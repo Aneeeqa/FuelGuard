@@ -192,15 +192,12 @@ export const convertDistance = (distance, fromUnit, toUnit) => {
 export const convertEfficiency = (efficiency, fromUnit, toUnit) => {
     if (fromUnit === toUnit) return efficiency;
     if (fromUnit === EFFICIENCY_UNITS.KM_L && toUnit === EFFICIENCY_UNITS.MPG) {
-        // km/L to mpg: (km * milesPerKm) * (litersPerGallon / efficiency)
-        const miles = efficiency * KILOMETERS_TO_MILES;
-        const gallons = 1; // 1 gallon base
-        return miles / (1 / efficiency * GALLONS_TO_LITERS); // mpg = miles / (1/efficiency in L) * gal
+        // km/L to mpg: 1 km/L = 2.35215 mpg
+        return efficiency * 2.35215;
     }
     if (fromUnit === EFFICIENCY_UNITS.MPG && toUnit === EFFICIENCY_UNITS.KM_L) {
-        // mpg to km/L: (miles / kilometersPerMile) / (miles / efficiency in gallons)
-        const km = 1 / MILES_TO_KILOMETERS;
-        return (1 / efficiency * GALLONS_TO_LITERS) / km; // km/L = (1/mpg * gal) / 1/km
+        // mpg to km/L: 1 mpg = 0.425144 km/L
+        return efficiency * 0.425144;
     }
     return efficiency;
 };

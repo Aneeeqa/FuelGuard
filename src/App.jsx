@@ -52,7 +52,6 @@ const ErrorFallback = () => (
 );
 
 const App = () => {
-  console.log('App component rendering');
   return (
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>

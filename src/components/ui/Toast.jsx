@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircle, WarningCircle, Info, X } from '@phosphor-icons/react';
 import { useEffect, useState } from 'react';
 
 /**
@@ -27,14 +27,14 @@ const Toast = ({
       bgClass: 'bg-success-50 dark:bg-success-900/10',
     },
     error: {
-      icon: XCircle,
+      icon: WarningCircle,
       container: 'glass border-l-4 animate-fade-in-right',
       borderClass: 'border-l-danger-500',
       iconColor: 'text-danger-500',
       bgClass: 'bg-danger-50 dark:bg-danger-900/10',
     },
     warning: {
-      icon: AlertCircle,
+      icon: WarningCircle,
       container: 'glass border-l-4 animate-fade-in-right',
       borderClass: 'border-l-warning-500',
       iconColor: 'text-warning-500',
@@ -86,8 +86,8 @@ const Toast = ({
       }}
       role="alert"
     >
-      <Icon className={clsx('w-5 h-5 flex-shrink-0 mt-0.5', config.iconColor)} />
-      
+      <Icon size={20} weight="duotone" className={clsx('flex-shrink-0 mt-0.5', config.iconColor)} />
+
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
           {message}
@@ -100,7 +100,7 @@ const Toast = ({
         style={{ color: 'var(--text-muted)' }}
         aria-label="Dismiss"
       >
-        <X className="w-4 h-4" />
+        <X size={16} />
       </button>
     </div>
   );

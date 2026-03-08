@@ -58,12 +58,9 @@ const Contact = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // In a real app, this would send to a backend
-    // For demo purposes, we'll just show success
     console.log('Contact form submitted:', formData);
     setSubmitted(true);
 
-    // Reset form after 3 seconds
     setTimeout(() => {
       setSubmitted(false);
       setFormData({ name: '', email: '', subject: '', message: '' });
@@ -80,7 +77,6 @@ const Contact = () => {
 
   return (
     <div className="p-4 lg:p-8 space-y-8 pb-24 max-w-4xl mx-auto">
-      {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-3xl lg:text-4xl font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
           Help & Support
@@ -90,7 +86,6 @@ const Contact = () => {
         </p>
       </div>
 
-      {/* FAQ Section */}
       <div
         className="rounded-xl p-6"
         style={{
@@ -242,7 +237,7 @@ const Contact = () => {
                   id="email"
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
-                  placeholder="email@example.com"
+                  placeholder="your.email@example.com"
                   required
                   className="w-full px-4 py-3 rounded-xl min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                   style={{

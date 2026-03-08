@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { X } from 'lucide-react';
+import { X } from '@phosphor-icons/react';
 import { useEffect, useRef } from 'react';
 
 /**
@@ -118,7 +118,7 @@ const Modal = ({
                 style={{ color: 'var(--text-muted)' }}
                 aria-label="Close modal"
               >
-                <X className="w-5 h-5" />
+                <X size={20} />
               </button>
             )}
           </div>

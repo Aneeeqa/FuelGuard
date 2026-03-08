@@ -1,4 +1,4 @@
-import { Mail, Phone, Car, Edit, Trash2, Calendar } from 'lucide-react';
+import { EnvelopeSimple, Phone, Car, Pencil, Trash, Calendar } from '@phosphor-icons/react';
 
 const DriverCard = ({
   driver,
@@ -65,12 +65,12 @@ const DriverCard = ({
           <div className="flex items-center gap-4 text-sm mt-3">
             {driver.phone && (
               <div className="flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
-                <Phone className="w-4 h-4" />
+                <Phone size={16} weight="regular" />
                 <span>{driver.phone}</span>
               </div>
             )}
             <div className="flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
-              <Calendar className="w-4 h-4" />
+              <Calendar size={16} weight="regular" />
               <span>{new Date(driver.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
@@ -83,7 +83,7 @@ const DriverCard = ({
             style={{ color: 'var(--accent-blue)' }}
             aria-label="Edit driver"
           >
-            <Edit className="w-5 h-5" />
+            <Pencil size={20} />
           </button>
           <button
             onClick={() => onDelete(driver.id)}
@@ -91,7 +91,7 @@ const DriverCard = ({
             style={{ color: 'var(--accent-alert)' }}
             aria-label="Delete driver"
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash size={20} />
           </button>
         </div>
       </div>
@@ -100,7 +100,7 @@ const DriverCard = ({
         className="flex items-center gap-2 p-3 rounded-lg mb-4"
         style={{ backgroundColor: 'var(--bg-input)' }}
       >
-        <Car className="w-4 h-4" style={{ color: 'var(--accent-fuel)' }} />
+        <Car size={16} weight="duotone" style={{ color: 'var(--accent-fuel)' }} />
         <div className="flex-1">
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
             Assigned Vehicle

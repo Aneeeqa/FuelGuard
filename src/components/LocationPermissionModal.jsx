@@ -1,4 +1,4 @@
-import { MapPin, ShieldCheck, X } from 'lucide-react';
+import { MapPin, ShieldCheck, X } from '@phosphor-icons/react';
 
 /**
  * Friendly modal to explain why location is needed before requesting browser permission.
@@ -22,7 +22,7 @@ const LocationPermissionModal = ({ isOpen, onClose, onConfirm }) => {
                     className="absolute right-4 top-4 p-1 rounded-full hover:bg-gray-100/10 transition-colors"
                     style={{ color: 'var(--text-muted)' }}
                 >
-                    <X className="w-5 h-5" />
+                    <X size={20} />
                 </button>
 
                 <div className="flex flex-col items-center text-center space-y-4">
@@ -30,7 +30,7 @@ const LocationPermissionModal = ({ isOpen, onClose, onConfirm }) => {
                         className="p-4 rounded-full"
                         style={{ backgroundColor: 'color-mix(in srgb, var(--accent-fuel) 10%, transparent)' }}
                     >
-                        <MapPin className="w-8 h-8" style={{ color: 'var(--accent-fuel)' }} />
+                        <MapPin size={32} weight="duotone" style={{ color: 'var(--accent-fuel)' }} />
                     </div>
 
                     <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -46,7 +46,7 @@ const LocationPermissionModal = ({ isOpen, onClose, onConfirm }) => {
                         style={{ backgroundColor: 'var(--bg-primary)' }}
                     >
                         <div className="flex gap-2">
-                            <ShieldCheck className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--accent-success)' }} />
+                            <ShieldCheck size={16} weight="duotone" className="flex-shrink-0 mt-0.5" style={{ color: 'var(--accent-success)' }} />
                             <span style={{ color: 'var(--text-muted)' }}>
                                 Your location data is stored only on your device and never shared.
                             </span>

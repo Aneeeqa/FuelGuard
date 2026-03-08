@@ -1,8 +1,8 @@
 /**
- * Google Maps Service - Distance Calculation
- * 
- * Uses Google Maps Directions API for accurate road-based distance
- * Requires VITE_GOOGLE_MAPS_API_KEY in environment
+ * Maps Service - Distance Calculation & Routing
+ *
+ * Supports both Google Maps (requires API key) and OpenStreetMap/OSRM (free, no API key)
+ * Falls back to free alternatives when Google Maps API key is not configured
  */
 
 // Cache for route calculations
@@ -14,28 +14,25 @@ const CACHE_TTL = 60 * 60 * 1000; // 1 hour
  * @returns {boolean}
  */
 export const isGoogleMapsConfigured = () => {
-    return !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    return apiKey && apiKey !== '' && apiKey !== 'your_google_maps_api_key_here';
 };
 
 /**
- * Calculate driving distance between two points using Google Directions API
- * 
+ * Calculate driving distance using Google Maps Directions API
+ * (Requires API key)
+ *
  * @param {Object} origin - {lat, lng}
  * @param {Object} destination - {lat, lng}
  * @returns {Promise<{distance: number, duration: number}|null>} distance in km, duration in minutes
  */
-export const calculateDrivingDistance = async (origin, destination) => {
-    if (!isGoogleMapsConfigured()) {
-        console.warn('Google Maps API key not configured');
-        return null;
-    }
-
+const calculateGoogleMapsDistance = async (origin, destination) => {
     if (!origin?.lat || !origin?.lng || !destination?.lat || !destination?.lng) {
         return null;
     }
 
     // Check cache
-    const cacheKey = `${origin.lat},${origin.lng}-${destination.lat},${destination.lng}`;
+    const cacheKey = `google-${origin.lat},${origin.lng}-${destination.lat},${destination.lng}`;
     const cached = routeCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
         return cached.data;
@@ -78,7 +75,91 @@ export const calculateDrivingDistance = async (origin, destination) => {
 };
 
 /**
- * Get a static map image URL for a route
+ * Calculate driving distance using OSRM (Open Source Routing Machine)
+ * (Free, no API key required)
+ *
+ * @param {Object} origin - {lat, lng}
+ * @param {Object} destination - {lat, lng}
+ * @returns {Promise<{distance: number, duration: number}|null>} distance in km, duration in minutes
+ */
+const calculateOSRMDistance = async (origin, destination) => {
+    if (!origin?.lat || !origin?.lng || !destination?.lat || !destination?.lng) {
+        return null;
+    }
+
+    // Check cache
+    const cacheKey = `osrm-${origin.lat},${origin.lng}-${destination.lat},${destination.lng}`;
+    const cached = routeCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        return cached.data;
+    }
+
+    try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error('OSRM API request failed');
+        }
+
+        const data = await response.json();
+
+        if (data.code !== 'Ok' || !data.routes?.[0]) {
+            return null;
+        }
+
+        const route = data.routes[0];
+        const result = {
+            distance: route.distance / 1000, // Convert meters to km
+            duration: Math.round(route.duration / 60), // Convert seconds to minutes
+        };
+
+        routeCache.set(cacheKey, { data: result, timestamp: Date.now() });
+        return result;
+    } catch (error) {
+        console.error('OSRM API error:', error);
+        return null;
+    }
+};
+
+/**
+ * Calculate driving distance between two points
+ * Tries Google Maps first (if API key is configured), falls back to OSRM (free)
+ *
+ * @param {Object} origin - {lat, lng}
+ * @param {Object} destination - {lat, lng}
+ * @returns {Promise<{distance: number, duration: number, provider: string}|null>} distance in km, duration in minutes, provider name
+ */
+export const calculateDrivingDistance = async (origin, destination) => {
+    // Validate inputs
+    if (!origin?.lat || !origin?.lng || !destination?.lat || !destination?.lng) {
+        return null;
+    }
+
+    // Try Google Maps first if API key is configured
+    if (isGoogleMapsConfigured()) {
+        try {
+            const result = await calculateGoogleMapsDistance(origin, destination);
+            if (result) {
+                return { ...result, provider: 'Google Maps' };
+            }
+        } catch (error) {
+            console.warn('Google Maps failed, falling back to OSRM:', error.message);
+        }
+    }
+
+    // Fallback to OSRM (free, no API key)
+    const osrmResult = await calculateOSRMDistance(origin, destination);
+    if (osrmResult) {
+        return { ...osrmResult, provider: 'OpenStreetMap (OSRM)' };
+    }
+
+    return null;
+};
+
+/**
+ * Get a static map image URL for a route (Google Maps only)
  * @param {Object} origin - {lat, lng}
  * @param {Object} destination - {lat, lng}
  * @param {number} width - Image width
@@ -96,8 +177,45 @@ export const getRouteMapUrl = (origin, destination, width = 400, height = 200) =
 };
 
 /**
+ * Get OSRM route geometry for plotting on maps
+ * @param {Object} origin - {lat, lng}
+ * @param {Object} destination - {lat, lng}
+ * @returns {Promise<Array<{lat: number, lng: number}>|null>}
+ */
+export const getRouteGeometry = async (origin, destination) => {
+    if (!origin?.lat || !origin?.lng || !destination?.lat || !destination?.lng) {
+        return null;
+    }
+
+    try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error('OSRM route geometry request failed');
+        }
+
+        const data = await response.json();
+
+        if (data.code !== 'Ok' || !data.routes?.[0]?.geometry?.coordinates) {
+            return null;
+        }
+
+        // OSRM returns coordinates as [lng, lat], need to convert to [lat, lng]
+        return data.routes[0].geometry.coordinates.map(coord => ({
+            lat: coord[1],
+            lng: coord[0],
+        }));
+    } catch (error) {
+        console.error('OSRM route geometry error:', error);
+        return null;
+    }
+};
+
+/**
  * Initialize Google Maps JavaScript API
- * Call this if you need interactive maps
+ * Call this if you need interactive maps with Google Maps
  * @returns {Promise<void>}
  */
 export const loadGoogleMapsScript = () => {
@@ -133,6 +251,7 @@ export default {
     isGoogleMapsConfigured,
     calculateDrivingDistance,
     getRouteMapUrl,
+    getRouteGeometry,
     loadGoogleMapsScript,
     clearRouteCache,
 };

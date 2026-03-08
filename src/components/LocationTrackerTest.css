@@ -1,0 +1,419 @@
+/**
+ * Location Tracker Test Component Styles
+ */
+
+.location-tracker-test {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.test-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.test-header h1 {
+  font-size: 2rem;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.test-header p {
+  color: #64748b;
+  font-size: 1rem;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.card-header .icon {
+  width: 24px;
+  height: 24px;
+  color: #3b82f6;
+}
+
+.card-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+/* GPS Status Card */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.status-item .label {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.status-item .value {
+  font-weight: 600;
+}
+
+.status-item .value.success {
+  color: #16a34a;
+}
+
+.status-item .value.error {
+  color: #dc2626;
+}
+
+.status-item .value.warning {
+  color: #f59e0b;
+}
+
+/* GPS Controls Card */
+.control-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn .btn-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-quick {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.btn-accurate {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.btn-secondary {
+  background: #e2e8f0;
+  color: #1e293b;
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-toggle {
+  background: #3b82f6;
+  color: white;
+  justify-content: center;
+  width: 100%;
+}
+
+.btn-calc {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  flex: 1;
+  justify-content: center;
+}
+
+.btn-search {
+  background: #3b82f6;
+  color: white;
+  white-space: nowrap;
+}
+
+.location-info {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.info-value {
+  font-weight: 600;
+  color: #1e293b;
+  font-family: monospace;
+}
+
+/* Distance Calculation Card */
+.distance-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.destination-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #fef3c7;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.dest-label {
+  font-weight: 600;
+  color: #92400e;
+}
+
+.dest-coords {
+  font-family: monospace;
+  color: #1e293b;
+}
+
+.calc-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.distance-results {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-item.highlight {
+  background: #dbeafe;
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+  margin-left: -16px;
+  margin-right: -16px;
+  margin-bottom: -16px;
+  padding-bottom: 12px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.result-label {
+  font-weight: 500;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.result-value {
+  font-weight: 700;
+  color: #1e293b;
+  font-family: monospace;
+  font-size: 1rem;
+}
+
+.result-item.highlight .result-value {
+  color: #2563eb;
+  font-size: 1.1rem;
+}
+
+.result-item.clickable {
+  cursor: pointer;
+  transition: background 0.2s;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.result-item.clickable:hover {
+  background: #e2e8f0;
+}
+
+.result-name {
+  font-weight: 500;
+  color: #1e293b;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.result-coords {
+  font-family: monospace;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+/* Location Search Card */
+.search-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.search-results {
+  margin-top: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.search-results .result-item {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.search-results .result-item:last-child {
+  border-bottom: none;
+}
+
+/* Map View Card */
+.map-container {
+  position: relative;
+  margin-top: 16px;
+}
+
+.map-container > div {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.map-instructions {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  text-align: center;
+  backdrop-filter: blur(4px);
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 24px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.footer strong {
+  color: #1e293b;
+}
+
+.footer .inline-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .location-tracker-test {
+    padding: 12px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .control-buttons {
+    flex-direction: column;
+  }
+
+  .calc-buttons {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-container {
+    flex-direction: column;
+  }
+
+  .test-header h1 {
+    font-size: 1.5rem;
+  }
+}

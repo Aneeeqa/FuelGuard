@@ -1,4 +1,4 @@
-import { Car, Edit, Trash2, Fuel, Route, TrendingUp, Calendar } from 'lucide-react';
+import { Car, Pencil, Trash, Drop, Path, TrendUp, Calendar } from '@phosphor-icons/react';
 
 const VehicleCard = ({
   vehicle,
@@ -40,7 +40,8 @@ const VehicleCard = ({
               }}
             >
               <Car
-                className="w-6 h-6"
+                size={24}
+                weight="duotone"
                 style={{ color: isSelected ? 'white' : 'var(--accent-fuel)' }}
               />
             </div>
@@ -69,35 +70,46 @@ const VehicleCard = ({
             </div>
           )}
 
-          <div className="flex items-center gap-2 mt-3">
-            {vehicle.status === 'Active' ? (
-              <span
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
-                style={{
-                  backgroundColor: 'color-mix(in srgb, var(--accent-success) 15%, transparent)',
-                  color: 'var(--accent-success)',
-                }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                Active
-              </span>
-            ) : (
-              <span
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
-                style={{
-                  backgroundColor: 'color-mix(in srgb, var(--text-muted) 10%, transparent)',
-                  color: 'var(--text-muted)',
-                }}
-              >
-                Inactive
-              </span>
-            )}
-            {vehicle.fuelType && (
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                {vehicle.fuelType.charAt(0).toUpperCase() + vehicle.fuelType.slice(1)}
-              </span>
-            )}
-          </div>
+           <div className="flex items-center gap-2 mt-3">
+             {vehicle.status === 'Active' ? (
+               <span
+                 className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+                 style={{
+                   backgroundColor: 'color-mix(in srgb, var(--accent-success) 15%, transparent)',
+                   color: 'var(--accent-success)',
+                 }}
+               >
+                 <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                 Active
+               </span>
+             ) : (
+               <span
+                 className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+                 style={{
+                   backgroundColor: 'color-mix(in srgb, var(--text-muted) 10%, transparent)',
+                   color: 'var(--text-muted)',
+                 }}
+               >
+                 Inactive
+               </span>
+             )}
+             {vehicle.fuelType && (
+               <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                 {vehicle.fuelType.charAt(0).toUpperCase() + vehicle.fuelType.slice(1)}
+               </span>
+             )}
+             {vehicle.theftThreshold && (
+               <span
+                 className="text-xs px-2 py-1 rounded-full font-medium"
+                 style={{
+                   backgroundColor: 'color-mix(in srgb, var(--accent-alert) 15%, transparent)',
+                   color: 'var(--accent-alert)',
+                 }}
+               >
+                 Alert: {(vehicle.theftThreshold * 100).toFixed(0)}%
+               </span>
+             )}
+           </div>
         </div>
 
         <div className="flex gap-2">
@@ -110,7 +122,7 @@ const VehicleCard = ({
             style={{ color: 'var(--accent-blue)' }}
             aria-label="Edit vehicle"
           >
-            <Edit className="w-5 h-5" />
+            <Pencil size={20} />
           </button>
           <button
             onClick={(e) => {
@@ -121,7 +133,7 @@ const VehicleCard = ({
             style={{ color: 'var(--accent-alert)' }}
             aria-label="Delete vehicle"
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash size={20} />
           </button>
         </div>
       </div>
@@ -129,7 +141,7 @@ const VehicleCard = ({
       <div className="grid grid-cols-2 gap-3">
         <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-input)' }}>
           <div className="flex items-center gap-1 mb-1">
-            <TrendingUp className="w-3 h-3" style={{ color: 'var(--accent-blue)' }} />
+            <TrendUp size={12} weight="duotone" style={{ color: 'var(--accent-blue)' }} />
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
               Avg Mileage
             </p>
@@ -145,7 +157,7 @@ const VehicleCard = ({
 
         <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-input)' }}>
           <div className="flex items-center gap-1 mb-1">
-            <Fuel className="w-3 h-3" style={{ color: 'var(--accent-fuel)' }} />
+            <Drop size={12} weight="duotone" style={{ color: 'var(--accent-fuel)' }} />
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
               Total Fuel
             </p>
@@ -157,7 +169,7 @@ const VehicleCard = ({
 
         <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-input)' }}>
           <div className="flex items-center gap-1 mb-1">
-            <Route className="w-3 h-3" style={{ color: 'var(--text-secondary)' }} />
+            <Path size={12} weight="regular" style={{ color: 'var(--text-secondary)' }} />
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
               Distance
             </p>
@@ -169,7 +181,7 @@ const VehicleCard = ({
 
         <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-input)' }}>
           <div className="flex items-center gap-1 mb-1">
-            <Calendar className="w-3 h-3" style={{ color: 'var(--text-muted)' }} />
+            <Calendar size={12} weight="regular" style={{ color: 'var(--text-muted)' }} />
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
               Tank Capacity
             </p>

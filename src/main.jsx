@@ -6,21 +6,18 @@ import { ThemeProvider } from './context/ThemeContext.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import './index.css';
 
-// Ensure proper initialization
-const root = document.getElementById('root');
+let root = document.getElementById('root');
 
 if (!root) {
   console.error('Root element not found!');
-  // Create root element if it doesn't exist
-  const newRoot = document.createElement('div');
-  newRoot.id = 'root';
-  document.body.appendChild(newRoot);
+  root = document.createElement('div');
+  root.id = 'root';
+  document.body.appendChild(root);
 }
 
-const rootElement = root || document.getElementById('root');
+const rootElement = root;
 
 try {
-  // REMOVED React.StrictMode - it was causing issues with error boundary
   ReactDOM.createRoot(rootElement).render(
     <ErrorBoundary>
       <ThemeProvider>
@@ -32,7 +29,6 @@ try {
   );
 } catch (error) {
   console.error('Failed to render React app:', error);
-  // Show error message to user
   rootElement.innerHTML = `
     <div style="
       padding: 20px;
