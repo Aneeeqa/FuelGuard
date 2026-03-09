@@ -1,27 +1,7 @@
-/**
- * Geolocation utilities for GPS-based distance tracking
- */
-
-// Earth's radius in kilometers
 const EARTH_RADIUS_KM = 6371;
 
-/**
- * Convert degrees to radians
- * @param {number} degrees 
- * @returns {number}
- */
 const toRadians = (degrees) => degrees * (Math.PI / 180);
 
-/**
- * Calculate the Haversine distance between two GPS coordinates
- * Returns straight-line distance in kilometers
- * 
- * @param {number} lat1 - Latitude of first point
- * @param {number} lon1 - Longitude of first point
- * @param {number} lat2 - Latitude of second point
- * @param {number} lon2 - Longitude of second point
- * @returns {number} Distance in kilometers
- */
 export const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
     const dLat = toRadians(lat2 - lat1);
     const dLon = toRadians(lon2 - lon1);
@@ -36,18 +16,10 @@ export const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
     return EARTH_RADIUS_KM * c;
 };
 
-/**
- * Check if geolocation is supported in the browser
- * @returns {boolean}
- */
 export const isGeolocationSupported = () => {
     return 'geolocation' in navigator;
 };
 
-/**
- * Check current geolocation permission status
- * @returns {Promise<'granted'|'denied'|'prompt'|'unsupported'>}
- */
 export const checkLocationPermission = async () => {
     if (!isGeolocationSupported()) {
         return 'unsupported';
@@ -58,7 +30,6 @@ export const checkLocationPermission = async () => {
             const result = await navigator.permissions.query({ name: 'geolocation' });
             return result.state;
         }
-        // Fallback: assume prompt if permissions API not available
         return 'prompt';
     } catch {
         return 'prompt';
@@ -66,18 +37,11 @@ export const checkLocationPermission = async () => {
 };
 
 
-// Cached position to avoid repeated GPS wakeups
 let lastKnownPosition = null;
 
-// Track pending GPS requests to prevent race conditions
 let pendingPositionPromise = null;
 
 
-/**
- * Request location permission with optimized settings for mobile
- * 
- * @returns {Promise<{success: boolean, permission: string, error?: string}>}
- */
 export const requestLocationPermission = async () => {
     if (!isGeolocationSupported()) {
         return {
@@ -88,42 +52,30 @@ export const requestLocationPermission = async () => {
     }
 
     try {
-        // Attempt to get position - this triggers permission request
-        // Use lower accuracy for permission check to return faster
         await getCurrentPosition({
             timeout: 5000,
             highAccuracy: false,
-            maxAge: 300000 // 5 minutes
+            maxAge: 300000
         });
         return { success: true, permission: 'granted' };
     } catch (error) {
-        if (error.code === 1) { // PERMISSION_DENIED
+        if (error.code === 1) {
             return { success: false, permission: 'denied', error: 'Location permission denied' };
         }
-        if (error.code === 2) { // POSITION_UNAVAILABLE
+        if (error.code === 2) {
             return { success: false, permission: 'unknown', error: error.message };
         }
-        if (error.code === 3) { // TIMEOUT
+        if (error.code === 3) {
             return { success: false, permission: 'unknown', error: error.message };
         }
-        // Other errors - unknown status
         return { success: false, permission: 'unknown', error: error.message };
     }
 };
 
-/**
- * Get current GPS position with mobile optimization
- *
- * @param {Object} options - Geolocation options
- * @param {number} options.timeout - Timeout in milliseconds (default: 8000 - faster!)
- * @param {boolean} options.highAccuracy - Use high accuracy mode (default: false - faster!)
- * @param {number} options.maxAge - Maximum age of cached position in ms (default: 60000)
- * @returns {Promise<{lat: number, lng: number, accuracy: number, timestamp: number}>}
- */
 export const getCurrentPosition = (options = {}) => {
     const {
-        timeout = 8000, // Reduced from 15000ms for faster acquisition
-        highAccuracy = false, // Default to false for faster GPS lock
+        timeout = 8000,
+        highAccuracy = false,
         maxAge = 60000,
     } = options;
 
@@ -133,24 +85,19 @@ export const getCurrentPosition = (options = {}) => {
             return;
         }
 
-        // Return usage of cached position if valid and fresh enough
         if (lastKnownPosition && (Date.now() - lastKnownPosition.timestamp < maxAge)) {
-            // Check if accuracy is acceptable for the request
             if (!highAccuracy || (highAccuracy && lastKnownPosition.accuracy < 100)) {
                 resolve(lastKnownPosition);
                 return;
             }
         }
 
-        // Prevent race conditions: check if there's already a pending request with similar options
-        // If so, we'll wait for that one instead of starting a new GPS fetch
         const requestOptions = JSON.stringify({ timeout, highAccuracy, maxAge });
         if (pendingPositionPromise && pendingPositionPromise.options === requestOptions) {
             pendingPositionPromise.promise.then(resolve).catch(reject);
             return;
         }
 
-        // Create new GPS request
         const positionPromise = new Promise((innerResolve, innerReject) => {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -168,13 +115,13 @@ export const getCurrentPosition = (options = {}) => {
                     const errorCode = error.code || 0;
 
                     switch (errorCode) {
-                        case 1:  // PERMISSION_DENIED
+                        case 1:
                             message = 'Please allow location access in your browser settings.';
                             break;
-                        case 2:  // POSITION_UNAVAILABLE
+                        case 2:
                             message = 'GPS signal lost. Please go outdoors or enable Wi-Fi.';
                             break;
-                        case 3:  // TIMEOUT
+                        case 3:
                             message = 'Acquiring GPS signal timed out. Please try again.';
                             break;
                         default:
@@ -192,13 +139,11 @@ export const getCurrentPosition = (options = {}) => {
             );
         });
 
-        // Track this pending request
         pendingPositionPromise = {
             promise: positionPromise,
             options: requestOptions
         };
 
-        // Clear pending tracking when complete
         positionPromise.finally(() => {
             pendingPositionPromise = null;
         });
@@ -207,46 +152,28 @@ export const getCurrentPosition = (options = {}) => {
     });
 };
 
-/**
- * Get current GPS position with QUICK mode (very fast, lower accuracy)
- * Use this for initial position fix, then get accurate position if needed
- * 
- * @returns {Promise<{lat: number, lng: number, accuracy: number, timestamp: number}>}
- */
 export const getQuickPosition = () => {
     return getCurrentPosition({
-        timeout: 5000, // 5 second timeout
-        highAccuracy: false, // Low accuracy for speed
-        maxAge: 300000, // Accept 5-minute old positions
+        timeout: 5000,
+        highAccuracy: false,
+        maxAge: 300000,
     });
 };
 
-/**
- * Get current GPS position with HIGH accuracy mode (slower but precise)
- * 
- * @returns {Promise<{lat: number, lng: number, accuracy: number, timestamp: number}>}
- */
 export const getAccuratePosition = () => {
     return getCurrentPosition({
-        timeout: 12000, // 12 second timeout
-        highAccuracy: true, // High accuracy GPS
-        maxAge: 0, // Get fresh position only
+        timeout: 12000,
+        highAccuracy: true,
+        maxAge: 0,
     });
 };
 
-/**
- * Calculate distance between current position and a saved location
- *
- * @param {Object} savedLocation - Previously saved location {lat, lng}
- * @returns {Promise<{distance: number, currentLocation: Object}|null>}
- */
 export const calculateDistanceFromSaved = async (savedLocation) => {
     if (!savedLocation || !savedLocation.lat || !savedLocation.lng) {
         return null;
     }
 
     try {
-        // High accuracy for actual distance calculation
         const current = await getCurrentPosition({ highAccuracy: true, timeout: 10000 });
         const distance = calculateHaversineDistance(
             savedLocation.lat,
@@ -256,7 +183,7 @@ export const calculateDistanceFromSaved = async (savedLocation) => {
         );
 
         return {
-            distance: Math.round(distance * 10) / 10, // Round to 1 decimal
+            distance: Math.round(distance * 10) / 10,
             currentLocation: current,
         };
     } catch (err) {
@@ -265,13 +192,6 @@ export const calculateDistanceFromSaved = async (savedLocation) => {
     }
 };
 
-/**
- * Start watching GPS position for real-time updates
- *
- * @param {Function} onSuccess - Callback called with new position
- * @param {Function} onError - Callback called on error
- * @returns {number} Watch ID to stop watching
- */
 export const watchPosition = (onSuccess, onError) => {
     return navigator.geolocation.watchPosition(
         (position) => {
@@ -304,29 +224,19 @@ export const watchPosition = (onSuccess, onError) => {
             onError(err);
         },
         {
-            enableHighAccuracy: false,  // Use all sources (GPS, Wi-Fi, cell) for speed
+            enableHighAccuracy: false,
             timeout: 8000,
             maximumAge: 60000,
         }
     );
 };
 
-/**
- * Stop watching GPS position
- *
- * @param {number} watchId - The watch ID returned by watchPosition
- */
 export const clearWatch = (watchId) => {
     if (watchId !== null && watchId !== undefined) {
         navigator.geolocation.clearWatch(watchId);
     }
 };
 
-/**
- * Format a location object for display
- * @param {Object} location - {lat, lng}
- * @returns {string}
- */
 export const formatLocation = (location) => {
     if (!location || !location.lat || !location.lng) {
         return 'Unknown';
@@ -343,4 +253,3 @@ export default {
     calculateDistanceFromSaved,
     formatLocation,
 };
-

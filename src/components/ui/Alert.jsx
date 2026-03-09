@@ -1,14 +1,6 @@
 import { clsx } from 'clsx';
 import { CheckCircle, Warning, WarningCircle, Info, XCircle, X } from '@phosphor-icons/react';
 
-/**
- * Alert component for status banners
- * - Color-coded: success (green), warning (yellow), danger (red), info (blue)
- * - Optional dismiss button
- * - Icon support
- * - Fade-in animation
- * - Glow effects for danger variant
- */
 const Alert = ({
   children,
   variant = 'info',

@@ -102,9 +102,9 @@ export const calculateDrivingDistance = async (origin, destination) => {
             if (result) {
                 return { ...result, provider: 'Google Maps' };
             }
-        } catch (error) {
-            console.warn('Google Maps failed, falling back to OSRM:', error.message);
-        }
+      } catch (error) {
+      return null;
+    }
     }
 
     const osrmResult = await calculateOSRMDistance(origin, destination);

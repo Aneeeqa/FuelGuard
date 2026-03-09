@@ -35,10 +35,10 @@ const ErrorFallback = () => (
         <span className="text-3xl">⚠️</span>
       </div>
       <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--accent-alert)' }}>Something went wrong</h1>
-      <p className="mb-4" style={{ color: 'var(--text-muted)' }}>Please refresh page to try again.</p>
+      <p className="mb-4" style={{ color: 'var(--text-muted)' }}>Please refresh the page to try again.</p>
       <button
         onClick={() => window.location.reload()}
-        className="px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover-lift active-scale"
+        className="px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 active:scale-95"
         style={{ backgroundColor: 'var(--accent-blue)', color: '#fff' }}
       >
         Reload Page
@@ -53,17 +53,17 @@ const App = () => {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="add" element={<LogEntry />} />
-          <Route path="history" element={<History />} />
-          <Route path="trips" element={<TripsPage />} />
-          <Route path="fleet" element={<Fleet />} />
-          <Route path="drivers" element={<Drivers />} />
-          <Route path="vehicles" element={<Vehicles />} />
-          <Route path="contact" element={<Contact />} />
-          <Route path="privacy" element={<Privacy />} />
-          <Route path="system" element={<SystemStatus />} />
-          <Route path="settings" element={<Settings />} />
+            <Route index element={<Dashboard />} />
+            <Route path="add" element={<LogEntry />} />
+            <Route path="history" element={<History />} />
+            <Route path="trips" element={<TripsPage />} />
+            <Route path="fleet" element={<Fleet />} />
+            <Route path="drivers" element={<Drivers />} />
+            <Route path="vehicles" element={<Vehicles />} />
+            <Route path="contact" element={<Contact />} />
+            <Route path="privacy" element={<Privacy />} />
+            <Route path="system" element={<SystemStatus />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
       </Suspense>

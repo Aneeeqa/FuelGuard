@@ -103,26 +103,16 @@ const LazyChart = lazy(() =>
         </ResponsiveContainer>
       );
     }
-  }))
+   }))
 );
 
-// Custom comparison function for memo
 const chartPropsAreEqual = (prevProps, nextProps) => {
   if (prevProps.data.length !== nextProps.data.length) return false;
   if (prevProps.data.length === 0) return true;
-  // Compare last month to detect new entries
   return prevProps.data[prevProps.data.length - 1]?.month ===
     nextProps.data[nextProps.data.length - 1]?.month;
 };
 
-/**
- * CarbonChart component
- * - Recharts BarChart with ResponsiveContainer
- * - Wrapped in React.memo with custom comparator
- * - Touch-friendly tooltip
- * - Color-coded bars based on emission levels
- * - Lazy loaded for performance
- */
 const CarbonChart = memo(({ data, fuelType = 'gasoline', className }) => {
   if (!data || data.length === 0) {
     return (

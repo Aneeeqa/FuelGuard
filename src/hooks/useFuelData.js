@@ -4,7 +4,7 @@ import { FuelContext } from '../context/FuelContext';
 export const useFuelData = () => {
   const context = useContext(FuelContext);
 
-if (!context) {
+  if (!context) {
     throw new Error('useFuelData must be used within a FuelProvider');
   }
 

@@ -1,17 +1,6 @@
 import React, { memo } from 'react';
 import Skeleton from '../ui/Skeleton';
 
-/**
- * TripMileageBarChart Component
- * Displays a bar chart of the last 5 trips with theft detection visualization
- *
- * Features:
- * - Bar chart showing mileage for each trip
- * - Threshold line indicating expected average
- * - Color-coded bars: Green (normal), Orange (heavy traffic), Red (potential theft)
- * - Responsive design with touch-friendly tooltips
- */
-
 const TripMileageBarChart = memo(({ trips, vehicleProfile }) => {
   if (!trips || trips.length === 0) {
     return (
@@ -25,18 +14,15 @@ const TripMileageBarChart = memo(({ trips, vehicleProfile }) => {
   const { expectedMileage = 15, theftThreshold = 0.75, efficiencyUnit = 'km/L' } = vehicleProfile;
   const thresholdMileage = expectedMileage * theftThreshold;
 
-  // Get only last 5 trips (already sorted by date descending)
   const recentTrips = trips.slice(0, 5);
-  const chartTrips = [...recentTrips].reverse(); // Show oldest to newest left-to-right
+  const chartTrips = [...recentTrips].reverse();
 
-  // Calculate Y-axis domain
   const allMileages = chartTrips.map(t => t.tripMileage);
   const maxMileage = Math.max(...allMileages, expectedMileage * 1.5);
   const minMileage = Math.min(...allMileages, thresholdMileage * 0.8);
 
-  // Chart dimensions - wider chart with better spacing
   const chartHeight = 220;
-  const chartWidth = 800; // Fixed width for calculations, will scale via viewBox
+  const chartWidth = 800;
   const padding = { left: 50, right: 30, top: 20, bottom: 50 };
   const availableWidth = chartWidth - padding.left - padding.right;
   const barWidth = Math.min(100, (availableWidth / chartTrips.length) * 0.6);
@@ -73,7 +59,6 @@ const TripMileageBarChart = memo(({ trips, vehicleProfile }) => {
 
   return (
     <div className="w-full" style={{ height: '350px' }}>
-      {/* Chart Title and Legend */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -99,16 +84,14 @@ const TripMileageBarChart = memo(({ trips, vehicleProfile }) => {
         </div>
       </div>
 
-      {/* Chart Container */}
       <div className="relative w-full" style={{ height: `${chartHeight + padding.bottom}px` }}>
         <svg
           viewBox={`0 0 ${chartWidth} ${chartHeight + padding.bottom}`}
           width="100%"
           height={chartHeight + padding.bottom}
           className="overflow-visible"
-          preserveAspectRatio="xMidYMid meet"
+           preserveAspectRatio="xMidYMid meet"
         >
-          {/* Y-axis grid lines */}
           {[0, 0.25, 0.5, 0.75, 1].map((fraction) => {
             const y = padding.top + (fraction * chartHeight * 0.8);
             const value = maxMileage - (fraction * (maxMileage - minMileage));
@@ -134,9 +117,8 @@ const TripMileageBarChart = memo(({ trips, vehicleProfile }) => {
                 </text>
               </g>
             );
-          })}
-
-          {/* Expected Mileage Line */}
+           })}
+ 
           <line
             x1={padding.left}
             y1={expectedY}
@@ -155,9 +137,8 @@ const TripMileageBarChart = memo(({ trips, vehicleProfile }) => {
             fontWeight="bold"
           >
             Expected: {expectedMileage.toFixed(1)} {efficiencyUnit}
-          </text>
-
-          {/* Threshold Mileage Line */}
+           </text>
+ 
           <line
             x1={padding.left}
             y1={thresholdY}
@@ -177,20 +158,18 @@ const TripMileageBarChart = memo(({ trips, vehicleProfile }) => {
             opacity="0.7"
           >
             Alert: {thresholdMileage.toFixed(1)}
-          </text>
-
-          {/* Bars */}
+           </text>
+ 
           {chartTrips.map((trip, index) => {
             const totalBarSpace = barWidth + barGap;
             const x = padding.left + (index * totalBarSpace) + (barGap / 2);
             const barWidthPx = barWidth;
             const y = getYPosition(trip.tripMileage);
             const height = getBarHeight(trip.tripMileage);
-            const color = getBarColor(trip.tripMileage, trip.isTheftAlert);
+             const color = getBarColor(trip.tripMileage, trip.isTheftAlert);
 
-            return (
-              <g key={trip.id}>
-                {/* Bar */}
+             return (
+               <g key={trip.id}>
                 <rect
                   x={x}
                   y={y}
@@ -206,11 +185,10 @@ const TripMileageBarChart = memo(({ trips, vehicleProfile }) => {
                     Mileage: {trip.tripMileage.toFixed(1)} {efficiencyUnit}
                     Distance: {trip.distance.toFixed(0)} {trip.distanceUnit}
                     Status: {trip.status}
-                  </title>
-                </rect>
+                 </title>
+                 </rect>
 
-                {/* Mileage value on top of bar */}
-                <text
+                 <text
                   x={x + barWidthPx / 2}
                   y={y - 8}
                   textAnchor="middle"
@@ -219,10 +197,9 @@ const TripMileageBarChart = memo(({ trips, vehicleProfile }) => {
                   fontWeight="bold"
                 >
                   {trip.tripMileage.toFixed(1)}
-                </text>
+                 </text>
 
-                {/* Trip label (date) on x-axis - larger font and more space */}
-                <text
+                 <text
                   x={x + barWidthPx / 2}
                   y={chartHeight + 35}
                   textAnchor="middle"
@@ -231,10 +208,9 @@ const TripMileageBarChart = memo(({ trips, vehicleProfile }) => {
                   style={{ fontWeight: '500' }}
                 >
                   {formatTripLabel(trip, index)}
-                </text>
+                 </text>
 
-                {/* Theft alert indicator */}
-                {trip.isTheftAlert && (
+                 {trip.isTheftAlert && (
                   <text
                     x={x + barWidthPx / 2}
                     y={y + 20}

@@ -59,41 +59,43 @@ const Vehicles = () => {
       totalDistance,
       avgMileage,
       totalEntries: vehicleLogs.length,
-    };
   };
+};
 
-  const handleOpenAddModal = () => {
-    setEditingVehicle(null);
-    setModalTab('search');
+  const handleOpenEditVehicleModal = (vehicle) => {
+    if (!vehicle?.id) {
+      return;
+    }
+    setEditingVehicle(vehicle);
+    setModalTab('manual'); // Always use manual tab for editing
     setSelectedVehicleFromDb(null);
     setFormData({
-      name: '',
-      make: '',
-      model: '',
-      year: new Date().getFullYear(),
-      fuelType: 'gasoline',
-      tankCapacity: 50,
-      tankCapacitySource: 'default',
-      tankCapacityConfidence: 'very-low',
-      tankCapacityDescription: 'Default vehicle capacity',
-      expectedMileage: 15,
-      theftThreshold: 0.75,
-      licensePlate: '',
-      status: 'Active',
+      name: vehicle.name || '',
+      make: vehicle.make || '',
+      model: vehicle.model || '',
+      year: vehicle.year || new Date().getFullYear(),
+      fuelType: vehicle.fuelType || 'gasoline',
+      tankCapacity: vehicle.tankCapacity || 50,
+      tankCapacitySource: vehicle.tankCapacitySource || 'user-provided',
+      tankCapacityConfidence: vehicle.tankCapacityConfidence || 'high',
+      tankCapacityDescription: vehicle.tankCapacityDescription || 'Previously saved value',
+      expectedMileage: vehicle.expectedMileage || 15,
+      theftThreshold: vehicle.theftThreshold ?? 0.75,
+      licensePlate: vehicle.licensePlate || '',
+      status: vehicle.status || 'Active',
     });
     setShowModal(true);
   };
 
   const handleOpenEditModal = (vehicle) => {
     if (!vehicle || !vehicle.id) {
-      console.warn('handleOpenEditModal called with invalid vehicle:', vehicle);
-      return;
-    }
+    return;
+  }
 
-    setEditingVehicle(vehicle);
-    setModalTab('manual'); // Always use manual tab for editing
-    setSelectedVehicleFromDb(null);
-    setFormData({
+  setEditingVehicle(vehicle);
+  setModalTab('manual'); // Always use manual tab for editing
+  setSelectedVehicleFromDb(null);
+  setFormData({
       name: vehicle.name || '',
       make: vehicle.make || '',
       model: vehicle.model || '',
@@ -142,16 +144,12 @@ const Vehicles = () => {
 
   const handleVehicleFromDbSelect = (vehicleData) => {
     // Auto-fill tank capacity from EPA database with source info
-    const tankCapacity = vehicleData.tankCapacity || 50;
-    const tankCapacitySource = vehicleData.tankCapacitySource || 'estimated';
-    const tankCapacityConfidence = vehicleData.tankCapacityConfidence || 'medium';
-    const tankCapacityDescription = vehicleData.tankCapacityDescription || 'Estimated from vehicle data';
+  const tankCapacity = vehicleData.tankCapacity || 50;
+  const tankCapacitySource = vehicleData.tankCapacitySource || 'estimated';
+  const tankCapacityConfidence = vehicleData.tankCapacityConfidence || 'medium';
+  const tankCapacityDescription = vehicleData.tankCapacityDescription || 'Estimated from vehicle data';
 
-    console.log('Vehicle selected from database:', vehicleData);
-    console.log('Auto-filled tank capacity:', tankCapacity, 'liters');
-    console.log('Source:', tankCapacitySource, 'Confidence:', tankCapacityConfidence);
-
-    setSelectedVehicleFromDb(vehicleData);
+  setSelectedVehicleFromDb(vehicleData);
     setFormData(prev => ({
       ...prev,
       name: vehicleData.name || '',
@@ -602,7 +600,7 @@ const Vehicles = () => {
                     type="number"
                     value={formData.year}
                     onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                    placeholder="e.g., 2021"
+                    placeholder="e.g., 2020"
                     className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                     style={{
                       backgroundColor: 'var(--bg-input)',

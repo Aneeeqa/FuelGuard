@@ -10,11 +10,6 @@ import {
   calculateMonthlyCO2,
 } from '../../utils/carbonCalculations';
 
-/**
- * CarbonFootprintCard component
- * Displays CO2 emissions, comparison with average, and eco-driving score
- * Mobile-first design with collapsible eco-driving tips
- */
 const CarbonFootprintCard = ({
   logs = [],
   totalCO2 = 0,
@@ -25,25 +20,18 @@ const CarbonFootprintCard = ({
 }) => {
   const [showTips, setShowTips] = useState(false);
 
-  // Ensure values are numbers, default to 0 if undefined
   const safeTotalCO2 = Number(totalCO2) || 0;
   const safeTotalDistance = Number(totalDistance) || 0;
   const safeCo2PerKm = Number(co2PerKm) || 0;
 
-  console.log('CarbonFootprintCard - Props:', { totalCO2, co2PerKm, logs, fuelType, vehicleType });
-  console.log('CarbonFootprintCard - Safe values:', { safeTotalCO2, safeCo2PerKm, safeTotalDistance });
-
-  // Calculate comparisons
   const comparison = compareWithAverage(safeCo2PerKm, vehicleType);
   const ecoData = calculateEcoDrivingScore(logs);
   const ecoBadge = getEcoBadge(ecoData.score);
   const monthlyData = calculateMonthlyCO2(logs, fuelType);
 
-  // Get current month's CO2
   const currentMonthData = monthlyData.length > 0 ? monthlyData[monthlyData.length - 1] : null;
   const previousMonthData = monthlyData.length > 1 ? monthlyData[monthlyData.length - 2] : null;
 
-  // Calculate monthly trend
   const monthlyTrend = currentMonthData && previousMonthData
     ? {
         direction: currentMonthData.co2 > previousMonthData.co2 ? 'up' : 'down',
@@ -51,9 +39,8 @@ const CarbonFootprintCard = ({
           ((currentMonthData.co2 - previousMonthData.co2) / previousMonthData.co2) * 100
         ),
       }
-    : null;
+      : null;
 
-  // Status colors
   const getStatusColor = (status) => {
     switch (status) {
       case 'excellent':
@@ -92,12 +79,10 @@ const CarbonFootprintCard = ({
             </div>
           </div>
         </div>
-      </Card.Header>
+       </Card.Header>
 
       <Card.Body className="space-y-5">
-        {/* Total CO2 Emissions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Total Emissions */}
           <div
             className="rounded-xl p-4 transition-all duration-300"
             style={{
@@ -119,10 +104,9 @@ const CarbonFootprintCard = ({
             <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
               All time
             </p>
-          </div>
+        </div>
 
-          {/* CO2 per KM */}
-          <div
+        <div
             className="rounded-xl p-4 transition-all duration-300"
             style={{
               background: 'var(--bg-secondary)',
@@ -222,7 +206,6 @@ const CarbonFootprintCard = ({
           </div>
         )}
 
-        {/* Eco-Driving Score Section */}
         <div
           className="rounded-xl p-4 transition-all duration-300"
           style={{

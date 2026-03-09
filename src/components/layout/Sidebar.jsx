@@ -1,14 +1,14 @@
 import { NavLink } from 'react-router-dom';
-import { SquaresFour, PlusCircle, ClockCounterClockwise, GearSix, Truck, Drop, Shield, WarningCircle, Lightning } from '@phosphor-icons/react';
+import { Grid2x2, PlusCircle, History, Settings, Truck, Droplet, Shield, AlertCircle, Zap } from 'lucide-react';
 import { clsx } from 'clsx';
 import ThemeToggle from '../ui/ThemeToggle';
 
 const navItems = [
-  { to: '/', icon: SquaresFour, label: 'Dashboard' },
+  { to: '/', icon: Grid2x2, label: 'Dashboard' },
   { to: '/add', icon: PlusCircle, label: 'Add Entry' },
-  { to: '/history', icon: ClockCounterClockwise, label: 'History' },
+  { to: '/history', icon: History, label: 'History' },
   { to: '/fleet', icon: Truck, label: 'Fleet' },
-  { to: '/settings', icon: GearSix, label: 'Settings' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 const Sidebar = () => {
@@ -86,7 +86,7 @@ const Sidebar = () => {
         border: '1px solid color-mix(in srgb, var(--accent-blue) 20%, transparent)'
       }}>
         <div className="flex items-center gap-2 mb-2">
-          <Lightning className="w-4 h-4" weight="duotone" style={{ color: 'var(--accent-blue)' }} />
+          <Zap className="w-4 h-4" style={{ color: 'var(--accent-blue)' }} />
           <span className="text-xs font-semibold" style={{ color: 'var(--accent-blue)' }}>Quick Stats</span>
         </div>
         <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Active</p>

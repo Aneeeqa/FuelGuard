@@ -1,14 +1,6 @@
-/**
- * Fuel Drain Rate Calculator
- * Detects abnormal fuel consumption when vehicle is parked
- */
-
-const DEFAULT_DRAIN_THRESHOLD_LITERS_PER_DAY = 2; // Alert if more than 2L lost per day when parked
+const DEFAULT_DRAIN_THRESHOLD_LITERS_PER_DAY = 2;
 const HOURS_PER_DAY = 24;
 
-/**
- * Calculate fuel drain rate between two log entries
- */
 export const calculateFuelDrainRate = (currentLog, previousLog) => {
   if (!currentLog || !previousLog) {
     return {
@@ -85,9 +77,6 @@ export const calculateFuelDrainRate = (currentLog, previousLog) => {
   };
 };
 
-/**
- * Calculate drain rate for all log entries and flag abnormal drains
- */
 export const analyzeFuelDrain = (logs, tankCapacity = 50) => {
   if (!logs || logs.length < 2) {
     return {

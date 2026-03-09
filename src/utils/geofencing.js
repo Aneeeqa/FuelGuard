@@ -1,25 +1,7 @@
-/**
- * Geofencing utilities for detecting vehicle movement outside expected zones
- */
-
-/**
- * Earth's radius in kilometers
- */
 const EARTH_RADIUS_KM = 6371;
 
-/**
- * Convert degrees to radians
- */
 const toRadians = (degrees) => degrees * (Math.PI / 180);
 
-/**
- * Calculate distance between two coordinates using Haversine formula
- * @param {number} lat1 - Latitude of first point
- * @param {number} lon1 - Longitude of first point
- * @param {number} lat2 - Latitude of second point
- * @param {number} lon2 - Longitude of second point
- * @returns {number} Distance in kilometers
- */
 export const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
   const dLat = toRadians(lat2 - lat1);
   const dLon = toRadians(lon2 - lon1);
@@ -34,12 +16,6 @@ export const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
   return EARTH_RADIUS_KM * c;
 };
 
-/**
- * Check if a location is within a geofence radius
- * @param {Object} location - {lat, lng}
- * @param {Object} geofence - {lat, lng, radius}
- * @returns {boolean}
- */
 export const isWithinGeofence = (location, geofence) => {
   if (!location || !geofence) return false;
 
@@ -53,12 +29,6 @@ export const isWithinGeofence = (location, geofence) => {
   return distance <= geofence.radius;
 };
 
-/**
- * Check if location is within any of the provided geofences
- * @param {Object} location - {lat, lng}
- * @param {Array} geofences - Array of {lat, lng, radius, name}
- * @returns {Object|null} Returns the matching geofence or null
- */
 export const findGeofenceForLocation = (location, geofences) => {
   if (!location || !geofences || geofences.length === 0) return null;
 
@@ -71,12 +41,6 @@ export const findGeofenceForLocation = (location, geofences) => {
   return null;
 };
 
-/**
- * Check if a vehicle has moved outside expected geofences
- * @param {Object} currentLocation - {lat, lng}
- * @param {Array} allowedGeofences - Array of {lat, lng, radius, name}
- * @returns {Object} { isOutside: boolean, currentFence: Object|null }
- */
 export const checkGeofenceViolation = (currentLocation, allowedGeofences) => {
   if (!currentLocation || !allowedGeofences || allowedGeofences.length === 0) {
     return { isOutside: false, currentFence: null };
@@ -88,47 +52,24 @@ export const checkGeofenceViolation = (currentLocation, allowedGeofences) => {
   return { isOutside, currentFence };
 };
 
-/**
- * Create a geofence object
- * @param {number} lat - Latitude
- * @param {number} lng - Longitude
- * @param {number} radius - Radius in kilometers
- * @param {string} name - Geofence name
- * @returns {Object} Geofence object
- */
 export const createGeofence = (lat, lng, radius = 1, name = 'Unnamed Zone') => {
   return {
     lat,
     lng,
-    radius, // in kilometers
+    radius,
     name,
     createdAt: new Date().toISOString(),
   };
 };
 
-/**
- * Default geofence presets for common locations
- */
 export const DEFAULT_GEOFENCES = {
-  // Home geofence (typical 500m radius)
   home: (lat, lng) => createGeofence(lat, lng, 0.5, 'Home'),
-
-  // Work geofence (typical 500m radius)
   work: (lat, lng) => createGeofence(lat, lng, 0.5, 'Work'),
-
-  // Fuel station geofence (typical 100m radius)
   fuelStation: (lat, lng, name = 'Fuel Station') =>
     createGeofence(lat, lng, 0.1, name),
-
-  // City-wide geofence (typical 20km radius for large cities)
   city: (lat, lng, name = 'City') => createGeofence(lat, lng, 20, name),
 };
 
-/**
- * Detect fuel station pattern (frequent stops at same location)
- * @param {Array} logs - Array of fuel log entries with locations
- * @returns {Array} Detected fuel station locations
- */
 export const detectFuelStations = (logs) => {
   if (!logs || logs.length === 0) return [];
 
@@ -138,7 +79,6 @@ export const detectFuelStations = (logs) => {
     const location = log.endLocation;
     if (!location) return;
 
-    // Round to 4 decimal places (~11m precision) to group nearby locations
     const key = `${location.lat.toFixed(4)},${location.lng.toFixed(4)}`;
 
     if (locationsWithCounts.has(key)) {
@@ -160,7 +100,6 @@ export const detectFuelStations = (logs) => {
     }
   });
 
-  // Return locations with multiple visits (likely fuel stations)
   return Array.from(locationsWithCounts.values())
     .filter((loc) => loc.count >= 2)
     .sort((a, b) => b.count - a.count)
@@ -170,12 +109,6 @@ export const detectFuelStations = (logs) => {
     }));
 };
 
-/**
- * Track geofence history for analytics
- * @param {Array} locationHistory - Array of {lat, lng, timestamp}
- * @param {Array} geofences - Array of {lat, lng, radius, name}
- * @returns {Object} Analytics data
- */
 export const analyzeGeofenceHistory = (locationHistory, geofences) => {
   if (!locationHistory || !geofences) {
     return { totalPoints: 0, withinFence: 0, outsideFence: 0, timeDistribution: {} };
@@ -187,11 +120,10 @@ export const analyzeGeofenceHistory = (locationHistory, geofences) => {
 
   locationHistory.forEach((point) => {
     const fence = findGeofenceForLocation(point, geofences);
-    
+
     if (fence) {
       withinFence++;
-      
-      // Count by fence name
+
       if (!timeDistribution[fence.name]) {
         timeDistribution[fence.name] = 0;
       }
@@ -212,12 +144,6 @@ export const analyzeGeofenceHistory = (locationHistory, geofences) => {
   };
 };
 
-/**
- * Get geofence violation alert message
- * @param {Object} location - Current location
- * @param {Array} allowedGeofences - Allowed geofences
- * @returns {string|null} Alert message or null
- */
 export const getGeofenceAlert = (location, allowedGeofences) => {
   const { isOutside } = checkGeofenceViolation(location, allowedGeofences);
 
@@ -228,12 +154,6 @@ export const getGeofenceAlert = (location, allowedGeofences) => {
   return null;
 };
 
-/**
- * Validate geofence coordinates
- * @param {number} lat - Latitude (-90 to 90)
- * @param {number} lng - Longitude (-180 to 180)
- * @returns {boolean}
- */
 export const isValidGeofence = (lat, lng) => {
   return (
     lat !== null &&

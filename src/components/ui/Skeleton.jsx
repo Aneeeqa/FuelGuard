@@ -1,11 +1,5 @@
 import { clsx } from 'clsx';
 
-/**
- * Mobile-friendly skeleton loader for async content
- * Used in Suspense fallbacks
- * - Animated shimmer effect
- * - Multiple variants: text, circular, rectangular, card, avatar, button
- */
 const Skeleton = ({ className, variant = 'default', ...props }) => {
   const variants = {
     default: 'h-4 rounded',

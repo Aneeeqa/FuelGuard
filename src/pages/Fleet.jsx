@@ -186,10 +186,6 @@ const Fleet = () => {
   };
 
   const handleOpenEditVehicleModal = (vehicle) => {
-    if (!vehicle || !vehicle.id) {
-      console.warn('handleOpenEditVehicleModal called with invalid vehicle:', vehicle);
-      return;
-    }
 
     setEditingVehicle(vehicle);
     setVehicleModalTab('manual'); // Always use manual tab for editing
@@ -240,11 +236,7 @@ const Fleet = () => {
   };
 
   const handleVehicleFromDbSelect = (vehicleData) => {
-    // Auto-fill tank capacity from EPA database
     const tankCapacity = vehicleData.tankCapacity || 50;
-
-    console.log('Vehicle selected from database:', vehicleData);
-    console.log('Auto-filled tank capacity:', tankCapacity, 'liters');
 
     setSelectedVehicleFromDb(vehicleData);
     setVehicleFormData(prev => ({
@@ -544,7 +536,7 @@ const Fleet = () => {
                 type="text"
                 value={driverFormData.name}
                 onChange={(e) => setDriverFormData({ ...driverFormData, name: e.target.value })}
-                placeholder="e.g., Driver Name"
+                placeholder="e.g., John Smith"
                 className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-input)',
@@ -932,7 +924,7 @@ const Fleet = () => {
                     type="number"
                     value={vehicleFormData.year}
                     onChange={(e) => setVehicleFormData({ ...vehicleFormData, year: parseInt(e.target.value) })}
-                    placeholder="e.g., 2021"
+                    placeholder="e.g., 2020"
                     className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                     style={{
                       backgroundColor: 'var(--bg-input)',

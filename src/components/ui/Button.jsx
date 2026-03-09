@@ -1,14 +1,6 @@
 import { clsx } from 'clsx';
 import { Spinner } from '@phosphor-icons/react';
 
-/**
- * Mobile-optimized Button component
- * - Min-height 48px for touch targets
- * - Ripple effect on click
- * - Hover lift effect
- * - Loading state with spinner
- * - Multiple variants: primary, secondary, danger, ghost, outline, gradient
- */
 const Button = ({
   children,
   variant = 'primary',

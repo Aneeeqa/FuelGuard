@@ -2,15 +2,6 @@ import { forwardRef, useState } from 'react';
 import { clsx } from 'clsx';
 import { Eye, EyeSlash, MagnifyingGlass, MapPin, Drop, Calendar } from '@phosphor-icons/react';
 
-/**
- * Mobile-optimized Input component
- * - Min-height 48px for touch targets
- * - Font-size 16px to prevent iOS zoom
- * - Proper inputmode support for mobile keyboards
- * - Floating label support
- * - Icon support
- * - Error state styling
- */
 const Input = forwardRef(({
   label,
   error,

@@ -1,15 +1,11 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, Car, Loader2, Search, X, Globe } from 'lucide-react';
 import {
-    getVehicleAPIForCountry,
-    mpgToKmPerLiter
+  getVehicleAPIForCountry,
+  mpgToKmPerLiter
 } from '../services/vehicleApiService';
 import { SUPPORTED_COUNTRIES } from '../utils/currency';
 
-/**
- * Multi-step vehicle selector component
- * Supports multiple databases depending on selected country
- */
 const VehicleSelector = ({
     value,
     onVehicleSelect,
@@ -310,7 +306,7 @@ const VehicleSelector = ({
                         value={manualName}
                         onChange={(e) => setManualName(e.target.value)}
                         onBlur={handleManualSubmit}
-                        placeholder="e.g., Toyota Camry"
+                        placeholder="e.g., 2020 Toyota Camry"
                         className="w-full px-4 py-3 rounded-xl min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                         style={{
                             backgroundColor: 'var(--bg-input)',

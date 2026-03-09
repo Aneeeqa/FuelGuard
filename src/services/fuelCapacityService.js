@@ -1,23 +1,8 @@
-/**
- * Enhanced Fuel Tank Capacity Service
- *
- * Uses multiple free APIs to fetch fuel tank capacity:
- * 1. NHTSA VPIC API (free, no API key) - VIN-based lookup
- * 2. EPA FuelEconomy.gov (free, no API key) - Vehicle specification lookup
- * 3. Fuelly API (community data) - Real-world data
- * 4. Comprehensive estimation based on vehicle class, make, model
- */
-
 import { estimateFuelTankCapacity as nhtsaEstimate } from './nhtsaApiService';
 
-// Cache for API responses
 const fuelCache = new Map();
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_TTL = 24 * 60 * 60 * 1000;
 
-/**
- * Extended vehicle class capacity database
- * More detailed categorization with year-specific data where applicable
- */
 const VEHICLE_CLASS_CAPACITY = {
   'Two Seaters': {
     average: 50,
@@ -48,15 +33,15 @@ const VEHICLE_CLASS_CAPACITY = {
     }
   },
   'Midsize Cars': {
-    average: 55,
+    average:55,
     range: [45, 65],
     examples: {
-      'toyota-camry': 55,
+      'toyota-camry':55,
       'honda-accord': 56,
       'nissan-altima': 56,
       'ford-fusion': 62,
-      'hyundai-sonata': 55,
-      'kia-optima': 55
+      'hyundai-sonata':55,
+      'kia-optima':55
     }
   },
   'Large Cars': {
@@ -109,7 +94,7 @@ const VEHICLE_CLASS_CAPACITY = {
     average: 60,
     range: [50, 70],
     examples: {
-      'toyota-rav4': 55,
+      'toyota-rav4':55,
       'honda-cr-v': 56,
       'nissan-rogue': 57,
       'mazda-cx-5': 56,
@@ -150,24 +135,20 @@ const VEHICLE_CLASS_CAPACITY = {
   }
 };
 
-/**
- * Enhanced vehicle specifications database
- * Includes more make/model combinations with fuel tank capacities
- */
 const MAKE_MODEL_CAPACITY = {
   'toyota': {
     'prius': 45,
     'corolla': 50,
-    'camry': 55,
-    'rav4': 55,
+    'camry':55,
+    'rav4':55,
     'highlander': 63,
     'sienna': 64,
-    'tacomma': 73,
+    'tacoma': 73,
     'tundra': 87,
     '4runner': 78,
     'sequoia': 87,
     'c-hr': 47,
-    'venza': 55
+    'venza':55
   },
   'honda': {
     'civic': 47,
@@ -213,7 +194,7 @@ const MAKE_MODEL_CAPACITY = {
   },
   'hyundai': {
     'elantra': 50,
-    'sonata': 55,
+    'sonata':55,
     'tucson': 54,
     'santa-fe': 67,
     'palisade': 71,
@@ -229,7 +210,7 @@ const MAKE_MODEL_CAPACITY = {
     'stinger': 60
   },
   'bmw': {
-    '3-series': 55,
+    '3-series':55,
     '5-series': 68,
     'x3': 65,
     'x5': 85,
@@ -244,7 +225,7 @@ const MAKE_MODEL_CAPACITY = {
   },
   'audi': {
     'a3': 50,
-    'a4': 55,
+    'a4':55,
     'a6': 65,
     'q3': 58,
     'q5': 73,
@@ -285,20 +266,11 @@ const MAKE_MODEL_CAPACITY = {
   }
 };
 
-/**
- * Estimate fuel tank capacity with enhanced database
- * @param {string} vehicleClass - Vehicle class from EPA
- * @param {string} make - Vehicle make
- * @param {string} model - Vehicle model
- * @param {number} year - Vehicle year (for adjustments)
- * @returns {Object} - { capacity: number, source: string, confidence: string }
- */
 export const estimateEnhancedTankCapacity = (vehicleClass, make, model, year) => {
   const makeLower = make?.toLowerCase().trim();
   const modelLower = model?.toLowerCase().trim();
   const modelKey = modelLower?.replace(/\s+/g, '-');
 
-  // Priority 1: Make/model specific data (highest confidence)
   if (makeLower && modelLower && MAKE_MODEL_CAPACITY[makeLower]) {
     const makeData = MAKE_MODEL_CAPACITY[makeLower];
     if (makeData[modelLower]) {
@@ -311,11 +283,9 @@ export const estimateEnhancedTankCapacity = (vehicleClass, make, model, year) =>
     }
   }
 
-  // Priority 2: Vehicle class with examples (medium-high confidence)
   if (vehicleClass && VEHICLE_CLASS_CAPACITY[vehicleClass]) {
     const classData = VEHICLE_CLASS_CAPACITY[vehicleClass];
 
-    // Check if we have an example for this make/model in the class
     if (makeLower && modelLower && classData.examples) {
       const key = `${makeLower}-${modelKey}`;
       if (classData.examples[key]) {
@@ -328,7 +298,6 @@ export const estimateEnhancedTankCapacity = (vehicleClass, make, model, year) =>
       }
     }
 
-    // Use class average
     return {
       capacity: classData.average,
       source: 'class-average',
@@ -337,7 +306,6 @@ export const estimateEnhancedTankCapacity = (vehicleClass, make, model, year) =>
     };
   }
 
-  // Priority 3: Make-based estimation (low-medium confidence)
   if (makeLower && MAKE_MODEL_CAPACITY[makeLower]) {
     const capacities = Object.values(MAKE_MODEL_CAPACITY[makeLower]);
     const avgCapacity = capacities.reduce((a, b) => a + b, 0) / capacities.length;
@@ -349,7 +317,6 @@ export const estimateEnhancedTankCapacity = (vehicleClass, make, model, year) =>
     };
   }
 
-  // Priority 4: Default fallback
   return {
     capacity: 50,
     source: 'default',
@@ -358,11 +325,6 @@ export const estimateEnhancedTankCapacity = (vehicleClass, make, model, year) =>
   };
 };
 
-/**
- * Fetch fuel tank capacity from EPA vehicle ID
- * @param {string|number} vehicleId - EPA vehicle ID
- * @returns {Promise<Object|null>} - Fuel capacity data
- */
 export const fetchEPAVehicleCapacity = async (vehicleId) => {
   if (!vehicleId) return null;
 
@@ -374,8 +336,6 @@ export const fetchEPAVehicleCapacity = async (vehicleId) => {
   }
 
   try {
-    // EPA API doesn't provide fuel capacity directly
-    // This is a placeholder for future API integrations
     return null;
   } catch (error) {
     console.error('EPA capacity fetch error:', error);
@@ -383,14 +343,6 @@ export const fetchEPAVehicleCapacity = async (vehicleId) => {
   }
 };
 
-/**
- * Search NHTSA for vehicles and find one matching make/model/year
- * Then decode its specifications
- * @param {string} make - Vehicle make
- * @param {string} model - Vehicle model
- * @param {number} year - Vehicle year
- * @returns {Promise<Object|null>} - Fuel capacity data
- */
 export const searchNHTSAForCapacity = async (make, model, year) => {
   if (!make || !model || !year) return null;
 
@@ -402,7 +354,6 @@ export const searchNHTSAForCapacity = async (make, model, year) => {
   }
 
   try {
-    // Search for vehicles matching make/model/year
     const searchUrl = `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${encodeURIComponent(make)}/modelyear/${year}?format=json`;
     const response = await fetch(searchUrl);
 
@@ -416,7 +367,6 @@ export const searchNHTSAForCapacity = async (make, model, year) => {
       return null;
     }
 
-    // Find best matching model (fuzzy match)
     const bestMatch = data.Results.find(item => {
       const itemModel = item.Model_Name.toLowerCase();
       const searchModel = model.toLowerCase();
@@ -427,7 +377,6 @@ export const searchNHTSAForCapacity = async (make, model, year) => {
       return null;
     }
 
-    // Get equipment for this vehicle (may include fuel capacity)
     const equipmentUrl = `https://vpic.nhtsa.dot.gov/api/vehicles/GetEquipmentPlantCodes/make/${encodeURIComponent(make)}/model/${encodeURIComponent(bestMatch.Model_Name)}/modelyear/${year}?format=json`;
     const equipResponse = await fetch(equipmentUrl);
 
@@ -438,14 +387,11 @@ export const searchNHTSAForCapacity = async (make, model, year) => {
     const equipData = await equipResponse.json();
 
     if (equipData.Results && equipData.Results.length > 0) {
-      // Look for fuel capacity in equipment codes
       for (const item of equipData.Results) {
         if (item.Description && item.Description.toLowerCase().includes('fuel tank')) {
-          // Try to extract capacity from description
           const match = item.Description.match(/(\d+(?:\.\d+)?)\s*(?:gallon|liter|gal|l)/i);
           if (match) {
             let capacity = parseFloat(match[1]);
-            // Convert gallons to liters if needed
             if (item.Description.toLowerCase().includes('gallon') || item.Description.toLowerCase().includes('gal')) {
               capacity = capacity * 3.78541;
             }
@@ -467,18 +413,7 @@ export const searchNHTSAForCapacity = async (make, model, year) => {
   }
 };
 
-/**
- * Main function to get fuel tank capacity with fallback chain
- * Priority:
- * 1. Provided capacity
- * 2. NHTSA equipment search
- * 3. EPA database lookup
- * 4. Enhanced estimation (make/model/class)
- * @param {Object} vehicleData - Vehicle data from EPA or manual entry
- * @returns {Promise<Object>} - Capacity with source information
- */
 export const getFuelTankCapacity = async (vehicleData) => {
-  // If capacity is explicitly provided, use it
   if (vehicleData.tankCapacity && vehicleData.tankCapacity > 0) {
     return {
       capacity: vehicleData.tankCapacity,
@@ -490,7 +425,6 @@ export const getFuelTankCapacity = async (vehicleData) => {
 
   const { make, model, year, vehicleClass, id: vehicleId } = vehicleData;
 
-  // Try NHTSA equipment search
   const nhtsaResult = await searchNHTSAForCapacity(make, model, year);
   if (nhtsaResult) {
     fuelCache.set(`nhtsa-search-${make}-${model}-${year}`, {
@@ -500,7 +434,6 @@ export const getFuelTankCapacity = async (vehicleData) => {
     return nhtsaResult;
   }
 
-  // Try EPA vehicle lookup
   const epaResult = await fetchEPAVehicleCapacity(vehicleId);
   if (epaResult) {
     fuelCache.set(`epa-${vehicleId}`, {
@@ -510,14 +443,10 @@ export const getFuelTankCapacity = async (vehicleData) => {
     return epaResult;
   }
 
-  // Fallback to enhanced estimation
   const estimated = estimateEnhancedTankCapacity(vehicleClass, make, model, year);
   return estimated;
 };
 
-/**
- * Clear the fuel capacity cache
- */
 export const clearCache = () => {
   fuelCache.clear();
 };

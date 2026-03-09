@@ -1,7 +1,3 @@
-/**
- * Check if Google Maps API key is configured and valid
- * @returns {boolean}
- */
 export const isGoogleMapsConfigured = () => {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   return apiKey && apiKey !== '' && apiKey !== 'your_google_maps_api_key_here';

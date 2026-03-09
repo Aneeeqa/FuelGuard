@@ -4,18 +4,6 @@ import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import { formatTripDateRange, getTripStatusColor } from '../../utils/tripCalculations';
 
-/**
- * LastTripSummary Component
- * Displays a summary card for the most recent trip with detailed metrics
- *
- * Shows:
- * - Odometer range (start → end)
- * - Distance traveled
- * - Fuel consumed
- * - Calculated average mileage
- * - Trip status (Normal/Heavy Traffic/Potential Theft)
- */
-
 const LastTripSummary = memo(({ trip, vehicleProfile }) => {
   if (!trip) {
     return (
@@ -72,7 +60,6 @@ const LastTripSummary = memo(({ trip, vehicleProfile }) => {
         </Badge>
       </div>
 
-      {/* Odometer Route */}
       <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <div className="flex items-center justify-between">
           <div className="text-center">
@@ -104,7 +91,6 @@ const LastTripSummary = memo(({ trip, vehicleProfile }) => {
         </div>
       </div>
 
-      {/* Trip Date/Time Range */}
       <div className="flex items-center gap-2 mb-4">
         <Clock className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -112,9 +98,7 @@ const LastTripSummary = memo(({ trip, vehicleProfile }) => {
         </p>
       </div>
 
-      {/* Statistics Grid */}
       <div className="grid grid-cols-3 gap-3">
-        {/* Distance */}
         <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-primary)' }}>
           <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
             Distance
@@ -127,7 +111,6 @@ const LastTripSummary = memo(({ trip, vehicleProfile }) => {
           </p>
         </div>
 
-        {/* Fuel Used */}
         <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-primary)' }}>
           <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
             Fuel Used
@@ -140,7 +123,6 @@ const LastTripSummary = memo(({ trip, vehicleProfile }) => {
           </p>
         </div>
 
-        {/* Mileage - Highlighted */}
         <div className="p-3 rounded-lg relative overflow-hidden" style={{
           backgroundColor: `color-mix(in srgb, ${statusColor} 10%, transparent)`
         }}>
@@ -159,7 +141,6 @@ const LastTripSummary = memo(({ trip, vehicleProfile }) => {
         </div>
       </div>
 
-      {/* Theft Alert Warning */}
       {isTheftAlert && (
         <div className="mt-4 p-3 rounded-lg flex items-start gap-2" style={{
           backgroundColor: 'color-mix(in srgb, var(--accent-alert) 10%, transparent)',

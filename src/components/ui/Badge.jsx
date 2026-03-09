@@ -1,11 +1,5 @@
 import { clsx } from 'clsx';
 
-/**
- * Badge component for status indicators
- * - Multiple variants: success, warning, danger, info, default
- * - Different sizes: sm, md, lg
- * - With or without icon
- */
 const Badge = ({
   children,
   variant = 'default',
@@ -68,9 +62,6 @@ const Badge = ({
   );
 };
 
-/**
- * Dot badge for small indicators
- */
 export const DotBadge = ({
   variant = 'default',
   className,
@@ -96,9 +87,6 @@ export const DotBadge = ({
   );
 };
 
-/**
- * Pill badge for larger indicators
- */
 export const PillBadge = ({
   children,
   variant = 'default',

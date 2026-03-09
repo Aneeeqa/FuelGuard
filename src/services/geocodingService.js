@@ -1,21 +1,7 @@
-/**
- * OpenStreetMap Nominatim Reverse Geocoding Service
- * Free, no API key required fallback for Google Maps
- * 
- * Usage Policy: https://operations.osmfoundation.org/policies/nominatim/
- * - Limit: 1 request per second
- * - Provide User-Agent header
- */
-
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org/reverse';
-const REQUEST_DELAY = 1000; // 1 second between requests (Nominatim policy)
+const REQUEST_DELAY = 1000;
 let lastRequestTime = 0;
 
-/**
- * Rate limiting wrapper for Nominatim requests
- * @param {Function} requestFn - The request function to execute
- * @returns {Promise}
- */
 const withRateLimit = async (requestFn) => {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
@@ -28,17 +14,8 @@ const withRateLimit = async (requestFn) => {
   return requestFn();
 };
 
-/**
- * Perform reverse geocoding using OpenStreetMap Nominatim
- * Converts lat/lon coordinates to human-readable address
- * 
- * @param {number} lat - Latitude
- * @param {number} lon - Longitude
- * @returns {Promise<{formatted: string, components: Object}|null>}
- */
 export const reverseGeocode = async (lat, lon) => {
   if (lat === null || lat === undefined || lon === null || lon === undefined) {
-    console.warn('Invalid coordinates for reverse geocoding');
     return null;
   }
 
@@ -48,16 +25,16 @@ export const reverseGeocode = async (lat, lon) => {
         format: 'json',
         lat: lat.toString(),
         lon: lon.toString(),
-        zoom: '18', // Building level
-        addressdetails: '1', // Include address components
-        accept_language: 'en', // Force English results
+        zoom: '18',
+        addressdetails: '1',
+        accept_language: 'en',
       });
 
       const response = await fetch(`${NOMINATIM_BASE_URL}?${params}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'FuelGuard/1.0 (fuel-tracking-app)', // Required by Nominatim policy
+          'User-Agent': 'FuelGuard/1.0 (fuel-tracking-app)',
         },
       });
 
@@ -68,11 +45,9 @@ export const reverseGeocode = async (lat, lon) => {
       const data = await response.json();
 
       if (!data || data.error) {
-        console.warn('Nominatim returned error:', data?.error);
         return null;
       }
 
-      // Parse the response
       const formatted = data.display_name || 'Unknown Location';
 
       const components = {
@@ -92,12 +67,6 @@ export const reverseGeocode = async (lat, lon) => {
   }
 };
 
-/**
- * Get simplified location name (city, state, country)
- * @param {number} lat - Latitude
- * @param {number} lon - Longitude
- * @returns {Promise<string>}
- */
 export const getLocationName = async (lat, lon) => {
   const result = await reverseGeocode(lat, lon);
 
@@ -111,12 +80,6 @@ export const getLocationName = async (lat, lon) => {
   return locationName || result.formatted;
 };
 
-/**
- * Geocoding (address to coordinates) - forward geocoding
- * 
- * @param {string} query - Address or place name
- * @returns {Promise<Array<{lat: number, lon: number, formatted: string}>|null>}
- */
 export const geocode = async (query) => {
   if (!query || query.trim().length === 0) {
     return null;
@@ -163,11 +126,6 @@ export const geocode = async (query) => {
   }
 };
 
-/**
- * Batch reverse geocode multiple locations with rate limiting
- * @param {Array<{lat: number, lon: number}>} locations - Array of coordinates
- * @returns {Promise<Array<{location: Object, result: Object|null}>>}
- */
 export const batchReverseGeocode = async (locations) => {
   const results = [];
 

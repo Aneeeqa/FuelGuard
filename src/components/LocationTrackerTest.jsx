@@ -1,15 +1,5 @@
-/**
- * Location Tracking Test & Demo Component
- *
- * Demonstrates all free location tracking features:
- * - GPS tracking (Quick & Accurate modes)
- * - Interactive maps (OpenStreetMap fallback)
- * - Geocoding (reverse and forward)
- * - Distance calculation (Haversine & OSRM routing)
- */
-
 import React, { useState, useEffect } from 'react';
-import { MapPin, Navigation, Clock, Gauge, Activity, Wifi, Zap } from 'lucide-react';
+import { MapPin, Navigation, Clock, Gauge, Activity, Wifi, Zap } from '@phosphor-icons/react';
 import {
   getQuickPosition,
   getAccuratePosition,
@@ -19,7 +9,7 @@ import {
 } from '../utils/geolocation';
 import { getLocationName, geocode } from '../services/geocodingService';
 import { calculateDrivingDistance } from '../services/mapsService';
-import OSMMap from './OSMMap';
+import OSMMap from './Map/OSMMap';
 import './LocationTrackerTest.css';
 
 const LocationTrackerTest = () => {

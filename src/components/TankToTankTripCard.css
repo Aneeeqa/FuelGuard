@@ -1,0 +1,288 @@
+/**
+ * TankToTankTripCard Styles
+ *
+ * Custom styles for the Tank-to-Tank Trip Card component
+ */
+
+/* Stat Box Animations */
+.stat-box {
+  transition: all 0.2s ease-in-out;
+}
+
+.stat-box:hover {
+  transform: translateY(-2px);
+}
+
+.stat-label {
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.025em;
+}
+
+/* Tank Visual Styles */
+.tank-visual {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.tank-liquid {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transition: height 0.5s ease-out, background-color 0.3s ease-in-out;
+}
+
+.tank-markers {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px 8px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Efficiency Bar Animation */
+.efficiency-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.efficiency-fill {
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.efficiency-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Theft Meter Animation */
+.theft-meter {
+  position: relative;
+}
+
+.theft-meter-indicator {
+  transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Pulse Animation for Theft Alerts */
+@keyframes pulse-red {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes pulse-orange {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(249, 115, 22, 0);
+  }
+}
+
+@keyframes pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+  }
+}
+
+.theft-pulse-critical {
+  animation: pulse-red 2s infinite;
+}
+
+.theft-pulse-warning {
+  animation: pulse-orange 2s infinite;
+}
+
+.theft-pulse-normal {
+  animation: pulse-green 2s infinite;
+}
+
+/* Expand/Collapse Animation */
+.expanded-content {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+  }
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  transition: all 0.2s ease-in-out;
+}
+
+.status-badge:hover {
+  transform: scale(1.05);
+}
+
+/* Detail Section */
+.detail-section {
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.detail-section:hover {
+  background: var(--bg-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Fuel Comparison Chart */
+.fuel-comparison-chart {
+  position: relative;
+  height: 40px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.fuel-bar-expected {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(59, 130, 246, 0.3);
+  transition: width 0.5s ease-out;
+}
+
+.fuel-bar-actual {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.7), rgba(99, 102, 241, 0.7));
+  transition: width 0.5s ease-out;
+}
+
+/* Dark Mode Adjustments */
+.dark .tank-visual {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .detail-section:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+  .stat-box {
+    padding: 0.5rem;
+  }
+
+  .tank-visual {
+    width: 3rem;
+    height: 5rem;
+  }
+
+  .detail-section {
+    padding: 0.5rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .tank-to-tank-trip-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .card-footer,
+  button {
+    display: none !important;
+  }
+
+  .tank-visual {
+    border: 1px solid #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .stat-box,
+  .tank-liquid,
+  .efficiency-fill,
+  .theft-meter-indicator,
+  .expanded-content,
+  .status-badge {
+    animation: none;
+    transition: none;
+  }
+
+  .theft-pulse-critical,
+  .theft-pulse-warning,
+  .theft-pulse-normal {
+    animation: none;
+  }
+}
+
+/* Focus Visible for Accessibility */
+button:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .stat-value {
+    font-weight: 700;
+  }
+
+  .status-badge {
+    border: 2px solid currentColor;
+  }
+}

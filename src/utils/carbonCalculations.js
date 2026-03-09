@@ -1,58 +1,31 @@
-/**
- * Carbon footprint calculations for fuel consumption tracking
- *
- * CO2 Emission Factors (kg CO2 per liter):
- * - Gasoline: 2.31 kg/L
- * - Diesel: 2.68 kg/L
- * - LPG: 1.53 kg/L
- * - Hybrid: 1.5 kg/L (gasoline engine portion)
- * - Electric: 0 kg/L (direct emissions)
- *
- * Source: EPA and IPCC guidelines
- */
-
-// CO2 emission factors in kg CO2 per liter
 const CO2_EMISSION_FACTORS = {
   gasoline: 2.31,
   diesel: 2.68,
   lpg: 1.53,
-  hybrid: 1.5, // Gasoline portion of hybrid
-  electric: 0, // No direct tailpipe emissions
+  hybrid: 1.5,
+  electric: 0,
   'regular gasoline': 2.31,
   'premium gasoline': 2.31,
   'diesel': 2.68,
 };
 
-// Average vehicle CO2 emissions benchmarks (kg CO2/year)
 const AVERAGE_VEHICLE_EMISSIONS = {
-  compact: 3989,    // 4.4 tonnes
-  sedan: 4669,      // 5.1 tonnes
-  suv: 6350,        // 7.0 tonnes
-  truck: 7711,       // 8.5 tonnes
-  default: 4990,     // 5.5 tonnes (average all vehicles)
+  compact: 3989,
+  sedan: 4669,
+  suv: 6350,
+  truck: 7711,
+  default: 4990,
 };
 
-// Per km average (kg CO2/km) - based on 12,000 miles/year average
-const AVERAGE_PER_KM = 0.38; // ~0.38 kg CO2 per km
+const AVERAGE_PER_KM = 0.38;
 
-/**
- * Get CO2 emission factor for a fuel type
- * @param {string} fuelType - Type of fuel (gasoline, diesel, etc.)
- * @returns {number} CO2 emission factor in kg/L
- */
 export const getEmissionFactor = (fuelType) => {
-  if (!fuelType) return CO2_EMISSION_FACTORS.gasoline; // Default to gasoline
+  if (!fuelType) return CO2_EMISSION_FACTORS.gasoline;
 
   const normalizedFuelType = fuelType.toLowerCase().trim();
   return CO2_EMISSION_FACTORS[normalizedFuelType] || CO2_EMISSION_FACTORS.gasoline;
 };
 
-/**
- * Calculate CO2 emissions for a single fuel fill
- * @param {number} liters - Fuel consumed in liters
- * @param {string} fuelType - Type of fuel
- * @returns {number} CO2 emitted in kg
- */
 export const calculateCO2PerTrip = (liters, fuelType = 'gasoline') => {
   if (!liters || liters <= 0) return 0;
 
@@ -60,13 +33,6 @@ export const calculateCO2PerTrip = (liters, fuelType = 'gasoline') => {
   return liters * emissionFactor;
 };
 
-/**
- * Calculate CO2 emissions for a trip based on distance
- * @param {number} distanceKm - Distance traveled in km
- * @param {string} fuelType - Type of fuel
- * @param {number} efficiency - Vehicle efficiency in km/L
- * @returns {number} CO2 emitted in kg
- */
 export const calculateCO2ByDistance = (distanceKm, fuelType = 'gasoline', efficiency = 15) => {
   if (!distanceKm || distanceKm <= 0 || !efficiency || efficiency <= 0) return 0;
 
@@ -74,12 +40,6 @@ export const calculateCO2ByDistance = (distanceKm, fuelType = 'gasoline', effici
   return calculateCO2PerTrip(litersConsumed, fuelType);
 };
 
-/**
- * Calculate total CO2 emissions from all logs
- * @param {Array} logs - Array of fuel log entries
- * @param {string} fuelType - Primary fuel type (fallback if not in logs)
- * @returns {number} Total CO2 in kg
- */
 export const calculateTotalCO2 = (logs, fuelType = 'gasoline') => {
   if (!logs || logs.length === 0) return 0;
 
@@ -89,24 +49,12 @@ export const calculateTotalCO2 = (logs, fuelType = 'gasoline') => {
   }, 0);
 };
 
-/**
- * Calculate CO2 emissions per kilometer
- * @param {number} totalCO2 - Total CO2 in kg
- * @param {number} totalDistance - Total distance in km
- * @returns {number} CO2 per km in kg
- */
 export const calculateCO2PerKm = (totalCO2, totalDistance) => {
   if (!totalCO2 || !totalDistance || totalDistance <= 0) return 0;
 
   return totalCO2 / totalDistance;
 };
 
-/**
- * Calculate monthly CO2 emissions from logs
- * @param {Array} logs - Array of fuel log entries
- * @param {string} fuelType - Primary fuel type (fallback)
- * @returns {Array} Array of monthly data: [{ month: 'YYYY-MM', co2: 123.45 }]
- */
 export const calculateMonthlyCO2 = (logs, fuelType = 'gasoline') => {
   if (!logs || logs.length === 0) return [];
 
@@ -127,12 +75,6 @@ export const calculateMonthlyCO2 = (logs, fuelType = 'gasoline') => {
   return Object.values(monthlyData).sort((a, b) => a.month.localeCompare(b.month));
 };
 
-/**
- * Calculate yearly CO2 emissions from logs
- * @param {Array} logs - Array of fuel log entries
- * @param {string} fuelType - Primary fuel type (fallback)
- * @returns {Array} Array of yearly data: [{ year: YYYY, co2: 1234.56 }]
- */
 export const calculateYearlyCO2 = (logs, fuelType = 'gasoline') => {
   if (!logs || logs.length === 0) return [];
 
@@ -153,18 +95,9 @@ export const calculateYearlyCO2 = (logs, fuelType = 'gasoline') => {
   return Object.values(yearlyData).sort((a, b) => a.year - b.year);
 };
 
-/**
- * Compare user's CO2 emissions with average vehicle
- * @param {number} userCO2PerKm - User's CO2 per km in kg
- * @param {string} vehicleType - Vehicle type (compact, sedan, suv, truck)
- * @returns {Object} Comparison data with percentage
- */
 export const compareWithAverage = (userCO2PerKm, vehicleType = 'sedan') => {
-  console.log('compareWithAverage - Input:', { userCO2PerKm, vehicleType });
-
   const averagePerKm = AVERAGE_PER_KM;
 
-  // Vehicle type multiplier (SUVs/trucks emit more)
   const vehicleMultiplier = {
     compact: 0.85,
     sedan: 1.0,
@@ -174,24 +107,21 @@ export const compareWithAverage = (userCO2PerKm, vehicleType = 'sedan') => {
 
   const adjustedAverage = averagePerKm * vehicleMultiplier;
 
-  // Handle undefined/null/invalid inputs
   if (userCO2PerKm === null || userCO2PerKm === undefined || isNaN(userCO2PerKm)) {
-    console.log('compareWithAverage - Invalid input, returning neutral');
     return {
       userCO2: 0,
       averageCO2: adjustedAverage,
-      difference: -100, // -100% means unknown
+      difference: -100,
       percentage: 0,
       status: 'neutral',
     };
   }
 
   if (userCO2PerKm <= 0) {
-    console.log('compareWithAverage - Zero or negative input, returning neutral');
     return {
       userCO2: 0,
       averageCO2: adjustedAverage,
-      difference: -100, // -100% means unknown
+      difference: -100,
       percentage: 0,
       status: 'neutral',
     };
@@ -200,17 +130,15 @@ export const compareWithAverage = (userCO2PerKm, vehicleType = 'sedan') => {
   const difference = userCO2PerKm - adjustedAverage;
   const percentage = (difference / adjustedAverage) * 100;
 
-  console.log('compareWithAverage - Calculated:', { difference, percentage });
-
   let status;
   if (percentage <= -15) {
-    status = 'excellent'; // 15% or more below average
+    status = 'excellent';
   } else if (percentage <= 0) {
-    status = 'good'; // Up to 15% below average
+    status = 'good';
   } else if (percentage <= 20) {
-    status = 'moderate'; // Up to 20% above average
+    status = 'moderate';
   } else {
-    status = 'poor'; // More than 20% above average
+    status = 'poor';
   }
 
   return {
@@ -222,16 +150,10 @@ export const compareWithAverage = (userCO2PerKm, vehicleType = 'sedan') => {
   };
 };
 
-/**
- * Calculate eco-driving score based on driving patterns
- * Score is 0-100, with higher being more eco-friendly
- * @param {Array} logs - Array of fuel log entries
- * @returns {Object} Score and suggestions
- */
 export const calculateEcoDrivingScore = (logs) => {
   if (!logs || logs.length < 3) {
     return {
-      score: 75, // Default neutral score
+      score: 75,
       category: 'neutral',
       suggestions: [
         'Keep logging your fuel entries to get personalized eco-driving tips',
@@ -240,9 +162,8 @@ export const calculateEcoDrivingScore = (logs) => {
     };
   }
 
-  // Calculate efficiency trends
   const sortedLogs = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
-  const recentLogs = sortedLogs.slice(-5); // Last 5 logs
+  const recentLogs = sortedLogs.slice(-5);
   const earlierLogs = sortedLogs.slice(-10, -5) || sortedLogs.slice(0, 3);
 
   const recentAvg =
@@ -254,29 +175,23 @@ export const calculateEcoDrivingScore = (logs) => {
   const flaggedLogs = logs.filter((log) => log.isFlagged).length;
   const flaggedRatio = flaggedLogs / logs.length;
 
-  // Calculate score (0-100)
-  let score = 75; // Base score
+  let score = 75;
 
-  // Trend bonus/penalty
   if (trend > 0) {
-    score += Math.min(trend * 3, 15); // Up to +15 for improvement
+    score += Math.min(trend * 3, 15);
   } else if (trend < 0) {
-    score -= Math.min(Math.abs(trend) * 3, 10); // Up to -10 for decline
+    score -= Math.min(Math.abs(trend) * 3, 10);
   }
 
-  // Flagged logs penalty
-  score -= flaggedRatio * 50; // -50 if 100% flagged
+  score -= flaggedRatio * 50;
 
-  // Mileage consistency bonus
   const variance = calculateVariance(recentLogs.map((log) => log.mileage || 0));
   if (variance < 2) {
-    score += 10; // +10 for very consistent driving
+    score += 10;
   }
 
-  // Clamp score to 0-100
   score = Math.max(0, Math.min(100, score));
 
-  // Determine category and suggestions
   let category, suggestions;
 
   if (score >= 85) {
@@ -310,7 +225,6 @@ export const calculateEcoDrivingScore = (logs) => {
     ];
   }
 
-  // Add flagged entry suggestions
   if (flaggedLogs > 0) {
     suggestions.push(
       `🔔 ${flaggedLogs} flagged entry${flaggedLogs > 1 ? 'ies' : ''} detected - check for fuel theft or unusual driving conditions`
@@ -324,36 +238,23 @@ export const calculateEcoDrivingScore = (logs) => {
   };
 };
 
-/**
- * Calculate variance for consistency check
- * @param {Array} values - Array of numbers
- * @returns {number} Variance
- */
 function calculateVariance(values) {
   if (values.length === 0) return 0;
   const mean = values.reduce((a, b) => a + b, 0) / values.length;
   return values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
 }
 
-/**
- * Get CO2 emissions label for comparison display
- * @param {number} co2kg - CO2 in kg
- * @returns {string} Formatted label (e.g., "123.45 kg" or "0.12 tonnes")
- */
 export const formatCO2Label = (co2kg) => {
-  // Check for null, undefined, NaN, or invalid numbers
   if (co2kg === null || co2kg === undefined || isNaN(co2kg)) {
     return '0 kg';
   }
 
-  // Ensure it's a number
   const value = Number(co2kg);
   if (isNaN(value)) {
     return '0 kg';
   }
 
   if (value >= 1000) {
-    // Convert to tonnes
     const tonnes = value / 1000;
     return `${tonnes.toFixed(2)} tonnes`;
   }
@@ -361,11 +262,6 @@ export const formatCO2Label = (co2kg) => {
   return `${value.toFixed(2)} kg`;
 };
 
-/**
- * Get eco-driving badge based on score
- * @param {number} score - Eco-driving score (0-100)
- * @returns {Object} Badge info with emoji and color
- */
 export const getEcoBadge = (score) => {
   if (score >= 85) {
     return { emoji: '🌱', label: 'Eco Champion', color: 'green' };
