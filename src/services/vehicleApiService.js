@@ -1,9 +1,14 @@
 /**
  * Vehicle API Service - FuelEconomy.gov Integration
- * 
+ *
  * Uses the free EPA FuelEconomy.gov API to fetch vehicle data
  * API Docs: https://www.fueleconomy.gov/feg/ws/index.shtml
  */
+
+import { getFuelTankCapacity, estimateEnhancedTankCapacity } from './fuelCapacityService';
+
+// Re-export for backward compatibility
+export const estimateFuelTankCapacity = estimateEnhancedTankCapacity;
 
 // CORS proxy for development (FuelEconomy.gov doesn't support CORS)
 const CORS_PROXY = 'https://corsproxy.io/?';
@@ -128,7 +133,7 @@ export const fetchOptions = async (year, make, model) => {
 
 /**
  * Fetch full vehicle details by vehicle ID
- * @param {string|number} vehicleId 
+ * @param {string|number} vehicleId
  * @returns {Promise<Object|null>}
  */
 export const fetchVehicleDetails = async (vehicleId) => {
@@ -137,8 +142,8 @@ export const fetchVehicleDetails = async (vehicleId) => {
     try {
         const data = await fetchWithProxy(`/vehicle/${vehicleId}`);
 
-        // Transform to our app's schema
-        return {
+        // Create vehicle object with EPA data
+        const vehicle = {
             id: data.id,
             year: parseInt(data.year, 10),
             make: data.make,
@@ -161,6 +166,18 @@ export const fetchVehicleDetails = async (vehicleId) => {
             // CO2 emissions
             co2: parseFloat(data.co2TailpipeGpm) || null,
         };
+
+        // Fetch enhanced fuel tank capacity with metadata
+        const capacityResult = await getFuelTankCapacity(vehicle);
+
+        if (capacityResult && capacityResult.capacity) {
+            vehicle.tankCapacity = capacityResult.capacity;
+            vehicle.tankCapacitySource = capacityResult.source;
+            vehicle.tankCapacityConfidence = capacityResult.confidence;
+            vehicle.tankCapacityDescription = capacityResult.description;
+        }
+
+        return vehicle;
     } catch (error) {
         console.error('Error fetching vehicle details:', error);
         return null;
@@ -312,10 +329,10 @@ export const fetchPakistaniVariants = async (make, model) => {
 
 /**
  * Get full details for a Pakistani vehicle variant
- * @param {string} make 
- * @param {string} model 
- * @param {string} variantName 
- * @param {number} year 
+ * @param {string} make
+ * @param {string} model
+ * @param {string} variantName
+ * @param {number} year
  * @returns {Object|null}
  */
 export const getPakistaniVehicleDetails = async (make, model, variantName, year) => {
@@ -327,7 +344,7 @@ export const getPakistaniVehicleDetails = async (make, model, variantName, year)
     const variant = vehicle.variants.find(v => v.name === variantName);
     if (!variant) return null;
 
-    return {
+    const details = {
         id: `pk-${make}-${model}-${variantName}`.toLowerCase().replace(/\s+/g, '-'),
         year: parseInt(year, 10),
         make,
@@ -349,6 +366,15 @@ export const getPakistaniVehicleDetails = async (make, model, variantName, year)
         // Mark as local data source
         dataSource: 'local-pk',
     };
+
+    // Add capacity source metadata
+    if (variant.tankCapacity) {
+        details.tankCapacitySource = 'local-database';
+        details.tankCapacityConfidence = 'high';
+        details.tankCapacityDescription = 'From local Pakistani vehicle database';
+    }
+
+    return details;
 };
 
 /**
@@ -401,4 +427,9 @@ export default {
 
     // Country dispatcher
     getVehicleAPIForCountry,
+
+    // Export enhanced fuel capacity functions for backward compatibility
+    estimateFuelTankCapacity: estimateEnhancedTankCapacity,
+    getFuelTankCapacity,
+    estimateEnhancedTankCapacity,
 };

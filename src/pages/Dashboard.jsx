@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useFuelData } from '../hooks/useFuelData';
 import { Drop, TrendUp, Warning, Path, Lightning, Leaf, CurrencyDollar, Wallet, Phone, DropHalf, Star } from '@phosphor-icons/react';
 import Skeleton from '../components/ui/Skeleton';
@@ -7,6 +7,10 @@ import MileageChart from '../components/dashboard/MileageChart';
 import MileageComparison from '../components/dashboard/MileageComparison';
 import CarbonFootprintCard from '../components/dashboard/CarbonFootprintCard';
 import CarbonChart from '../components/dashboard/CarbonChart';
+import BudgetCard from '../components/dashboard/BudgetCard';
+import TripMileageBarChart from '../components/dashboard/TripMileageBarChart';
+import LastTripSummary from '../components/dashboard/LastTripSummary';
+import EmptyDashboardState from '../components/dashboard/EmptyDashboardState';
 import Alert from '../components/ui/Alert';
 import Card from '../components/ui/Card';
 import EmergencyContact from '../components/EmergencyContact';
@@ -19,6 +23,7 @@ import {
 import { getCurrencySymbol } from '../utils/currency';
 import { analyzeFuelDrain, generateDrainAlertMessage, formatDrainRate } from '../utils/fuelDrainCalculator';
 import { getFuelStatus } from '../utils/fuelLevelAlerts';
+import { calculateTrips, calculateTripStatistics } from '../utils/tripCalculations';
 
 const Dashboard = () => {
   const { data, loading } = useFuelData();
@@ -30,12 +35,64 @@ const Dashboard = () => {
     budget: false
   });
 
+  const { logs, stats } = data;
+  const flaggedCount = logs.filter((log) => log.isFlagged).length;
+
+  // Analyze fuel drain
+  const drainAnalysis = analyzeFuelDrain(logs || [], data.vehicleProfile?.tankCapacity);
+
+  // Calculate trips (trip-wise mileage analysis) - MUST be before loading check
+  const trips = useMemo(() => {
+    return calculateTrips(logs || [], data.vehicleProfile || {});
+  }, [logs, data.vehicleProfile]);
+
+  // Get last trip for summary
+  const lastTrip = trips.length > 0 ? trips[0] : null;
+
+  // Calculate trip statistics - MUST be before loading check
+  const tripStats = useMemo(() => {
+    return calculateTripStatistics(trips);
+  }, [trips]);
+
+  // Calculate fuel level status - MUST be before loading check
+  const lastFuelLog = logs.length > 0 ? logs[0] : null;
+  const currentFuelAmount = lastFuelLog ? lastFuelLog.liters : 0;
+  const fuelLevelAnalysis = getFuelStatus(
+    currentFuelAmount,
+    data.vehicleProfile?.tankCapacity || 50,
+    data.stats?.avgMileage || 15
+  );
+
+  // Get currency symbol from vehicle profile
+  const currencySymbol = getCurrencySymbol(data.vehicleProfile?.currency || 'USD');
+  const fuelUnit = data.vehicleProfile?.fuelVolumeUnit || 'L';
+  const distanceUnit = data.vehicleProfile?.distanceUnit || 'km';
+  const efficiencyUnit = data.vehicleProfile?.efficiencyUnit || 'km/L';
+  const fuelDisplayUnit = fuelUnit;
+  const vehicleProfile = data.vehicleProfile || {};
+
+  // Calculate cost statistics - MUST be before loading check
+  const costStats = getCostStatistics(logs || [], vehicleProfile?.currency || 'USD');
+
+  // Calculate monthly budget and expenditure - MUST be before loading check
+  const monthlyBudget = vehicleProfile?.monthlyBudget || 200;
+  const currentMonthExpenditure = logs
+    ? logs.reduce((sum, log) => {
+        const logDate = new Date(log.date);
+        const now = new Date();
+        return logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear()
+          ? sum + (log.cost || 0)
+          : sum;
+      }, 0)
+    : 0;
+  const budgetAlert = checkBudgetAlert(currentMonthExpenditure, monthlyBudget);
+  const monthlyBudgetAlert = budgetAlert;
+
   if (loading) {
     return (
       <div className="p-4 space-y-4">
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-2 gap-4">
-          <Skeleton className="h-24" />
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
@@ -45,89 +102,9 @@ const Dashboard = () => {
     );
   }
 
-  const { logs, stats } = data;
-  const flaggedCount = logs.filter((log) => log.isFlagged).length;
-
-  const drainAnalysis = analyzeFuelDrain(logs || [], data.vehicleProfile?.tankCapacity);
-
-  const lastFuelLog = logs.length > 0 ? logs[0] : null;
-  const currentFuelAmount = lastFuelLog ? lastFuelLog.liters : 0;
-  const fuelLevelAnalysis = getFuelStatus(
-    currentFuelAmount,
-    data.vehicleProfile?.tankCapacity || 50,
-    data.stats?.avgMileage || 15
-  );
-
-  const currency = data.vehicleProfile?.currency || 'USD';
-  const currencySymbol = getCurrencySymbol(currency);
-
-  const fuelVolumeUnit = data.vehicleProfile?.fuelVolumeUnit || 'L';
-  const distanceUnit = data.vehicleProfile?.distanceUnit || 'km';
-  const efficiencyUnit = fuelVolumeUnit === 'gal' ? 'mpg' : 'km/L';
-  const fuelDisplayUnit = fuelVolumeUnit === 'gal' ? 'gal' : 'L';
-
-  const costStats = getCostStatistics(logs, currencySymbol);
-  const { vehicleProfile } = data;
-  const monthlyBudget = data.monthlyBudget || 200;
-
-  const budgetAlert = checkBudgetAlert(costStats.totalExpenditure, monthlyBudget);
-  const currentDate = new Date();
-  const currentMonthExpenditure = logs
-    .filter(log => {
-      const logDate = new Date(log.date);
-      return logDate.getMonth() === currentDate.getMonth() &&
-             logDate.getFullYear() === currentDate.getFullYear();
-    })
-    .reduce((sum, log) => sum + (log.price || 0), 0);
-  const monthlyBudgetAlert = checkBudgetAlert(currentMonthExpenditure, monthlyBudget);
-
-  if (logs.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center animate-fade-in">
-        <div
-          className="w-24 h-24 rounded-2xl flex items-center justify-center mb-6 animate-bounce"
-          style={{
-            background: 'var(--gradient-primary)',
-            boxShadow: 'var(--shadow-glow-blue)'
-          }}
-        >
-          <Drop size={48} weight="duotone" color="white" />
-        </div>
-        <h1 className="text-2xl font-bold mb-3 animate-fade-in-up" style={{ color: 'var(--text-primary)' }}>
-          Welcome to Fuel Guard
-        </h1>
-        <p className="mb-8 max-w-md text-lg animate-fade-in-up delay-200" style={{ color: 'var(--text-secondary)' }}>
-          Track fuel consumption, detect anomalies, and prevent theft with AI-powered monitoring.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 animate-fade-in-up delay-300">
-          <a
-            href="/settings"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 text-white font-semibold rounded-xl min-h-[56px] transition-all duration-300 hover-lift active-scale"
-            style={{
-              background: 'var(--gradient-primary)',
-              boxShadow: 'var(--shadow-glow-blue)'
-            }}
-          >
-            <Star size={20} weight="duotone" color="white" />
-            Generate Demo Data
-          </a>
-          <a
-            href="/add"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 font-semibold rounded-xl min-h-[56px] transition-all duration-300 hover-lift active-scale"
-            style={{
-              border: '2px solid var(--accent-blue)',
-              color: 'var(--accent-blue)',
-            }}
-          >
-            <Lightning size={20} weight="duotone" />
-            Add First Entry
-          </a>
-        </div>
-        <p className="text-sm mt-4 animate-fade-in delay-400" style={{ color: 'var(--text-muted)' }}>
-          🎲 Demo data generates <span style={{ color: 'var(--accent-alert)', fontWeight: '600' }}>3 random theft alerts</span> - Click multiple times for different data!
-        </p>
-      </div>
-    );
+  // Show empty state if no logs exist
+  if (!logs || logs.length === 0) {
+    return <EmptyDashboardState />;
   }
 
   return (
@@ -204,24 +181,10 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Desktop: Two-column layout */}
+       {/* Desktop: Two-column layout */}
       <div className="lg:grid lg:grid-cols-3 lg:gap-8">
         {/* Stats + Chart Column */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Budget Alert Banner - Hidden on mobile (shown in notifications) */}
-          {(budgetAlert.triggered || monthlyBudgetAlert.triggered) && !dismissedAlerts.budget && (
-            <div className="hidden lg:block animate-fade-in-up delay-50">
-              <Alert
-                variant={monthlyBudgetAlert.level === 'critical' ? 'danger' : 'warning'}
-                title={monthlyBudgetAlert.level === 'critical' ? 'Budget Exceeded!' : 'Budget Warning'}
-                dismissible
-                onDismiss={() => setDismissedAlerts(prev => ({ ...prev, budget: true }))}
-              >
-                {monthlyBudgetAlert.message}
-              </Alert>
-            </div>
-          )}
-
            {/* Stats Grid - Using StatCard component */}
           <div className="flex flex-row sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 overflow-x-auto sm:overflow-visible snap-x snap-mandatory px-4 sm:px-0 -mx-4 sm:mx-0 gap-4 sm:gap-4" style={{
             scrollPaddingLeft: '1rem',
@@ -313,20 +276,55 @@ const Dashboard = () => {
              />
            </div>
            <div className="flex-shrink-0 w-12 sm:hidden"></div>
-           </div>
+            </div>
 
-          {/* Mileage Chart */}
-          {logs.length > 1 && (
-            <div className="animate-fade-in-up delay-500">
-              <Card variant="elevated" interactive>
-                <Card.Header>
-                  <Card.Title>Mileage Trend</Card.Title>
-                  <Card.Subtitle>Track your fuel efficiency over time</Card.Subtitle>
-                </Card.Header>
-                <div className="pt-4">
-                  <MileageChart data={logs} />
-                </div>
-              </Card>
+           {/* Trip Analysis Section - NEW */}
+           {trips.length > 0 && (
+             <div className="animate-fade-in-up delay-500 space-y-6">
+               {/* Last Trip Summary Card */}
+               <LastTripSummary trip={lastTrip} vehicleProfile={data.vehicleProfile} />
+
+               {/* Trip Mileage Bar Chart */}
+               <Card variant="elevated" interactive>
+                 <div className="p-4">
+                   <TripMileageBarChart trips={trips} vehicleProfile={data.vehicleProfile} />
+                 </div>
+               </Card>
+             </div>
+           )}
+
+           {/* Mileage Chart */}
+           {logs.length > 1 && (
+             <div className="animate-fade-in-up delay-600">
+               <Card variant="elevated" interactive>
+                 <Card.Header>
+                   <Card.Title>Mileage Trend</Card.Title>
+                   <Card.Subtitle>Track your fuel efficiency over time</Card.Subtitle>
+                 </Card.Header>
+                 <div className="pt-4">
+                   <MileageChart data={logs} />
+                 </div>
+               </Card>
+             </div>
+           )}
+
+          {/* Budget Card */}
+          <BudgetCard
+            logs={logs}
+            monthlyBudget={monthlyBudget}
+            currency={vehicleProfile?.currency || 'USD'}
+          />
+          {/* Budget Alert Banner - Hidden on mobile (shown in notifications) */}
+          {(budgetAlert.triggered || monthlyBudgetAlert.triggered) && !dismissedAlerts.budget && (
+            <div className="hidden lg:block animate-fade-in-up delay-50">
+              <Alert
+                variant={monthlyBudgetAlert.level === 'critical' ? 'danger' : 'warning'}
+                title={monthlyBudgetAlert.level === 'critical' ? 'Budget Exceeded!' : 'Budget Warning'}
+                dismissible
+                onDismiss={() => setDismissedAlerts(prev => ({ ...prev, budget: true }))}
+              >
+                {monthlyBudgetAlert.message}
+              </Alert>
             </div>
           )}
 

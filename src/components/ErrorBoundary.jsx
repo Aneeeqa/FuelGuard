@@ -7,7 +7,6 @@ class ErrorBoundary extends Component {
   }
 
   static getDerivedStateFromError(error) {
-    console.log('ErrorBoundary.getDerivedStateFromError called with:', error);
     if (!error) {
       return { hasError: false };
     }
@@ -134,7 +133,7 @@ class ErrorBoundary extends Component {
             <span className="text-lg">👋</span> The application is running correctly.
           </p>
           <p className="text-sm mt-2">
-            You can continue using the app. The error was caught by our error boundary and logged for debugging.
+            You can continue using app. The error was caught by our error boundary and logged for debugging.
           </p>
         </div>
       </div>

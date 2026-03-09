@@ -24,6 +24,8 @@ export const calculateDistance = (currentOdometer, previousOdometer) => {
 
   const distance = currentOdometer - previousOdometer;
 
+  // Log warning if odometer decreased (potential data entry error)
+  // This can happen if odometer was reset or entered incorrectly
   if (distance < 0) {
     console.warn(`Odometer decreased from ${previousOdometer.toLocaleString()} to ${currentOdometer.toLocaleString()} km. Please verify your data entry. This may indicate an odometer reset or incorrect values.`);
   }
@@ -31,21 +33,39 @@ export const calculateDistance = (currentOdometer, previousOdometer) => {
   return Math.max(0, distance);
 };
 
+/**
+ * Check if mileage indicates potential theft
+ * Theft is flagged if efficiency is below the specified threshold of average
+ * @param {number} mileage - Current mileage
+ * @param {number} avgMileage - Average mileage
+ * @param {number} threshold - Threshold ratio (default 0.75 = flag if below 75% of average)
+ * @returns {boolean} True if theft is suspected
+ */
 export const isTheftSuspected = (mileage, avgMileage, threshold = 0.75) => {
   if (!mileage || !avgMileage || mileage <= 0) return false;
   return mileage < avgMileage * threshold;
 };
 
+/**
+ * Calculate average mileage from logs
+ * @param {Array} logs - Array of log entries
+ * @returns {number} Average mileage
+ */
 export const calculateAverageMileage = (logs) => {
-  if (!logs || logs.length === 0) return 15;
-
+  if (!logs || logs.length === 0) return 15; // Default expected mileage
+  
   const validLogs = logs.filter(log => log.mileage && log.mileage > 0);
   if (validLogs.length === 0) return 15;
-
+  
   const sum = validLogs.reduce((acc, log) => acc + log.mileage, 0);
   return sum / validLogs.length;
 };
 
+/**
+ * Calculate total fuel consumed
+ * @param {Array} logs - Array of log entries
+ * @returns {number} Total liters consumed
+ */
 export const calculateTotalFuel = (logs) => {
   if (!logs || logs.length === 0) return 0;
   return logs.reduce((sum, log) => sum + (log.liters || 0), 0);

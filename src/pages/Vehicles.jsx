@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useFuelData } from '../hooks/useFuelData';
-import { Car, Plus, Edit, Search, Database, Check } from 'lucide-react';
+import { Car, Plus, Edit, Search, Database, Check, Info } from 'lucide-react';
 import VehicleCard from '../components/VehicleCard';
 import VehicleSelector from '../components/VehicleSelector';
 import Button from '../components/ui/Button';
@@ -73,6 +73,9 @@ const Vehicles = () => {
       year: new Date().getFullYear(),
       fuelType: 'gasoline',
       tankCapacity: 50,
+      tankCapacitySource: 'default',
+      tankCapacityConfidence: 'very-low',
+      tankCapacityDescription: 'Default vehicle capacity',
       expectedMileage: 15,
       theftThreshold: 0.75,
       licensePlate: '',
@@ -97,6 +100,9 @@ const Vehicles = () => {
       year: vehicle.year || new Date().getFullYear(),
       fuelType: vehicle.fuelType || 'gasoline',
       tankCapacity: vehicle.tankCapacity || 50,
+      tankCapacitySource: vehicle.tankCapacitySource || 'user-provided',
+      tankCapacityConfidence: vehicle.tankCapacityConfidence || 'high',
+      tankCapacityDescription: vehicle.tankCapacityDescription || 'Previously saved value',
       expectedMileage: vehicle.expectedMileage || 15,
       theftThreshold: vehicle.theftThreshold ?? 0.75,
       licensePlate: vehicle.licensePlate || '',
@@ -135,6 +141,16 @@ const Vehicles = () => {
   };
 
   const handleVehicleFromDbSelect = (vehicleData) => {
+    // Auto-fill tank capacity from EPA database with source info
+    const tankCapacity = vehicleData.tankCapacity || 50;
+    const tankCapacitySource = vehicleData.tankCapacitySource || 'estimated';
+    const tankCapacityConfidence = vehicleData.tankCapacityConfidence || 'medium';
+    const tankCapacityDescription = vehicleData.tankCapacityDescription || 'Estimated from vehicle data';
+
+    console.log('Vehicle selected from database:', vehicleData);
+    console.log('Auto-filled tank capacity:', tankCapacity, 'liters');
+    console.log('Source:', tankCapacitySource, 'Confidence:', tankCapacityConfidence);
+
     setSelectedVehicleFromDb(vehicleData);
     setFormData(prev => ({
       ...prev,
@@ -145,7 +161,10 @@ const Vehicles = () => {
       fuelType: vehicleData.fuelType === 'Electric' ? 'electric' :
                 vehicleData.fuelType === 'Diesel' ? 'diesel' :
                 vehicleData.fuelType === 'Hybrid' ? 'hybrid' : 'gasoline',
-      tankCapacity: vehicleData.tankCapacity || 50,
+      tankCapacity: tankCapacity,
+      tankCapacitySource: tankCapacitySource,
+      tankCapacityConfidence: tankCapacityConfidence,
+      tankCapacityDescription: tankCapacityDescription,
       expectedMileage: vehicleData.epaCombined || vehicleData.expectedMileage || 15,
       theftThreshold: prev.theftThreshold || 0.75,
     }));
@@ -337,9 +356,12 @@ const Vehicles = () => {
                         </div>
                         <div>
                           <span style={{ color: 'var(--text-muted)' }}>Tank Capacity:</span>{' '}
-                          <span style={{ color: 'var(--text-primary)' }}>
-                            {selectedVehicleFromDb.tankCapacity} L
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span style={{ color: 'var(--text-primary)' }}>
+                              {selectedVehicleFromDb.tankCapacity} L
+                            </span>
+                            <Info className="w-3 h-3" style={{ color: 'var(--accent-blue)' }} title="Auto-filled from vehicle database" />
+                          </div>
                         </div>
                         <div>
                           <span style={{ color: 'var(--text-muted)' }}>Est. Mileage:</span>{' '}
@@ -347,6 +369,35 @@ const Vehicles = () => {
                             {selectedVehicleFromDb.epaCombined} km/L
                           </span>
                         </div>
+                        <div>
+                          <span style={{ color: 'var(--text-muted)' }}>Data Source:</span>{' '}
+                          <span
+                            className="text-xs px-2 py-0.5 rounded"
+                            style={{
+                              backgroundColor: formData.tankCapacityConfidence === 'high'
+                                ? 'var(--accent-success)'
+                                : formData.tankCapacityConfidence === 'medium'
+                                  ? 'var(--accent-warning)'
+                                  : 'var(--accent-alert)',
+                              color: 'white'
+                            }}
+                          >
+                            {formData.tankCapacityConfidence === 'high' ? '✓ High' :
+                             formData.tankCapacityConfidence === 'medium' ? '~ Medium' : '! Low'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Info banner */}
+                      <div
+                        className="mt-3 p-2 rounded-lg text-xs text-center"
+                        style={{
+                          backgroundColor: 'color-mix(in srgb, var(--accent-blue) 10%, var(--bg-secondary))',
+                          color: 'var(--accent-blue)',
+                        }}
+                      >
+                        <Info className="w-3 h-3 inline mr-1" />
+                        Tank capacity auto-filled from vehicle database. You can edit it below if needed.
                       </div>
                     </div>
                   </div>
@@ -390,6 +441,74 @@ const Vehicles = () => {
                         color: 'var(--text-primary)',
                       }}
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                      <div className="flex items-center justify-between">
+                        <span>Tank Capacity (L)</span>
+                        <span
+                          className="text-xs px-2 py-0.5 rounded"
+                          style={{
+                            backgroundColor: formData.tankCapacityConfidence === 'high'
+                              ? 'var(--accent-success)'
+                              : formData.tankCapacityConfidence === 'medium'
+                                ? 'var(--accent-warning)'
+                                : 'var(--accent-alert)',
+                            color: 'white'
+                          }}
+                        >
+                          {formData.tankCapacityConfidence === 'high' ? '✓ Verified' :
+                           formData.tankCapacityConfidence === 'medium' ? '~ Estimated' : '! Default'}
+                        </span>
+                      </div>
+                      <span className="block text-xs font-normal mt-1" style={{ color: 'var(--accent-blue)' }}>
+                        <Info className="w-3 h-3 inline mr-1" />
+                        Auto-filled from {formData.tankCapacityDescription || 'vehicle database'} - Edit if incorrect
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={formData.tankCapacity}
+                        onChange={(e) => setFormData({ ...formData, tankCapacity: parseFloat(e.target.value) || 0 })}
+                        placeholder="e.g., 50"
+                        className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors pr-12"
+                        style={{
+                          backgroundColor: 'var(--bg-input)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)',
+                          fontWeight: '500'
+                        }}
+                      />
+                      <span
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        L
+                      </span>
+                    </div>
+                    {/* Source info */}
+                    <div
+                      className="mt-2 p-2 rounded-lg text-xs"
+                      style={{
+                        backgroundColor: formData.tankCapacityConfidence === 'high'
+                          ? 'color-mix(in srgb, var(--accent-success) 10%, var(--bg-secondary))'
+                          : formData.tankCapacityConfidence === 'medium'
+                            ? 'color-mix(in srgb, var(--accent-warning) 10%, var(--bg-secondary))'
+                            : 'color-mix(in srgb, var(--accent-alert) 10%, var(--bg-secondary))',
+                        color: formData.tankCapacityConfidence === 'high'
+                          ? 'var(--accent-success)'
+                          : formData.tankCapacityConfidence === 'medium'
+                            ? 'var(--accent-warning)'
+                            : 'var(--accent-alert)'
+                      }}
+                    >
+                      <Info className="w-3 h-3 inline mr-1" />
+                      Source: {formData.tankCapacitySource || 'vehicle database'} | You can edit this value
+                    </div>
                   </div>
 
                   <div>
@@ -483,7 +602,7 @@ const Vehicles = () => {
                     type="number"
                     value={formData.year}
                     onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                    placeholder="e.g., 2020"
+                    placeholder="e.g., 2021"
                     className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                     style={{
                       backgroundColor: 'var(--bg-input)',
@@ -533,24 +652,32 @@ const Vehicles = () => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                    Tank Capacity (L)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.tankCapacity}
-                    onChange={(e) => setFormData({ ...formData, tankCapacity: parseFloat(e.target.value) })}
-                    placeholder="e.g., 50"
-                    className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
-                    style={{
-                      backgroundColor: 'var(--bg-input)',
-                      borderColor: 'var(--border-color)',
-                      color: 'var(--text-primary)',
-                    }}
-                  />
-                </div>
+               <div className="grid grid-cols-2 gap-4">
+                 <div>
+                   <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                     Tank Capacity (L)
+                     {formData.tankCapacitySource && formData.tankCapacitySource !== 'user-provided' && (
+                       <span className="block text-xs font-normal mt-1" style={{ color: 'var(--accent-blue)' }}>
+                         <Info className="w-3 h-3 inline mr-1" />
+                         {formData.tankCapacityDescription || 'Auto-filled value'}
+                       </span>
+                     )}
+                   </label>
+                   <input
+                     type="number"
+                     step="0.1"
+                     min="0"
+                     value={formData.tankCapacity}
+                     onChange={(e) => setFormData({ ...formData, tankCapacity: parseFloat(e.target.value) || 0 })}
+                     placeholder="e.g., 50"
+                     className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
+                     style={{
+                       backgroundColor: 'var(--bg-input)',
+                       borderColor: 'var(--border-color)',
+                       color: 'var(--text-primary)',
+                     }}
+                   />
+                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>

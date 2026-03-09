@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useFuelData } from '../hooks/useFuelData';
-import { User, Plus, Car, Edit, X, Car as CarIcon, User as UserIcon, UserPlus, Zap, Database, Check } from 'lucide-react';
+import { User, Plus, Car, Edit, X, Car as CarIcon, User as UserIcon, UserPlus, Zap, Database, Check, Wallet, AlertTriangle, RefreshCw, Info } from 'lucide-react';
 import DriverCard from '../components/DriverCard';
 import VehicleCard from '../components/VehicleCard';
 import VehicleSelector from '../components/VehicleSelector';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
+import { getCurrencySymbol } from '../utils/currency';
 
 const Fleet = () => {
   const { data, addDriver, updateDriver, deleteDriver, addVehicle, updateVehicle, deleteVehicle, selectVehicle, logs } = useFuelData();
@@ -39,6 +40,7 @@ const Fleet = () => {
     tankCapacity: 50,
     expectedMileage: 15,
     theftThreshold: 0.75,
+    monthlyBudget: 200,
     licensePlate: '',
     status: 'Active',
   });
@@ -74,6 +76,51 @@ const Fleet = () => {
       totalEntries: vehicleLogs.length,
     };
   };
+
+  // Calculate fleet-wide budget statistics
+  const getFleetBudgetStats = () => {
+    if (!vehicles || !Array.isArray(vehicles) || !logs || !Array.isArray(logs)) {
+      return {
+        totalBudget: 0,
+        totalSpent: 0,
+        vehiclesOverBudget: 0,
+        budgetUsedPercentage: 0,
+      };
+    }
+
+    const currentDate = new Date();
+
+    const totalBudget = vehicles.reduce((sum, vehicle) => sum + (vehicle.monthlyBudget || 200), 0);
+
+    let totalSpent = 0;
+    let vehiclesOverBudget = 0;
+
+    vehicles.forEach(vehicle => {
+      const vehicleLogs = logs.filter(log => log.vehicleId === vehicle.id);
+      const currentMonthExpenditure = vehicleLogs
+        .filter(log => {
+          const logDate = new Date(log.date);
+          return logDate.getMonth() === currentDate.getMonth() &&
+                 logDate.getFullYear() === currentDate.getFullYear();
+        })
+        .reduce((sum, log) => sum + (log.price || 0), 0);
+
+      totalSpent += currentMonthExpenditure;
+
+      if (currentMonthExpenditure > (vehicle.monthlyBudget || 200)) {
+        vehiclesOverBudget++;
+      }
+    });
+
+    return {
+      totalBudget,
+      totalSpent,
+      vehiclesOverBudget,
+      budgetUsedPercentage: totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0,
+    };
+  };
+
+  const fleetBudgetStats = getFleetBudgetStats();
 
   const handleOpenAddDriverModal = () => {
     setEditingDriver(null);
@@ -131,6 +178,7 @@ const Fleet = () => {
       tankCapacity: 50,
       expectedMileage: 15,
       theftThreshold: 0.75,
+      monthlyBudget: 200,
       licensePlate: '',
       status: 'Active',
     });
@@ -155,6 +203,7 @@ const Fleet = () => {
       tankCapacity: vehicle.tankCapacity || 50,
       expectedMileage: vehicle.expectedMileage || 15,
       theftThreshold: vehicle.theftThreshold ?? 0.75,
+      monthlyBudget: vehicle.monthlyBudget ?? 200,
       licensePlate: vehicle.licensePlate || '',
       status: vehicle.status || 'Active',
     });
@@ -191,6 +240,12 @@ const Fleet = () => {
   };
 
   const handleVehicleFromDbSelect = (vehicleData) => {
+    // Auto-fill tank capacity from EPA database
+    const tankCapacity = vehicleData.tankCapacity || 50;
+
+    console.log('Vehicle selected from database:', vehicleData);
+    console.log('Auto-filled tank capacity:', tankCapacity, 'liters');
+
     setSelectedVehicleFromDb(vehicleData);
     setVehicleFormData(prev => ({
       ...prev,
@@ -201,7 +256,7 @@ const Fleet = () => {
       fuelType: vehicleData.fuelType === 'Electric' ? 'electric' :
                 vehicleData.fuelType === 'Diesel' ? 'diesel' :
                 vehicleData.fuelType === 'Hybrid' ? 'hybrid' : 'gasoline',
-      tankCapacity: vehicleData.tankCapacity || 50,
+      tankCapacity: tankCapacity,
       expectedMileage: vehicleData.epaCombined || vehicleData.expectedMileage || 15,
       theftThreshold: prev.theftThreshold || 0.75,
     }));
@@ -268,7 +323,7 @@ const Fleet = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
               <div className="flex items-center gap-2 mb-2">
                 <Car className="w-4 h-4" style={{ color: 'var(--accent-blue)' }} />
@@ -307,13 +362,31 @@ const Fleet = () => {
 
             <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
               <div className="flex items-center gap-2 mb-2">
-                <X className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                <Wallet className="w-4 h-4" style={{ color: 'var(--accent-blue)' }} />
                 <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                  Inactive
+                  Fleet Budget Used
                 </p>
               </div>
-              <p className="text-2xl font-bold" style={{ color: 'var(--text-muted)' }}>
-                {(vehicles || []).filter(v => v.status !== 'Active').length}
+              <p className="text-2xl font-bold" style={{ color: 'var(--accent-blue)' }}>
+                {fleetBudgetStats.budgetUsedPercentage.toFixed(0)}%
+              </p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {getCurrencySymbol(data?.vehicleProfile?.currency || 'USD')}{fleetBudgetStats.totalSpent.toFixed(0)} / {fleetBudgetStats.totalBudget.toFixed(0)}
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-4 h-4" style={{ color: fleetBudgetStats.vehiclesOverBudget > 0 ? 'var(--accent-alert)' : 'var(--accent-success)' }} />
+                <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                  Over Budget
+                </p>
+              </div>
+              <p className="text-2xl font-bold" style={{ color: fleetBudgetStats.vehiclesOverBudget > 0 ? 'var(--accent-alert)' : 'var(--accent-success)' }}>
+                {fleetBudgetStats.vehiclesOverBudget}
+              </p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {fleetBudgetStats.vehiclesOverBudget > 0 ? 'vehicles exceeded' : 'All on track'}
               </p>
             </div>
           </div>
@@ -341,6 +414,7 @@ const Fleet = () => {
                   key={vehicle.id}
                   vehicle={vehicle}
                   stats={getVehicleStats(vehicle.id)}
+                  logs={logs && Array.isArray(logs) ? logs.filter(log => log.vehicleId === vehicle.id) : []}
                   isSelected={currentVehicleId === vehicle.id}
                   onSelect={handleSelectVehicle}
                   onEdit={handleEditVehicle}
@@ -470,7 +544,7 @@ const Fleet = () => {
                 type="text"
                 value={driverFormData.name}
                 onChange={(e) => setDriverFormData({ ...driverFormData, name: e.target.value })}
-                placeholder="e.g., John Smith"
+                placeholder="e.g., Driver Name"
                 className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-input)',
@@ -634,9 +708,12 @@ const Fleet = () => {
                         </div>
                         <div>
                           <span style={{ color: 'var(--text-muted)' }}>Tank Capacity:</span>{' '}
-                          <span style={{ color: 'var(--text-primary)' }}>
-                            {selectedVehicleFromDb.tankCapacity} L
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span style={{ color: 'var(--text-primary)' }}>
+                              {selectedVehicleFromDb.tankCapacity} L
+                            </span>
+                            <Info className="w-3 h-3" style={{ color: 'var(--accent-blue)' }} title="Auto-filled from vehicle database" />
+                          </div>
                         </div>
                         <div>
                           <span style={{ color: 'var(--text-muted)' }}>Est. Mileage:</span>{' '}
@@ -644,6 +721,18 @@ const Fleet = () => {
                             {selectedVehicleFromDb.epaCombined} km/L
                           </span>
                         </div>
+                      </div>
+
+                      {/* Info banner */}
+                      <div
+                        className="mt-3 p-2 rounded-lg text-xs text-center"
+                        style={{
+                          backgroundColor: 'color-mix(in srgb, var(--accent-blue) 10%, var(--bg-secondary))',
+                          color: 'var(--accent-blue)',
+                        }}
+                      >
+                        <Info className="w-3 h-3 inline mr-1" />
+                        Tank capacity auto-filled from vehicle database. You can edit it below if needed.
                       </div>
                     </div>
                   </div>
@@ -673,6 +762,37 @@ const Fleet = () => {
 
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                      Monthly Budget
+                      <span className="block text-xs font-normal mt-1" style={{ color: 'var(--text-muted)' }}>
+                        Set your monthly fuel budget for this vehicle
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={vehicleFormData.monthlyBudget}
+                        onChange={(e) => setVehicleFormData({ ...vehicleFormData, monthlyBudget: parseFloat(e.target.value) || 0 })}
+                        placeholder="200"
+                        className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors pr-12"
+                        style={{
+                          backgroundColor: 'var(--bg-input)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <span
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        $
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                       License Plate
                     </label>
                     <input
@@ -687,6 +807,38 @@ const Fleet = () => {
                         color: 'var(--text-primary)',
                       }}
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                      Tank Capacity (L)
+                      <span className="block text-xs font-normal mt-1" style={{ color: 'var(--accent-blue)' }}>
+                        <Info className="w-3 h-3 inline mr-1" />
+                        Auto-filled from vehicle database - Edit if incorrect
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={vehicleFormData.tankCapacity}
+                        onChange={(e) => setVehicleFormData({ ...vehicleFormData, tankCapacity: parseFloat(e.target.value) || 0 })}
+                        placeholder="e.g., 50"
+                        className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors pr-12"
+                        style={{
+                          backgroundColor: 'var(--bg-input)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <span
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        L
+                      </span>
+                    </div>
                   </div>
 
                   <div>
@@ -780,7 +932,7 @@ const Fleet = () => {
                     type="number"
                     value={vehicleFormData.year}
                     onChange={(e) => setVehicleFormData({ ...vehicleFormData, year: parseInt(e.target.value) })}
-                    placeholder="e.g., 2020"
+                    placeholder="e.g., 2021"
                     className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                     style={{
                       backgroundColor: 'var(--bg-input)',
@@ -869,37 +1021,68 @@ const Fleet = () => {
                  </div>
 
                  <div>
-                   <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                     Theft Alert Threshold
-                     <span className="block text-xs font-normal mt-1" style={{ color: 'var(--text-muted)' }}>
-                       Flag efficiency below this % of average
-                     </span>
-                   </label>
-                   <div className="relative">
-                     <input
-                       type="number"
-                       step="1"
-                       min="1"
-                       max="100"
-                       value={(vehicleFormData.theftThreshold * 100).toFixed(0)}
-                       onChange={(e) => setVehicleFormData({ ...vehicleFormData, theftThreshold: parseFloat(e.target.value) / 100 })}
-                       placeholder="75"
-                       className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors pr-12"
-                       style={{
-                         backgroundColor: 'var(--bg-input)',
-                         borderColor: 'var(--border-color)',
-                         color: 'var(--text-primary)',
-                       }}
-                     />
-                     <span
-                       className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
-                       style={{ color: 'var(--text-muted)' }}
-                     >
-                       %
-                     </span>
-                   </div>
-                 </div>
-               </div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                      Theft Alert Threshold
+                      <span className="block text-xs font-normal mt-1" style={{ color: 'var(--text-muted)' }}>
+                        Flag efficiency below this % of average
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="1"
+                        min="1"
+                        max="100"
+                        value={(vehicleFormData.theftThreshold * 100).toFixed(0)}
+                        onChange={(e) => setVehicleFormData({ ...vehicleFormData, theftThreshold: parseFloat(e.target.value) / 100 })}
+                        placeholder="75"
+                        className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors pr-12"
+                        style={{
+                          backgroundColor: 'var(--bg-input)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <span
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        %
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                      Monthly Budget
+                      <span className="block text-xs font-normal mt-1" style={{ color: 'var(--text-muted)' }}>
+                        Set your monthly fuel budget for this vehicle
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={vehicleFormData.monthlyBudget}
+                        onChange={(e) => setVehicleFormData({ ...vehicleFormData, monthlyBudget: parseFloat(e.target.value) || 0 })}
+                        placeholder="200"
+                        className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors pr-12"
+                        style={{
+                          backgroundColor: 'var(--bg-input)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <span
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        $
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>

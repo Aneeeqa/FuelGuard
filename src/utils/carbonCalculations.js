@@ -1,23 +1,39 @@
+/**
+ * Carbon footprint calculations for fuel consumption tracking
+ *
+ * CO2 Emission Factors (kg CO2 per liter):
+ * - Gasoline: 2.31 kg/L
+ * - Diesel: 2.68 kg/L
+ * - LPG: 1.53 kg/L
+ * - Hybrid: 1.5 kg/L (gasoline engine portion)
+ * - Electric: 0 kg/L (direct emissions)
+ *
+ * Source: EPA and IPCC guidelines
+ */
+
+// CO2 emission factors in kg CO2 per liter
 const CO2_EMISSION_FACTORS = {
   gasoline: 2.31,
   diesel: 2.68,
   lpg: 1.53,
-  hybrid: 1.5,
-  electric: 0,
+  hybrid: 1.5, // Gasoline portion of hybrid
+  electric: 0, // No direct tailpipe emissions
   'regular gasoline': 2.31,
   'premium gasoline': 2.31,
   'diesel': 2.68,
 };
 
+// Average vehicle CO2 emissions benchmarks (kg CO2/year)
 const AVERAGE_VEHICLE_EMISSIONS = {
-  compact: 3989,
-  sedan: 4669,
-  suv: 6350,
-  truck: 7711,
-  default: 4990,
+  compact: 3989,    // 4.4 tonnes
+  sedan: 4669,      // 5.1 tonnes
+  suv: 6350,        // 7.0 tonnes
+  truck: 7711,       // 8.5 tonnes
+  default: 4990,     // 5.5 tonnes (average all vehicles)
 };
 
-const AVERAGE_PER_KM = 0.38;
+// Per km average (kg CO2/km) - based on 12,000 miles/year average
+const AVERAGE_PER_KM = 0.38; // ~0.38 kg CO2 per km
 
 /**
  * Get CO2 emission factor for a fuel type
@@ -144,8 +160,11 @@ export const calculateYearlyCO2 = (logs, fuelType = 'gasoline') => {
  * @returns {Object} Comparison data with percentage
  */
 export const compareWithAverage = (userCO2PerKm, vehicleType = 'sedan') => {
+  console.log('compareWithAverage - Input:', { userCO2PerKm, vehicleType });
+
   const averagePerKm = AVERAGE_PER_KM;
 
+  // Vehicle type multiplier (SUVs/trucks emit more)
   const vehicleMultiplier = {
     compact: 0.85,
     sedan: 1.0,
@@ -155,21 +174,24 @@ export const compareWithAverage = (userCO2PerKm, vehicleType = 'sedan') => {
 
   const adjustedAverage = averagePerKm * vehicleMultiplier;
 
+  // Handle undefined/null/invalid inputs
   if (userCO2PerKm === null || userCO2PerKm === undefined || isNaN(userCO2PerKm)) {
+    console.log('compareWithAverage - Invalid input, returning neutral');
     return {
       userCO2: 0,
       averageCO2: adjustedAverage,
-      difference: -100,
+      difference: -100, // -100% means unknown
       percentage: 0,
       status: 'neutral',
     };
   }
 
   if (userCO2PerKm <= 0) {
+    console.log('compareWithAverage - Zero or negative input, returning neutral');
     return {
       userCO2: 0,
       averageCO2: adjustedAverage,
-      difference: -100,
+      difference: -100, // -100% means unknown
       percentage: 0,
       status: 'neutral',
     };
@@ -178,11 +200,13 @@ export const compareWithAverage = (userCO2PerKm, vehicleType = 'sedan') => {
   const difference = userCO2PerKm - adjustedAverage;
   const percentage = (difference / adjustedAverage) * 100;
 
+  console.log('compareWithAverage - Calculated:', { difference, percentage });
+
   let status;
   if (percentage <= -15) {
-    status = 'excellent';
+    status = 'excellent'; // 15% or more below average
   } else if (percentage <= 0) {
-    status = 'good';
+    status = 'good'; // Up to 15% below average
   } else if (percentage <= 20) {
     status = 'moderate'; // Up to 20% above average
   } else {
@@ -218,7 +242,7 @@ export const calculateEcoDrivingScore = (logs) => {
 
   // Calculate efficiency trends
   const sortedLogs = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
-  const recentLogs = sortedLogs.slice(-5);
+  const recentLogs = sortedLogs.slice(-5); // Last 5 logs
   const earlierLogs = sortedLogs.slice(-10, -5) || sortedLogs.slice(0, 3);
 
   const recentAvg =
@@ -230,23 +254,29 @@ export const calculateEcoDrivingScore = (logs) => {
   const flaggedLogs = logs.filter((log) => log.isFlagged).length;
   const flaggedRatio = flaggedLogs / logs.length;
 
-  let score = 75;
+  // Calculate score (0-100)
+  let score = 75; // Base score
 
+  // Trend bonus/penalty
   if (trend > 0) {
-    score += Math.min(trend * 3, 15);
+    score += Math.min(trend * 3, 15); // Up to +15 for improvement
   } else if (trend < 0) {
-    score -= Math.min(Math.abs(trend) * 3, 10);
+    score -= Math.min(Math.abs(trend) * 3, 10); // Up to -10 for decline
   }
 
-  score -= flaggedRatio * 50;
+  // Flagged logs penalty
+  score -= flaggedRatio * 50; // -50 if 100% flagged
 
+  // Mileage consistency bonus
   const variance = calculateVariance(recentLogs.map((log) => log.mileage || 0));
   if (variance < 2) {
-    score += 10;
+    score += 10; // +10 for very consistent driving
   }
 
+  // Clamp score to 0-100
   score = Math.max(0, Math.min(100, score));
 
+  // Determine category and suggestions
   let category, suggestions;
 
   if (score >= 85) {
@@ -280,6 +310,7 @@ export const calculateEcoDrivingScore = (logs) => {
     ];
   }
 
+  // Add flagged entry suggestions
   if (flaggedLogs > 0) {
     suggestions.push(
       `🔔 ${flaggedLogs} flagged entry${flaggedLogs > 1 ? 'ies' : ''} detected - check for fuel theft or unusual driving conditions`

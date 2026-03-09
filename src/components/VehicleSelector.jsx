@@ -161,6 +161,9 @@ const VehicleSelector = ({
 
                     fuelType: details.fuelType,
                     tankCapacity: details.tankCapacity || 50,
+                    tankCapacitySource: details.tankCapacitySource,
+                    tankCapacityConfidence: details.tankCapacityConfidence,
+                    tankCapacityDescription: details.tankCapacityDescription,
                     name: `${details.year} ${details.make} ${details.model} ${details.variant}`,
                     country: country,
                     currency: countryDetails.currency,
@@ -307,7 +310,7 @@ const VehicleSelector = ({
                         value={manualName}
                         onChange={(e) => setManualName(e.target.value)}
                         onBlur={handleManualSubmit}
-                        placeholder="e.g., 2020 Toyota Camry"
+                        placeholder="e.g., Toyota Camry"
                         className="w-full px-4 py-3 rounded-xl min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                         style={{
                             backgroundColor: 'var(--bg-input)',

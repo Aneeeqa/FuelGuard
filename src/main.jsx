@@ -9,7 +9,6 @@ import './index.css';
 let root = document.getElementById('root');
 
 if (!root) {
-  console.error('Root element not found!');
   root = document.createElement('div');
   root.id = 'root';
   document.body.appendChild(root);
@@ -56,5 +55,3 @@ try {
     </div>
   `;
 }
-
-
