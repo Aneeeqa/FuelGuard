@@ -42,6 +42,7 @@ const defaultState = {
     fuelType: null,
     assignedDriverId: null,
     theftThreshold: 0.75,
+    monthlyBudget: 200,
     geofences: [],
     emergencyContact: {
       name: '',
@@ -61,8 +62,6 @@ const defaultState = {
     costPerKm: 0,
     averagePricePerUnit: 0,
   },
-  monthlyBudget: 200,
-  budgetAlert: null,
   lastLocation: null,
 };
 
@@ -91,14 +90,14 @@ export const FuelProvider = ({ children }) => {
 
   useEffect(() => {
     if (!loading && !skipPersist) {
-      storage.set(STORAGE_KEY, data);
+      storage.set(STORAGE_KEY, data).catch(console.error);
     }
     if (skipPersist) {
       setSkipPersist(false);
     }
   }, [data, loading, skipPersist]);
 
-  const calculateStats = useCallback((logs, vehicleId = null) => {
+  const calculateStats = useCallback((logs, vehicleId = null, monthlyBudget = 200) => {
     const filteredLogs = vehicleId && data.vehicles && data.vehicles.length > 1
       ? logs.filter(log => log.vehicleId === vehicleId || (!log.vehicleId && vehicleId === data.currentVehicleId))
       : logs;
@@ -138,8 +137,6 @@ export const FuelProvider = ({ children }) => {
     const costPerKm = totalDistance > 0 ? totalExpenditure / totalDistance : 0;
     const averagePricePerUnit = totalFuel > 0 ? totalExpenditure / totalFuel : 0;
 
-    const budgetAlert = checkBudgetAlert(totalExpenditure, data.monthlyBudget || 200);
-
     return {
       avgMileage,
       totalFuel,
@@ -152,7 +149,7 @@ export const FuelProvider = ({ children }) => {
       costPerKm,
       averagePricePerUnit,
     };
-  }, [data.vehicleProfile?.fuelType, data.monthlyBudget, data.currentVehicleId, data.vehicles?.length]);
+  }, [data.vehicleProfile?.fuelType, data.currentVehicleId, data.vehicles?.length]);
 
   const addLog = useCallback((newLog) => {
     setData((prev) => {
@@ -171,7 +168,6 @@ export const FuelProvider = ({ children }) => {
 
         if (distance > 1) {
           mileage = distance / newLog.liters;
-
           const theftThreshold = prev.vehicleProfile.theftThreshold ?? 0.75;
           if (mileage < prev.stats.avgMileage * theftThreshold && mileage > 0) {
             isFlagged = true;
@@ -229,45 +225,50 @@ export const FuelProvider = ({ children }) => {
           const rate = rates?.rates?.[to];
           if (!rate) {
             console.warn(`No exchange rate for ${to}, using fallback`);
-            return amount;
+            return convertCurrencySync(amount, from, to);
           }
-          return amount / rate;
+          return amount * rate;
         };
 
-        const convertedLogs = currentData.logs.map((log) => {
-          const convertedPrice = convertWithRates(log.originalPrice || log.price, oldCurrency, newCurrency);
-          return {
-            ...log,
-            price: convertedPrice,
-            currency: newCurrency,
-            originalCurrency: oldCurrency,
-          };
-        });
-
-        setData((prev) => ({
-          ...prev,
-          logs: convertedLogs,
-          vehicleProfile: { ...prev.vehicleProfile, ...profile },
-          stats: calculateStats(convertedLogs),
+        const convertedLogs = currentData.logs.map(log => ({
+          ...log,
+          currency: newCurrency,
+          price: convertWithRates(log.price, oldCurrency, newCurrency),
+          pricePerLiter: log.pricePerLiter
+            ? convertWithRates(log.pricePerLiter, oldCurrency, newCurrency)
+            : null,
+          costPerKm: log.costPerKm
+            ? convertWithRates(log.costPerKm, oldCurrency, newCurrency)
+            : null,
+          costPerMile: log.costPerMile
+            ? convertWithRates(log.costPerMile, oldCurrency, newCurrency)
+            : null,
+          originalCurrency: log.originalCurrency || oldCurrency,
+          originalPrice: log.originalPrice || log.price,
         }));
 
-        console.log('Currency conversion successful, updating state');
+        const newStats = calculateStats(convertedLogs);
+        setData({
+          ...currentData,
+          vehicleProfile: { ...currentData.vehicleProfile, ...profile, currency: newCurrency },
+          logs: convertedLogs,
+          stats: newStats,
+        });
       } catch (error) {
         console.error('Currency conversion failed:', error);
-        setData((prev) => ({
-          ...prev,
-          vehicleProfile: { ...prev.vehicleProfile, currency: oldCurrency },
-        }));
+        setData({
+          ...currentData,
+          vehicleProfile: { ...currentData.vehicleProfile, ...profile, currency: newCurrency },
+        });
       }
     } else {
-      setData((prev) => ({
-        ...prev,
-        vehicleProfile: { ...prev.vehicleProfile, ...profile },
-      }));
+      setData({
+        ...currentData,
+        vehicleProfile: { ...currentData.vehicleProfile, ...profile },
+      });
     }
   }, [data, calculateStats]);
 
-  // Add a new driver
   const addDriver = useCallback((driver) => {
     setData((prev) => ({
       ...prev,
@@ -282,7 +283,6 @@ export const FuelProvider = ({ children }) => {
     }));
   }, []);
 
-  // Update a driver
   const updateDriver = useCallback((driverId, updates) => {
     setData((prev) => ({
       ...prev,
@@ -292,7 +292,6 @@ export const FuelProvider = ({ children }) => {
     }));
   }, []);
 
-  // Delete a driver
   const deleteDriver = useCallback((driverId) => {
     setData((prev) => {
       const updatedDrivers = prev.drivers.filter((driver) => driver.id !== driverId);
@@ -300,13 +299,13 @@ export const FuelProvider = ({ children }) => {
     });
   }, []);
 
-  // Add a new vehicle
   const addVehicle = useCallback((vehicle) => {
     setData((prev) => {
       const newVehicle = {
         ...vehicle,
         id: vehicle.id || Date.now().toString(),
         createdAt: new Date().toISOString(),
+        monthlyBudget: vehicle.monthlyBudget ?? 200,
       };
       const updatedVehicles = [...prev.vehicles, newVehicle];
       const newCurrentVehicleId = prev.currentVehicleId || newVehicle.id;
@@ -368,29 +367,20 @@ export const FuelProvider = ({ children }) => {
 
   const injectDemoData = useCallback(() => {
     const now = new Date();
-
     const randomInRange = (min, max) => Math.random() * (max - min) + min;
 
     let currentOdometer = Math.floor(randomInRange(5000, 10000));
-
     const basePricePerLiter = randomInRange(3.00, 4.50);
-
     const numLogs = Math.floor(randomInRange(15, 20));
     const demoLogs = [];
-
     const distances = [];
 
     for (let i = 0; i < numLogs; i++) {
       const daysBetween = Math.floor(randomInRange(2, 7));
       const logDate = new Date(now - i * daysBetween * 24 * 60 * 60 * 1000);
-
       const isFlagged = i < 3;
-      const isFlagged = i < 3;
-
-      // Random fuel amount: 7-14 liters
       const fuelAmount = parseFloat(randomInRange(7, 14).toFixed(1));
 
-      // Calculate distance and mileage
       let mileage;
       let distance;
 
@@ -403,7 +393,6 @@ export const FuelProvider = ({ children }) => {
       }
 
       const price = parseFloat((fuelAmount * basePricePerLiter * randomInRange(0.95, 1.05)).toFixed(2));
-
       distances.push(distance);
 
       demoLogs.push({
@@ -418,12 +407,11 @@ export const FuelProvider = ({ children }) => {
         currency: 'USD',
         originalCurrency: 'USD',
         originalPrice: price,
-        pumpName: i % 3 === 0 ? 'Shell Station' : i % 3 ===1 ? 'Chevron' : 'BP',
+        pumpName: i % 3 === 0 ? 'Shell Station' : i % 3 === 1 ? 'Chevron' : 'BP',
       });
     }
 
     demoLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
-
     let baseOdometer = Math.floor(randomInRange(5000, 10000));
 
     for (let i = demoLogs.length - 1; i >= 0; i--) {
@@ -445,31 +433,30 @@ export const FuelProvider = ({ children }) => {
 
     const vehicleOptions = [
       {
-        name: 'Sample Vehicle 1',
-        make: 'Sample',
-        model: 'Vehicle',
-        variant: 'Sample',
-        year: new Date().getFullYear(),
+        name: 'Toyota Corolla',
+        make: 'Toyota',
+        model: 'Corolla',
+        variant: '2.0L 4cyl Auto CVT',
         vehicleId: 41190,
         epaCity: 30,
         epaHighway: 38,
         epaCombined: 33,
       },
       {
-        name: 'Sample Vehicle 2',
-        make: 'Sample',
-        model: 'Vehicle',
-        year: new Date().getFullYear(),
+        name: 'Honda Civic',
+        make: 'Honda',
+        model: 'Civic',
+        variant: '2.0L 4cyl Auto',
         vehicleId: 41542,
         epaCity: 33,
         epaHighway: 42,
         epaCombined: 36,
       },
       {
-        name: 'Sample Vehicle 3',
-        make: 'Sample',
-        model: 'Vehicle',
-        year: new Date().getFullYear(),
+        name: 'Hyundai Elantra',
+        make: 'Hyundai',
+        model: 'Elantra',
+        variant: '2.0L 4cyl Auto',
         vehicleId: 42123,
         epaCity: 33,
         epaHighway: 43,
@@ -491,12 +478,13 @@ export const FuelProvider = ({ children }) => {
       efficiencyUnit: 'km/L',
       fuelType: 'gasoline',
       theftThreshold: 0.75,
+      monthlyBudget: 200,
       assignedDriverId: 'driver-1',
       status: 'Active',
       createdAt: new Date().toISOString(),
     };
 
-    const driverNames = ['Sample User 1', 'Sample User 2', 'Sample User 3', 'Sample User 4'];
+    const driverNames = ['Driver One', 'Driver Two', 'Driver Three', 'Driver Four'];
     const selectedDriver = driverNames[Math.floor(randomInRange(0, driverNames.length))];
 
     setData({
@@ -546,57 +534,3 @@ export const FuelProvider = ({ children }) => {
 
   return <FuelContext.Provider value={value}>{children}</FuelContext.Provider>;
 };
-
-    // Random driver names
-    const driverNames = ['Sample User 1', 'Sample User 2', 'Sample User 3', 'Sample User 4'];
-    const selectedDriver = driverNames[Math.floor(randomInRange(0, driverNames.length))];
-
-    setData({
-      logs: demoLogs,
-      drivers: [
-        {
-          id: 'driver-1',
-          name: selectedDriver,
-          email: `${selectedDriver.toLowerCase().replace(' ', '.')}@example.com`,
-          phone: '+1 ' + Math.floor(randomInRange(200, 999)) + ' ' + Math.floor(randomInRange(100, 999)) + ' ' + Math.floor(randomInRange(1000, 9999)),
-          assignedVehicleId: 'vehicle-1',
-      createdAt: new Date().toISOString(),
-        },
-      ],
-      vehicles: [demoVehicle],
-      currentVehicleId: 'vehicle-1',
-      vehicleProfile: { ...demoVehicle, id: undefined, createdAt: undefined },
-      stats,
-      lastLocation: null,
-    });
-  }, [calculateStats]);
-
-  // Clear all data
-  const clearAllData = useCallback(async () => {
-    setSkipPersist(true); // Prevent the persistence effect from saving defaultState
-    await storage.clear(STORAGE_KEY);
-    setData(defaultState);
-  }, []);
-
-  const value = {
-    data,
-    loading,
-    storageType,
-    addLog,
-    deleteLog,
-    updateVehicleProfile,
-    updateVehicleProfileWithCurrencyConversion,
-    addVehicle,
-    updateVehicle,
-    deleteVehicle,
-    selectVehicle,
-    addDriver,
-    updateDriver,
-    deleteDriver,
-    injectDemoData,
-    clearAllData,
-  };
-
-  return <FuelContext.Provider value={value}>{children}</FuelContext.Provider>;
-};
-

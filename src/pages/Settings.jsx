@@ -14,15 +14,17 @@ const Settings = () => {
   const [demoInjected, setDemoInjected] = useState(false);
   const [showVehicleSelector, setShowVehicleSelector] = useState(false);
 
+  // Geofencing state
   const [showGeofenceForm, setShowGeofenceForm] = useState(false);
   const [newGeofence, setNewGeofence] = useState({
     name: 'Home',
     lat: '',
     lng: '',
-    radius: 0.5,
+    radius: 0.5, // 500m default
   });
   const [geofences, setGeofences] = useState(data.vehicleProfile?.geofences || []);
 
+  // Emergency contact state
   const [showEmergencyForm, setShowEmergencyForm] = useState(false);
   const [emergencyContact, setEmergencyContact] = useState(
     data.vehicleProfile?.emergencyContact || { name: '', phone: '', relationship: '' }
@@ -38,8 +40,10 @@ const Settings = () => {
     fuelVolumeUnit: data.vehicleProfile?.fuelVolumeUnit || 'L',
     efficiencyUnit: data.vehicleProfile?.efficiencyUnit || 'km/L',
     theftThreshold: data.vehicleProfile?.theftThreshold ?? 0.75,
+    monthlyBudget: data.vehicleProfile?.monthlyBudget ?? 200,
   });
 
+  // Sync vehicleForm with data.vehicleProfile when it changes (e.g., from other tabs)
   useEffect(() => {
     if (data.vehicleProfile) {
       setVehicleForm({
@@ -52,11 +56,13 @@ const Settings = () => {
         fuelVolumeUnit: data.vehicleProfile.fuelVolumeUnit || 'L',
         efficiencyUnit: data.vehicleProfile.efficiencyUnit || 'km/L',
         theftThreshold: data.vehicleProfile.theftThreshold ?? 0.75,
+        monthlyBudget: data.vehicleProfile.monthlyBudget ?? 200,
       });
     }
   }, [data.vehicleProfile]);
 
   const handleVehicleUpdate = () => {
+    // Derive efficiencyUnit from fuelVolumeUnit if not explicitly set
     const derivedEfficiencyUnit = vehicleForm.fuelVolumeUnit === 'gal' ? 'mpg' : 'km/L';
 
     updateVehicleProfile({
@@ -69,10 +75,12 @@ const Settings = () => {
       fuelVolumeUnit: vehicleForm.fuelVolumeUnit,
       efficiencyUnit: vehicleForm.efficiencyUnit || derivedEfficiencyUnit,
       theftThreshold: parseFloat(vehicleForm.theftThreshold) || 0.75,
+      monthlyBudget: parseFloat(vehicleForm.monthlyBudget) || 200,
     });
   };
 
   const handleVehicleSelect = (vehicleData) => {
+    // Update both local form and context with EPA data
     setVehicleForm(prev => ({
       ...prev,
       name: vehicleData.name || prev.name,
@@ -94,111 +102,20 @@ const Settings = () => {
 
   const handleCurrencyChange = async (newCurrency) => {
     const oldCurrency = vehicleForm.currency;
+    console.log(`Currency change: ${oldCurrency} -> ${newCurrency}`);
     setVehicleForm(prev => ({ ...prev, currency: newCurrency }));
 
     try {
+      // Use the currency conversion function to update profile and convert all logs
       await updateVehicleProfileWithCurrencyConversion({
         ...data.vehicleProfile,
         currency: newCurrency
       });
+      console.log('Currency conversion completed');
     } catch (error) {
       console.error('Currency conversion failed:', error);
+      // Revert the form currency if conversion failed
       setVehicleForm(prev => ({ ...prev, currency: oldCurrency }));
-    }
-  };
-
-  const handleCountryChange = async (newCountry) => {
-    const defaultCurrency = getDefaultCurrencyForCountry(newCountry);
-    const oldCurrency = vehicleForm.currency;
-
-    setVehicleForm(prev => ({
-      ...prev,
-      country: newCountry,
-      currency: defaultCurrency
-    }));
-
-    if (oldCurrency !== defaultCurrency) {
-      await updateVehicleProfileWithCurrencyConversion({
-        ...data.vehicleProfile,
-        country: newCountry,
-        currency: defaultCurrency
-      });
-    } else {
-      updateVehicleProfile({
-        ...data.vehicleProfile,
-        country: newCountry,
-      });
-    }
-  };
-
-  const handleInjectDemo = () => {
-    injectDemoData();
-    setDemoInjected(true);
-    setVehicleForm({
-      name: 'Sample Vehicle',
-      expectedMileage: 15,
-      tankCapacity: 50,
-      currency: 'USD',
-      country: 'US',
-      distanceUnit: 'km',
-      fuelVolumeUnit: 'L',
-      efficiencyUnit: 'km/L',
-    });
-    setTimeout(() => setDemoInjected(false), 2000);
-  };
-
-  const handleClearData = async () => {
-    await clearAllData();
-    setConfirmClear(false);
-    setVehicleForm({
-      name: '',
-      expectedMileage: 15,
-      tankCapacity: 50,
-      currency: 'USD',
-      country: 'US',
-      distanceUnit: 'km',
-      fuelVolumeUnit: 'L',
-      efficiencyUnit: 'km/L',
-    });
-    setGeofences([]);
-  };
-
-  const handleAddGeofence = () => {
-    const lat = parseFloat(newGeofence.lat);
-    const lng = parseFloat(newGeofence.lng);
-    const radius = parseFloat(newGeofence.radius);
-
-    if (!isValidGeofence(lat, lng) || isNaN(radius) || radius <= 0) {
-      return;
-    }
-
-    const fence = createGeofence(lat, lng, radius, newGeofence.name);
-    const updatedFences = [...geofences, fence];
-    setGeofences(updatedFences);
-    updateVehicleProfile({ ...data.vehicleProfile, geofences: updatedFences });
-
-    setNewGeofence({ name: 'Home', lat: '', lng: '', radius: 0.5 });
-    setShowGeofenceForm(false);
-  };
-
-  const handleRemoveGeofence = (index) => {
-    const updatedFences = geofences.filter((_, i) => i !== index);
-    setGeofences(updatedFences);
-    updateVehicleProfile({ ...data.vehicleProfile, geofences: updatedFences });
-  };
-
-  const handleUseCurrentLocation = async () => {
-    try {
-      const { getCurrentPosition } = await import('../utils/geolocation');
-      const position = await getCurrentPosition({ timeout: 15000, highAccuracy: true });
-      setNewGeofence(prev => ({
-        ...prev,
-        lat: position.lat.toString(),
-        lng: position.lng.toString(),
-      }));
-    } catch (error) {
-      console.error('Failed to get current location:', error);
-      alert('Could not get your location. Please enter coordinates manually.');
     }
   };
 
@@ -232,7 +149,7 @@ const Settings = () => {
     injectDemoData();
     setDemoInjected(true);
     setVehicleForm({
-      name: 'Sample Vehicle',
+      name: 'Demo Vehicle',
       expectedMileage: 15,
       tankCapacity: 50,
       currency: 'USD',
@@ -240,6 +157,7 @@ const Settings = () => {
       distanceUnit: 'km',
       fuelVolumeUnit: 'L',
       efficiencyUnit: 'km/L',
+      monthlyBudget: 200,
     });
     setTimeout(() => setDemoInjected(false), 2000);
   };
@@ -256,6 +174,7 @@ const Settings = () => {
       distanceUnit: 'km',
       fuelVolumeUnit: 'L',
       efficiencyUnit: 'km/L',
+      monthlyBudget: 200,
     });
     setGeofences([]);
   };
@@ -455,39 +374,71 @@ const Settings = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                Theft Alert Threshold
-                <span className="block text-xs font-normal mt-1" style={{ color: 'var(--text-muted)' }}>
-                  Flag efficiency below this % of average
-                </span>
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={(vehicleForm.theftThreshold * 100).toFixed(0)}
-                  onChange={(e) => setVehicleForm({ ...vehicleForm, theftThreshold: parseFloat(e.target.value) / 100 })}
-                  onBlur={handleVehicleUpdate}
-                  placeholder="75"
-                  min="1"
-                  max="100"
-                  className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors duration-300 pr-12"
-                  style={{
-                    backgroundColor: 'var(--bg-input)',
-                    borderColor: 'var(--border-color)',
-                    color: 'var(--text-primary)'
-                  }}
-                />
-                <span
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  %
-                </span>
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                      Theft Alert Threshold
+                      <span className="block text-xs font-normal mt-1" style={{ color: 'var(--text-muted)' }}>
+                        Flag efficiency below this % of average
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={(vehicleForm.theftThreshold * 100).toFixed(0)}
+                        onChange={(e) => setVehicleForm({ ...vehicleForm, theftThreshold: parseFloat(e.target.value) / 100 })}
+                        onBlur={handleVehicleUpdate}
+                        placeholder="75"
+                        min="1"
+                        max="100"
+                        className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors duration-300 pr-12"
+                        style={{
+                          backgroundColor: 'var(--bg-input)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                      <span
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        %
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                      Monthly Budget
+                      <span className="block text-xs font-normal mt-1" style={{ color: 'var(--text-muted)' }}>
+                        Set your monthly fuel budget for this vehicle
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={vehicleForm.monthlyBudget}
+                        onChange={(e) => setVehicleForm({ ...vehicleForm, monthlyBudget: parseFloat(e.target.value) || 0 })}
+                        onBlur={handleVehicleUpdate}
+                        placeholder="200"
+                        className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors duration-300 pr-12"
+                        style={{
+                          backgroundColor: 'var(--bg-input)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                      <span
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        $
+                      </span>
+                    </div>
+                  </div>
             </div>
-          </div>
         </div>
 
         {/* Currency and Unit Section - MOVED TO TOP */}
