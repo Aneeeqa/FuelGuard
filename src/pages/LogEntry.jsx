@@ -71,6 +71,9 @@ const LogEntry = () => {
   const [displayFuelValue, setDisplayFuelValue] = useState('');
   const [userHasTyped, setUserHasTyped] = useState(false);
 
+  // ========================================
+  // NEW: Tank-to-Tank Form State (Task 5)
+  // ========================================
   const [isFullTank, setIsFullTank] = useState(false);
   const [fuelLevelBeforeFill, setFuelLevelBeforeFill] = useState(0);
   const [gaugeReading, setGaugeReading] = useState('');
@@ -93,7 +96,8 @@ const LogEntry = () => {
 
   const handleFuelAmountBlur = () => {
     const numValue = parseFloat(displayFuelValue);
-    if (isNaN(numValue) || numValue <= 0) {
+    // Allow 0 for tracking entries, but reject negative or NaN
+    if (isNaN(numValue) || numValue < 0) {
       return;
     }
     const liters = fuelUnit === 'gal' ? gallonsToLiters(numValue) : numValue;
@@ -121,6 +125,7 @@ const LogEntry = () => {
   }, [fuelUnit]);
 
   useEffect(() => {
+    // Clean up GPS watch when component unmounts
     return () => {
       if (watchId !== null) {
         clearWatch(watchId);
@@ -128,6 +133,8 @@ const LogEntry = () => {
       }
     };
   }, [watchId]);
+
+  // Bidirectional auto-calculation
   useEffect(() => {
     const liters = parseFloat(formData.liters);
     const pricePerLiter = parseFloat(formData.pricePerLiter);
@@ -136,17 +143,23 @@ const LogEntry = () => {
     if (!isNaN(liters) && !isNaN(pricePerLiter)) {
       setFormData(prev => ({ ...prev, price: (liters * pricePerLiter).toFixed(2) }));
     } else if (!isNaN(liters) && !isNaN(total) && liters > 0) {
+      // Only calculate price per liter if we have actual fuel amount (not 0)
       setFormData(prev => ({ ...prev, pricePerLiter: (total / liters).toFixed(2) }));
     }
   }, [formData.liters, formData.pricePerLiter, formData.price, fuelUnit]);
 
+  // ========================================
+  // NEW: Tank-to-Tank Auto-calculation (Task 5)
+  // ========================================
+  // Auto-calculate estimated fuel level before fill based on tank capacity and fuel amount
   useEffect(() => {
-    if (isFullTank && formData.liters && data.vehicleProfile?.tankCapacity) {
+    if (isFullTank && formData.liters && data.vehicleProfile?.tankCapacity && parseFloat(formData.liters) > 0) {
       const tankCapacity = data.vehicleProfile.tankCapacity;
       const liters = parseFloat(formData.liters);
       const estimatedRemaining = Math.max(0, tankCapacity - liters);
       const estimatedPercentage = (estimatedRemaining / tankCapacity) * 100;
 
+      // Update fuel level state (but don't override if user manually adjusted)
       setFuelLevelBeforeFill(estimatedRemaining);
     }
   }, [formData.liters, isFullTank, data.vehicleProfile?.tankCapacity]);
@@ -156,24 +169,29 @@ const LogEntry = () => {
     setLocationNameLoading(true);
     setErrors(prev => ({ ...prev, gps: null }));
 
+    // Clear any existing watch
     if (watchId !== null) {
       clearWatch(watchId);
       setWatchId(null);
     }
 
+    // Start watching GPS for real-time updates
     const newWatchId = watchPosition(
+      // On success - called every time GPS updates
       (pos) => {
         setGpsLoading(false);
         setIsRealTimeUpdating(true);
         setCurrentLocation(pos);
         setGpsAccuracy(pos.accuracy);
 
+        // Get location name in real-time (debounce to avoid too many API calls)
         setLocationNameLoading(true);
         getLocationName(pos.lat, pos.lng).then(name => {
           setCurrentLocationName(name);
           setLocationNameLoading(false);
         });
 
+        // Calculate distance if we have a saved location
         if (data.lastLocation) {
           const distance = calculateHaversineDistance(
             data.lastLocation.lat,
@@ -185,9 +203,14 @@ const LogEntry = () => {
           setFormData(prev => ({ ...prev, distance: (Math.round(distance * 10) / 10).toString() }));
         }
 
+        // Update last location for next time
+        // Note: This only saves the first location, subsequent updates are for distance
         if (!data.lastLocation) {
+          // Save this as the start location for future distance calculations
+          // This would be done in context when submitting the form
         }
       },
+      // On error
       (err) => {
         console.error('GPS Watch Error:', err);
 
@@ -252,6 +275,7 @@ const LogEntry = () => {
       return;
     }
 
+    // Set current location manually
     const manualLocation = { lat, lng, accuracy: 0, timestamp: Date.now() };
     setCurrentLocation(manualLocation);
     setGpsAccuracy(0);
@@ -259,10 +283,12 @@ const LogEntry = () => {
     setShowManualCoordinates(false);
     setErrors(prev => ({ ...prev, gps: null }));
 
+    // Get location name
     getLocationName(lat, lng).then(name => {
       setCurrentLocationName(name);
     });
 
+    // Calculate distance if we have a saved location
     if (data.lastLocation) {
       const distance = calculateHaversineDistance(
         data.lastLocation.lat,
@@ -277,12 +303,15 @@ const LogEntry = () => {
 
   const initiateGpsRequest = () => {
     if (gpsEnabled) {
+      // Stop real-time GPS updates
       if (watchId !== null) {
         clearWatch(watchId);
         setWatchId(null);
       }
       setGpsEnabled(false);
       setIsRealTimeUpdating(false);
+      // Keep the last calculated distance for manual editing
+      // Don't reset it so user can adjust it
       setGpsAccuracy(null);
       setErrors(prev => ({ ...prev, gps: null }));
       return;
@@ -298,6 +327,7 @@ const LogEntry = () => {
   };
 
   const enableGpsDirectly = async () => {
+    // This function is now replaced by calculateGpsDistance which uses watchPosition
     calculateGpsDistance();
   };
 
@@ -325,8 +355,10 @@ const LogEntry = () => {
       newErrors.odometer = 'Please enter a valid odometer reading';
     }
 
-    if (!formData.liters || parseFloat(formData.liters) <= 0) {
-      newErrors.liters = 'Please enter a valid fuel amount';
+    // Allow 0 fuel for tracking entries (trips without refueling)
+    // Only validate if fuel is provided and negative
+    if (formData.liters !== '' && parseFloat(formData.liters) < 0) {
+      newErrors.liters = 'Fuel amount cannot be negative';
     }
 
     if (!formData.date) {
@@ -342,13 +374,14 @@ const LogEntry = () => {
 
     if (!validateForm()) return;
 
-    const fuelAmountLiters = parseFloat(formData.liters);
+    const fuelAmountLiters = formData.liters !== '' ? parseFloat(formData.liters) : 0;
     const distance = formData.distance ? parseFloat(formData.distance) : null;
     const price = formData.price ? parseFloat(formData.price) : null;
 
     let costPerKm = null;
     let costPerMile = null;
 
+    // Only calculate cost per distance if we have both price and distance
     if (price && distance && distance > 0) {
       costPerKm = price / distance;
       costPerMile = price / (distance * 0.621371);
@@ -371,11 +404,16 @@ const LogEntry = () => {
       vehicleId: data.currentVehicleId || data.vehicleProfile?.vehicleId,
       note: formData.note || null,
       pumpName: formData.pumpName || null,
-      isFullTank: isFullTank,
-      fuelLevelBeforeFill: isFullTank ? fuelLevelBeforeFill : null,
-      fuelLevelAfterFill: isFullTank ? data.vehicleProfile?.tankCapacity : null,
-      tankCapacity: data.vehicleProfile?.tankCapacity,
-      gaugeReading: gaugeReading || null,
+
+      // ========================================
+      // NEW: Tank-to-Tank Fields (Task 5)
+      // ========================================
+      // For 0 fuel entries, these should be null
+      isFullTank: fuelAmountLiters > 0 ? isFullTank : false,
+      fuelLevelBeforeFill: fuelAmountLiters > 0 && isFullTank ? fuelLevelBeforeFill : null,
+      fuelLevelAfterFill: fuelAmountLiters > 0 && isFullTank ? data.vehicleProfile?.tankCapacity : null,
+      tankCapacity: fuelAmountLiters > 0 ? data.vehicleProfile?.tankCapacity : null,
+      gaugeReading: fuelAmountLiters > 0 ? gaugeReading : null,
     };
 
     addLog(newLog);
@@ -441,11 +479,14 @@ const LogEntry = () => {
     <div className="p-4 lg:p-8 pb-8 max-w-2xl mx-auto">
       <LocationPermissionModal
         isOpen={showPermissionModal}
-         onClose={() => setShowPermissionModal(false)}
-         onConfirm={handlePermissionConfirm}
-       />
+        onClose={() => setShowPermissionModal(false)}
+        onConfirm={handlePermissionConfirm}
+      />
 
-       {showTankCapacityEdit && (
+      {/* ======================================== */}
+      {/* NEW: Tank Capacity Edit Modal (Task 5) */}
+      {/* ======================================== */}
+      {showTankCapacityEdit && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={() => setShowTankCapacityEdit(false)}
@@ -561,15 +602,16 @@ const LogEntry = () => {
               </div>
             </div>
           </div>
-       </div>
-       )}
+        </div>
+      )}
 
-       <div className="mb-6">
-         <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Add Entry</h1>
-         <p style={{ color: 'var(--text-muted)' }}>Log your fuel fill-up</p>
-       </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Add Entry</h1>
+        <p style={{ color: 'var(--text-muted)' }}>Log your fuel fill-up</p>
+      </div>
 
-       <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Date */}
         <div>
           <label
             htmlFor="date"
@@ -590,10 +632,12 @@ const LogEntry = () => {
               border: `1px solid ${errors.date ? 'var(--accent-alert)' : 'var(--border-color)'}`,
             }}
           />
-           {errors.date && (
-             <p className="mt-1 text-sm" style={{ color: 'var(--accent-alert)' }}>{errors.date}</p>
-           )}
-         </div>
+          {errors.date && (
+            <p className="mt-1 text-sm" style={{ color: 'var(--accent-alert)' }}>{errors.date}</p>
+          )}
+        </div>
+
+        {/* Odometer */}
         <div>
           <label
             htmlFor="odometer"
@@ -616,10 +660,12 @@ const LogEntry = () => {
               border: `1px solid ${errors.odometer ? 'var(--accent-alert)' : 'var(--border-color)'}`,
             }}
           />
-           {errors.odometer && (
-             <p className="mt-1 text-sm" style={{ color: 'var(--accent-alert)' }}>{errors.odometer}</p>
-           )}
-         </div>
+          {errors.odometer && (
+            <p className="mt-1 text-sm" style={{ color: 'var(--accent-alert)' }}>{errors.odometer}</p>
+          )}
+        </div>
+
+        {/* Distance with GPS Toggle */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <label
@@ -829,8 +875,10 @@ const LogEntry = () => {
             <p className="mt-1 text-xs text-yellow-500">
               Could not calculate distance from previous point.
             </p>
-           )}
-         </div>
+          )}
+        </div>
+
+        {/* Map Section */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
@@ -885,21 +933,23 @@ const LogEntry = () => {
                 </div>
               )}
             </div>
-           )}
-         </div>
+          )}
+        </div>
+
+        {/* Fuel Amount */}
         <div>
           <label
             htmlFor="liters"
             className="block text-sm font-medium mb-2"
             style={{ color: 'var(--text-secondary)' }}
           >
-            Fuel Amount ({fuelUnit === 'L' ? 'Liters' : 'Gallons'})
+            Fuel Amount ({fuelUnit === 'L' ? 'Liters' : 'Gallons'}) <span style={{ color: 'var(--text-muted)' }}>(Optional - Enter 0 for tracking only)</span>
           </label>
           <input
             type="text"
             inputMode="decimal"
             id="liters"
-            placeholder={`e.g., ${fuelUnit === 'L' ? '35' : '9.2'}`}
+            placeholder={`e.g., ${fuelUnit === 'L' ? '35' : '9.2'} or 0 for trip tracking`}
             value={displayFuelValue}
             onChange={(e) => setDisplayFuelAmount(e.target.value)}
             onBlur={handleFuelAmountBlur}
@@ -907,31 +957,50 @@ const LogEntry = () => {
             style={{
               backgroundColor: 'var(--bg-input)',
               color: 'var(--text-primary)',
-              border: `1px solid ${errors.liters ? 'var(--accent-alert)' : 'var(--border-color)'}`,
+              border: displayFuelValue === '0' || formData.liters === '0'
+                ? '2px solid var(--accent-blue)'
+                : `1px solid ${errors.liters ? 'var(--accent-alert)' : 'var(--border-color)'}`,
             }}
           />
-           {errors.liters && (
-             <p className="mt-1 text-sm" style={{ color: 'var(--accent-alert)' }}>{errors.liters}</p>
-           )}
-         </div>
+          {errors.liters && (
+            <p className="mt-1 text-sm" style={{ color: 'var(--accent-alert)' }}>{errors.liters}</p>
+          )}
+          {displayFuelValue === '0' || formData.liters === '0' ? (
+            <p className="mt-1 text-xs px-2 py-1.5 rounded-lg" style={{ backgroundColor: 'color-mix(in srgb, var(--accent-blue) 10%, transparent)', color: 'var(--accent-blue)' }}>
+              📊 Tracking Mode: This entry will track distance and odometer readings without fuel consumption calculations.
+            </p>
+          ) : (formData.liters === '' || displayFuelValue === '') ? (
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+              💡 Enter 0 fuel to track trips and distance without refueling. This helps monitor mileage between fill-ups.
+            </p>
+          ) : null}
+        </div>
 
-         <div className="space-y-4">
-           <FullTankToggle
-             checked={isFullTank}
-             onChange={setIsFullTank}
-             tankCapacity={data.vehicleProfile?.tankCapacity}
-             showLearnMore={true}
-           />
+        {/* ======================================== */}
+        {/* NEW: Tank Fill Information (Task 5) */}
+        {/* ======================================== */}
+        <div className="space-y-4">
+          {/* Full Tank Toggle */}
+          <FullTankToggle
+            checked={isFullTank}
+            onChange={setIsFullTank}
+            tankCapacity={data.vehicleProfile?.tankCapacity}
+            showLearnMore={true}
+          />
 
-           {isFullTank && (
-             <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          {/* Expanded Options (show when toggle ON) */}
+          {isFullTank && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+              {/* Tank Visual Indicator */}
               <TankVisualIndicator
                 currentLevel={fuelLevelBeforeFill}
                 tankCapacity={data.vehicleProfile?.tankCapacity || 50}
                 editable={true}
-                 onChange={setFuelLevelBeforeFill}
-                 units={fuelUnit}
-               />
+                onChange={setFuelLevelBeforeFill}
+                units={fuelUnit}
+              />
+
+              {/* Gauge Reading Selector */}
               <GaugeReadingSelector
                 value={(fuelLevelBeforeFill / (data.vehicleProfile?.tankCapacity || 50)) * 100}
                 onChange={(percentage) => {
@@ -939,9 +1008,11 @@ const LogEntry = () => {
                   setFuelLevelBeforeFill(newLevel);
                 }}
                 tankCapacity={data.vehicleProfile?.tankCapacity || 50}
-                 allowManual={true}
-                 units={fuelUnit}
-               />
+                allowManual={true}
+                units={fuelUnit}
+              />
+
+              {/* Tank Capacity Display */}
               <TankCapacityDisplay
                 capacity={data.vehicleProfile?.tankCapacity || 50}
                 confidence={data.vehicleProfile?.tankCapacity ? 'high' : 'medium'}
@@ -951,10 +1022,12 @@ const LogEntry = () => {
                 }
                 onEdit={() => setShowTankCapacityEdit(true)}
                 units={fuelUnit}
-               />
-             </div>
-           )}
-         </div>
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Price Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label
@@ -1002,13 +1075,20 @@ const LogEntry = () => {
                 border: '1px solid var(--border-color)',
               }}
             />
-             {formData.liters && formData.pricePerLiter && (
-               <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-                 Auto-calculated: {formData.liters} {fuelUnit} × {currencySymbol}{formData.pricePerLiter} = {currencySymbol}{formData.price}
-               </p>
-             )}
-           </div>
-         </div>
+              {formData.liters && formData.pricePerLiter && parseFloat(formData.liters) > 0 && (
+                <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Auto-calculated: {formData.liters} {fuelUnit} × {currencySymbol}{formData.pricePerLiter} = {currencySymbol}{formData.price}
+                </p>
+              )}
+              {formData.liters && parseFloat(formData.liters) === 0 && formData.pricePerLiter && (
+                <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Note: Price calculations skipped for 0 fuel entries
+                </p>
+              )}
+          </div>
+        </div>
+
+        {/* Additional Information Dropdown */}
         <div
           className="rounded-xl border"
           style={{

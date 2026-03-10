@@ -186,6 +186,10 @@ const Fleet = () => {
   };
 
   const handleOpenEditVehicleModal = (vehicle) => {
+    if (!vehicle || !vehicle.id) {
+      console.warn('handleOpenEditVehicleModal called with invalid vehicle:', vehicle);
+      return;
+    }
 
     setEditingVehicle(vehicle);
     setVehicleModalTab('manual'); // Always use manual tab for editing
@@ -236,7 +240,11 @@ const Fleet = () => {
   };
 
   const handleVehicleFromDbSelect = (vehicleData) => {
+    // Auto-fill tank capacity from EPA database
     const tankCapacity = vehicleData.tankCapacity || 50;
+
+    console.log('Vehicle selected from database:', vehicleData);
+    console.log('Auto-filled tank capacity:', tankCapacity, 'liters');
 
     setSelectedVehicleFromDb(vehicleData);
     setVehicleFormData(prev => ({

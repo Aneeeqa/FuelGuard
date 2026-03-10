@@ -2,6 +2,14 @@ import { clsx } from 'clsx';
 import { useEffect, useState } from 'react';
 import './StatCard.css';
 
+/**
+ * StatCard component for dashboard statistics
+ * - Animated wave design
+ * - Unique gradient backgrounds for each card
+ * - Icon + large value + label layout
+ * - Light and dark mode support
+ * - Uses Phosphor icons with duotone weight for large widgets
+ */
 const StatCard = ({
   icon: Icon,
   value,

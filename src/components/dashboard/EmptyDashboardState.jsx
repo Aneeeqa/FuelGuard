@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Droplet, Zap, TrendingUp, Wallet, AlertTriangle, Leaf } from 'lucide-react';
 import { useFuelData } from '../../hooks/useFuelData';
 
+/**
+ * Empty State Component for Dashboard
+ * Displays when there are no fuel logs, with options to generate demo data or add new entries
+ *
+ * @returns {JSX.Element} Empty state UI
+ */
 const EmptyDashboardState = () => {
   const navigate = useNavigate();
   const { injectDemoData } = useFuelData();

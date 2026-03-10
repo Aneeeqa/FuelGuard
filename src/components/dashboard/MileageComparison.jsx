@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { TrendUp, TrendDown, Minus, Users, Trophy, Spinner } from '@phosphor-icons/react';
 import { fetchCommunityMpg, convertCommunityToKmL } from '../../services/communityMpgService';
 
+/**
+ * Mileage Comparison Component
+ * Compares user's actual mileage against EPA rating and community average
+ */
 const MileageComparison = ({
     userAverage,
     epaRating,
@@ -18,23 +22,24 @@ const MileageComparison = ({
             loadCommunityData();
         } else {
             setCommunityData(null);
-     }
-  }, [vehicleId]);
+        }
+    }, [vehicleId]);
 
-  const loadCommunityData = async () => {
-      setLoading(true);
-      try {
-          const data = await fetchCommunityMpg(vehicleId);
-          if (data) {
-              setCommunityData(convertCommunityToKmL(data));
-          }
-      } catch (error) {
-          console.error('Failed to load community data:', error);
-      }
-      setLoading(false);
-  };
+    const loadCommunityData = async () => {
+        setLoading(true);
+        try {
+            const data = await fetchCommunityMpg(vehicleId);
+            if (data) {
+                setCommunityData(convertCommunityToKmL(data));
+            }
+        } catch (error) {
+            console.error('Failed to load community data:', error);
+        }
+        setLoading(false);
+    };
 
-  if (!userAverage && !epaRating) {
+    // Don't render if we don't have minimum data
+    if (!userAverage && !epaRating) {
         return null;
     }
 
@@ -52,6 +57,7 @@ const MileageComparison = ({
 
     const status = getComparisonStatus();
 
+    // Get status color and icon
     const getStatusConfig = () => {
         switch (status) {
             case 'excellent':
@@ -95,6 +101,7 @@ const MileageComparison = ({
     const statusConfig = getStatusConfig();
     const StatusIcon = statusConfig.icon;
 
+    // Calculate percentage difference from EPA
     const percentDiff = epaRating && userAverage
         ? Math.round(((userAverage - epaRating) / epaRating) * 100)
         : null;
@@ -124,7 +131,9 @@ const MileageComparison = ({
                 </div>
             </div>
 
+            {/* Comparison Bars */}
             <div className="space-y-4">
+                {/* Your Average */}
                 <div>
                     <div className="flex justify-between text-sm mb-1">
                         <span style={{ color: 'var(--text-secondary)' }}>Your Average</span>

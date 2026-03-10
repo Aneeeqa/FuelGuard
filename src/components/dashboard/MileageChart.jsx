@@ -1,6 +1,7 @@
 import React, { memo, lazy, Suspense } from 'react';
 import Skeleton from '../ui/Skeleton';
 
+// Lazy load recharts components
 const LazyChart = lazy(() =>
   import('recharts').then(module => ({
     default: ({ data }) => {
@@ -15,11 +16,13 @@ const LazyChart = lazy(() =>
         CartesianGrid
       } = module;
 
+      // Format date for display
       const formatDate = (dateStr) => {
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       };
 
+      // Prepare chart data (reverse to show oldest first)
       const chartData = [...data]
         .reverse()
         .map(log => ({
@@ -28,10 +31,13 @@ const LazyChart = lazy(() =>
           mileage: log.mileage || 0,
         }));
 
+      // Calculate average for reference line
       const validMileages = chartData.filter(d => d.mileage > 0);
       const avgMileage = validMileages.length > 0
         ? validMileages.reduce((sum, d) => sum + d.mileage, 0) / validMileages.length
         : 15;
+
+      // Custom tooltip for touch-friendly display
       const CustomTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
           const data = payload[0].payload;
@@ -109,13 +115,22 @@ const LazyChart = lazy(() =>
   }))
 );
 
+// Custom comparison function for memo
 const chartPropsAreEqual = (prevProps, nextProps) => {
   if (prevProps.data.length !== nextProps.data.length) return false;
   if (prevProps.data.length === 0) return true;
-  return prevProps.data[prevProps.data.length -1]?.id ===
-    nextProps.data[nextProps.data.length -1]?.id;
+  // Compare last item ID to detect new entries
+  return prevProps.data[prevProps.data.length - 1]?.id ===
+    nextProps.data[nextProps.data.length - 1]?.id;
 };
 
+/**
+ * MileageChart component
+ * - Recharts LineChart with ResponsiveContainer
+ * - Wrapped in React.memo with custom comparator
+ * - Touch-friendly tooltip
+ * - Lazy loaded for performance
+ */
 const MileageChart = memo(({ data, className }) => {
   if (!data || data.length === 0) {
     return (

@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, Car, Loader2, Search, X, Globe } from 'lucide-react';
 import {
-  getVehicleAPIForCountry,
-  mpgToKmPerLiter
+    getVehicleAPIForCountry,
+    mpgToKmPerLiter
 } from '../services/vehicleApiService';
 import { SUPPORTED_COUNTRIES } from '../utils/currency';
 
+/**
+ * Multi-step vehicle selector component
+ * Supports multiple databases depending on selected country
+ */
 const VehicleSelector = ({
     value,
     onVehicleSelect,

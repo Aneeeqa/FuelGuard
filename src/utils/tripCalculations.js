@@ -1,36 +1,62 @@
+/**
+ * tripCalculations.js
+ * Utility functions for calculating trip-wise fuel statistics
+ * Used to detect fuel theft by analyzing per-trip mileage
+ */
+
+/**
+ * Calculate trips from fuel logs
+ * A "trip" is defined as the period between two consecutive fuel entries
+ * when the vehicle was driven.
+ *
+ * @param {Array} logs - Array of fuel log entries, sorted by date descending
+ * @param {Object} vehicleProfile - Vehicle profile with threshold settings
+ * @returns {Array} Array of trip objects with calculated statistics
+ *
+ * Time Complexity: O(n) where n is the number of logs
+ * Space Complexity: O(n) for storing trip data
+ */
 export const calculateTrips = (logs = [], vehicleProfile = {}) => {
   if (!logs || logs.length < 2) return [];
 
+  // Sort logs by date ascending for trip calculation
   const sortedLogs = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
 
   const trips = [];
   const {
     expectedMileage = 15,
-    theftThreshold = 0.75,
+    theftThreshold = 0.75, // Default: 75% of expected = 25% drop triggers alert
     distanceUnit = 'km',
     fuelVolumeUnit = 'L'
   } = vehicleProfile;
 
   for (let i = 1; i < sortedLogs.length; i++) {
-    const prevLog = sortedLogs[i - 1];
-    const currLog = sortedLogs[i];
+    const prevLog = sortedLogs[i - 1]; // Earlier entry (trip start)
+    const currLog = sortedLogs[i];     // Later entry (trip end)
 
+    // Calculate trip distance
     const distance = currLog.odometer - prevLog.odometer;
 
+    // Skip trips with zero or negative distance
     if (distance <= 0) continue;
 
+    // Calculate fuel consumed during this trip
     const fuelConsumed = currLog.liters || 0;
 
+    // Skip trips with no fuel consumption
     if (fuelConsumed <= 0) continue;
 
+    // Calculate trip mileage (km/L)
     const tripMileage = distance / fuelConsumed;
 
+    // Determine trip status based on mileage
     const thresholdMileage = expectedMileage * theftThreshold;
     let status = 'Normal';
 
     if (tripMileage < thresholdMileage) {
       status = 'Potential Theft';
     } else if (tripMileage < expectedMileage * 0.85) {
+      // 85-95% of expected could be heavy traffic or aggressive driving
       status = 'Heavy Traffic';
     }
 
@@ -50,19 +76,35 @@ export const calculateTrips = (logs = [], vehicleProfile = {}) => {
       thresholdMileage,
       distanceUnit,
       fuelVolumeUnit,
+      // Reference to original logs
       startLogId: prevLog.id,
       endLogId: currLog.id,
+      // Calculate trip duration
       duration: new Date(currLog.date) - new Date(prevLog.date),
     });
   }
 
+  // Return trips sorted by end date descending (most recent first)
   return trips.reverse();
 };
 
+/**
+ * Get recent trips (last N trips)
+ *
+ * @param {Array} trips - Array of trip objects
+ * @param {number} count - Number of recent trips to return
+ * @returns {Array} Recent trips
+ */
 export const getRecentTrips = (trips, count = 5) => {
   return trips.slice(0, count);
 };
 
+/**
+ * Calculate trip statistics
+ *
+ * @param {Array} trips - Array of trip objects
+ * @returns {Object} Trip statistics
+ */
 export const calculateTripStatistics = (trips) => {
   if (!trips || trips.length === 0) {
     return {
@@ -99,6 +141,12 @@ export const calculateTripStatistics = (trips) => {
   };
 };
 
+/**
+ * Format trip duration for display
+ *
+ * @param {number} durationMs - Duration in milliseconds
+ * @returns {string} Formatted duration string
+ */
 export const formatTripDuration = (durationMs) => {
   const hours = Math.floor(durationMs / (1000 * 60 * 60));
   const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -108,6 +156,13 @@ export const formatTripDuration = (durationMs) => {
   return `${hours}h ${minutes}m`;
 };
 
+/**
+ * Format date range for a trip
+ *
+ * @param {string} startDate - Start date ISO string
+ * @param {string} endDate - End date ISO string
+ * @returns {string} Formatted date range
+ */
 export const formatTripDateRange = (startDate, endDate) => {
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -133,6 +188,12 @@ export const formatTripDateRange = (startDate, endDate) => {
   })}`;
 };
 
+/**
+ * Get status color for trip status
+ *
+ * @param {string} status - Trip status
+ * @returns {string} Color style
+ */
 export const getTripStatusColor = (status) => {
   switch (status) {
     case 'Potential Theft':
@@ -145,8 +206,15 @@ export const getTripStatusColor = (status) => {
   }
 };
 
+/**
+ * Determine bar color based on mileage vs threshold
+ *
+ * @param {number} mileage - Trip mileage
+ * @param {number} threshold - Threshold mileage
+ * @returns {string} Color code
+ */
 export const getBarColor = (mileage, threshold) => {
-  if (mileage < threshold) return '#ef4444';
-  if (mileage < threshold * 1.15) return '#f59e0b';
-  return '#22c55e';
+  if (mileage < threshold) return '#ef4444'; // Red - potential theft
+  if (mileage < threshold * 1.15) return '#f59e0b'; // Orange - heavy traffic
+  return '#22c55e'; // Green - normal
 };

@@ -15,7 +15,7 @@ import {
   FileText,
   ChevronDown,
   ChevronUp,
-  Flame,
+  Flame
 } from 'lucide-react';
 import Card from './ui/Card';
 import Alert from './ui/Alert';
@@ -29,6 +29,30 @@ import {
 } from '../utils/tankToTankCalculations';
 import './TankToTankTripCard.css';
 
+/**
+ * TankToTankTripCard Component
+ *
+ * Displays detailed Tank-to-Tank fuel consumption analysis including:
+ * - Trip summary (distance, fuel consumed, mileage)
+ * - Theft detection analysis
+ * - Mileage efficiency indicator
+ * - Visual fuel level display
+ * - Action buttons for reports and details
+ *
+ * Time Complexity: O(1) - Static component rendering
+ * Space Complexity: O(1) - No additional data structures
+ *
+ * @param {Object} props
+ * @param {Object} props.tripData - Tank-to-Tank calculation result from tankToTankCalculations
+ * @param {Object} props.vehicleProfile - Vehicle profile with expected mileage and tank capacity
+ * @param {Object} props.units - Unit system { distanceUnit: 'km', fuelVolumeUnit: 'L' }
+ * @param {string} props.currency - Currency code (default: 'USD')
+ * @param {string} props.pricePerLiter - Price per liter for theft cost calculation
+ * @param {Function} props.onViewDetails - Callback when clicking view details
+ * @param {Function} props.onExportReport - Callback when exporting report
+ * @param {Function} props.onCopyReport - Callback when copying report
+ * @param {string} props.className - Additional CSS classes
+ */
 const TankToTankTripCard = ({
   tripData,
   vehicleProfile,

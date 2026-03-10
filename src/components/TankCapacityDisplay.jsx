@@ -1,5 +1,28 @@
-import { Info, Edit3 } from '@phosphor-icons/react';
+/**
+ * Tank Capacity Display Component
+ *
+ * Purpose: Display vehicle's tank capacity with confidence badge
+ *
+ * @component TankCapacityDisplay
+ * @description Shows the vehicle's tank capacity with a confidence level indicator
+ * and provides options to edit the capacity or view the data source.
+ */
 
+import { Info, Edit3 } from 'lucide-react';
+
+/**
+ * TankCapacityDisplay Component
+ *
+ * Props:
+ * - capacity: number - Tank capacity in liters
+ * - confidence: 'high' | 'medium' | 'low' - Confidence level of the capacity data
+ * - source: string - Data source description (e.g., 'Vehicle Database')
+ * - onEdit: () => void - Callback when user wants to edit capacity
+ * - units: string - Volume unit ('L' or 'gal')
+ *
+ * Time Complexity: O(1) - Simple display component
+ * Space Complexity: O(1) - Fixed component size
+ */
 const TankCapacityDisplay = ({
   capacity,
   confidence = 'medium',

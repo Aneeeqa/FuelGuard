@@ -43,6 +43,7 @@ const Settings = () => {
     monthlyBudget: data.vehicleProfile?.monthlyBudget ?? 200,
   });
 
+  // Sync vehicleForm with data.vehicleProfile when it changes (e.g., from other tabs)
   useEffect(() => {
     if (data.vehicleProfile) {
       setVehicleForm({
@@ -61,6 +62,7 @@ const Settings = () => {
   }, [data.vehicleProfile]);
 
   const handleVehicleUpdate = () => {
+    // Derive efficiencyUnit from fuelVolumeUnit if not explicitly set
     const derivedEfficiencyUnit = vehicleForm.fuelVolumeUnit === 'gal' ? 'mpg' : 'km/L';
 
     updateVehicleProfile({
@@ -78,6 +80,7 @@ const Settings = () => {
   };
 
   const handleVehicleSelect = (vehicleData) => {
+    // Update both local form and context with EPA data
     setVehicleForm(prev => ({
       ...prev,
       name: vehicleData.name || prev.name,
@@ -99,15 +102,19 @@ const Settings = () => {
 
   const handleCurrencyChange = async (newCurrency) => {
     const oldCurrency = vehicleForm.currency;
+    console.log(`Currency change: ${oldCurrency} -> ${newCurrency}`);
     setVehicleForm(prev => ({ ...prev, currency: newCurrency }));
 
     try {
+      // Use the currency conversion function to update profile and convert all logs
       await updateVehicleProfileWithCurrencyConversion({
         ...data.vehicleProfile,
         currency: newCurrency
       });
+      console.log('Currency conversion completed');
     } catch (error) {
       console.error('Currency conversion failed:', error);
+      // Revert the form currency if conversion failed
       setVehicleForm(prev => ({ ...prev, currency: oldCurrency }));
     }
   };
@@ -122,6 +129,7 @@ const Settings = () => {
       currency: defaultCurrency
     }));
 
+    // Use currency conversion if currency is actually changing
     if (oldCurrency !== defaultCurrency) {
       await updateVehicleProfileWithCurrencyConversion({
         ...data.vehicleProfile,
@@ -129,6 +137,7 @@ const Settings = () => {
         currency: defaultCurrency
       });
     } else {
+      // Just update country, no currency conversion needed
       updateVehicleProfile({
         ...data.vehicleProfile,
         country: newCountry,
@@ -170,6 +179,7 @@ const Settings = () => {
     setGeofences([]);
   };
 
+  // Geofencing handlers
   const handleAddGeofence = () => {
     const lat = parseFloat(newGeofence.lat);
     const lng = parseFloat(newGeofence.lng);
@@ -197,6 +207,7 @@ const Settings = () => {
 
   const handleUseCurrentLocation = async () => {
     try {
+      // Import getCurrentPosition dynamically to avoid circular dependency
       const { getCurrentPosition } = await import('../utils/geolocation');
       const position = await getCurrentPosition({ timeout: 15000, highAccuracy: true });
       setNewGeofence(prev => ({
@@ -236,13 +247,15 @@ const Settings = () => {
   const hasEpaData = data.vehicleProfile?.vehicleId && data.vehicleProfile?.epaCombined;
 
   return (
-     <div className="p-4 lg:p-8 space-y-6 pb-24 max-w-3xl mx-auto">
-       <div>
+    <div className="p-4 lg:p-8 space-y-6 pb-24 max-w-3xl mx-auto">
+      {/* Header */}
+      <div>
         <h1 className="text-2xl lg:text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Settings</h1>
         <p style={{ color: 'var(--text-muted)' }}>Configure your vehicle and app</p>
-       </div>
+      </div>
 
-       {data.vehicles && data.vehicles.length > 1 && (
+      {/* Vehicle Selector */}
+      {data.vehicles && data.vehicles.length > 1 && (
         <div
           className="rounded-xl shadow-sm border p-5 mb-6"
           style={{
@@ -280,9 +293,10 @@ const Settings = () => {
           >
             Manage all vehicles →
           </a>
-       </div>
-       )}
+        </div>
+      )}
 
+      {/* Quick Settings - MOVED TO TOP */}
       <div className="rounded-xl shadow-sm border p-5 mb-6 animate-fade-in-up delay-100" style={{
         backgroundColor: 'var(--bg-secondary)',
         borderColor: 'var(--border-color)',
@@ -290,9 +304,10 @@ const Settings = () => {
       }}>
         <div className="flex items-center gap-2 mb-4">
           <Car className="w-5 h-5" style={{ color: 'var(--accent-fuel)' }} />
-           <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Quick Settings</h2>
-         </div>
+          <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Quick Settings</h2>
+        </div>
 
+        {/* Vehicle Profile Section - MOVED TO TOP */}
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
@@ -423,9 +438,10 @@ const Settings = () => {
                       </span>
                     </div>
                   </div>
-             </div>
-         </div>
+            </div>
+        </div>
 
+        {/* Currency and Unit Section - MOVED TO TOP */}
         <div className="border-t pt-4 mt-4" style={{ borderColor: 'var(--border-color)' }}>
           <div className="space-y-4">
             {/* Currency Selection */}
@@ -522,13 +538,16 @@ const Settings = () => {
                    className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none"
                    style={{ color: 'var(--text-muted)' }}
                  />
-                 </div>
                </div>
              </div>
           </div>
-       </div>
+        </div>
+      </div>
 
-       <div
+      {/* Theme Toggle Section - REMAINS AT TOP (Mobile Only) */}
+
+      {/* Theme Toggle Section - REMAINS AT TOP (Mobile Only) */}
+      <div
         className="rounded-xl p-5 border transition-colors duration-300 lg:hidden"
         style={{
           backgroundColor: 'var(--bg-secondary)',
@@ -551,9 +570,9 @@ const Settings = () => {
           </div>
           <ThemeToggle />
         </div>
-       </div>
+      </div>
 
-      <div
+      {/* Demo Data Section */}
       <div
         className="rounded-xl p-5 border transition-colors duration-300"
         style={{
@@ -1098,6 +1117,7 @@ const Settings = () => {
           <Info className="w-4 h-4" />
           <span>Fuel Guard</span>
         </div>
+        <p>Fuel Management Application</p>
         <div className="mt-3 flex items-center justify-center gap-2">
           <a
             href="/privacy"

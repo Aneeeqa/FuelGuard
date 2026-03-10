@@ -1,13 +1,28 @@
+/**
+ * Vehicle API Service - FuelEconomy.gov Integration
+ *
+ * Uses the free EPA FuelEconomy.gov API to fetch vehicle data
+ * API Docs: https://www.fueleconomy.gov/feg/ws/index.shtml
+ */
+
 import { getFuelTankCapacity, estimateEnhancedTankCapacity } from './fuelCapacityService';
 
+// Re-export for backward compatibility
 export const estimateFuelTankCapacity = estimateEnhancedTankCapacity;
 
+// CORS proxy for development (FuelEconomy.gov doesn't support CORS)
 const CORS_PROXY = 'https://corsproxy.io/?';
 const BASE_URL = 'https://www.fueleconomy.gov/ws/rest';
 
+// Cache for API responses to minimize calls
 const apiCache = new Map();
-const CACHE_TTL = 30 * 60 * 1000;
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
+/**
+ * Make an API request with CORS proxy and caching
+ * @param {string} endpoint 
+ * @returns {Promise<any>}
+ */
 const fetchWithProxy = async (endpoint) => {
     const cacheKey = endpoint;
     const cached = apiCache.get(cacheKey);
@@ -37,11 +52,16 @@ const fetchWithProxy = async (endpoint) => {
     }
 };
 
+/**
+ * Fetch available model years (1984 - present)
+ * @returns {Promise<Array<{text: string, value: string}>>}
+ */
 export const fetchYears = async () => {
     try {
         const data = await fetchWithProxy('/vehicle/menu/year');
         return data.menuItem || [];
     } catch {
+        // Fallback: generate years from 1984 to current year
         const currentYear = new Date().getFullYear();
         const years = [];
         for (let year = currentYear + 1; year >= 1984; year--) {
@@ -51,6 +71,11 @@ export const fetchYears = async () => {
     }
 };
 
+/**
+ * Fetch makes for a given year
+ * @param {string|number} year 
+ * @returns {Promise<Array<{text: string, value: string}>>}
+ */
 export const fetchMakes = async (year) => {
     if (!year) return [];
 
@@ -63,6 +88,12 @@ export const fetchMakes = async (year) => {
     }
 };
 
+/**
+ * Fetch models for a given year and make
+ * @param {string|number} year 
+ * @param {string} make 
+ * @returns {Promise<Array<{text: string, value: string}>>}
+ */
 export const fetchModels = async (year, make) => {
     if (!year || !make) return [];
 
@@ -75,6 +106,14 @@ export const fetchModels = async (year, make) => {
     }
 };
 
+/**
+ * Fetch vehicle options/variants for a given year, make, and model
+ * Returns vehicle IDs that can be used to fetch full details
+ * @param {string|number} year 
+ * @param {string} make 
+ * @param {string} model 
+ * @returns {Promise<Array<{text: string, value: string}>>}
+ */
 export const fetchOptions = async (year, make, model) => {
     if (!year || !make || !model) return [];
 
@@ -82,6 +121,7 @@ export const fetchOptions = async (year, make, model) => {
         const data = await fetchWithProxy(
             `/vehicle/menu/options?year=${year}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}`
         );
+        // Normalize - API may return single object or array
         const items = data.menuItem;
         if (!items) return [];
         return Array.isArray(items) ? items : [items];
@@ -91,12 +131,18 @@ export const fetchOptions = async (year, make, model) => {
     }
 };
 
+/**
+ * Fetch full vehicle details by vehicle ID
+ * @param {string|number} vehicleId
+ * @returns {Promise<Object|null>}
+ */
 export const fetchVehicleDetails = async (vehicleId) => {
     if (!vehicleId) return null;
 
     try {
         const data = await fetchWithProxy(`/vehicle/${vehicleId}`);
 
+        // Create vehicle object with EPA data
         const vehicle = {
             id: data.id,
             year: parseInt(data.year, 10),
@@ -104,10 +150,12 @@ export const fetchVehicleDetails = async (vehicleId) => {
             model: data.model,
             variant: data.trany || data.VClass || '',
 
+            // MPG data (convert to km/L if needed, but keeping MPG for EPA comparison)
             cityMpg: parseFloat(data.city08) || null,
             highwayMpg: parseFloat(data.highway08) || null,
             combinedMpg: parseFloat(data.comb08) || null,
 
+            // Additional info
             fuelType: data.fuelType || data.fuelType1 || 'Regular Gasoline',
             cylinders: parseInt(data.cylinders, 10) || null,
             displacement: parseFloat(data.displ) || null,
@@ -115,9 +163,11 @@ export const fetchVehicleDetails = async (vehicleId) => {
             driveType: data.drive || '',
             vehicleClass: data.VClass || '',
 
+            // CO2 emissions
             co2: parseFloat(data.co2TailpipeGpm) || null,
         };
 
+        // Fetch enhanced fuel tank capacity with metadata
         const capacityResult = await getFuelTankCapacity(vehicle);
 
         if (capacityResult && capacityResult.capacity) {
@@ -134,33 +184,65 @@ export const fetchVehicleDetails = async (vehicleId) => {
     }
 };
 
+/**
+ * Convert MPG to km/L
+ * @param {number} mpg 
+ * @returns {number}
+ */
 export const mpgToKmPerLiter = (mpg) => {
     if (!mpg || isNaN(mpg)) return null;
+    // 1 MPG = 0.425144 km/L
     return Math.round(mpg * 0.425144 * 10) / 10;
 };
 
+/**
+ * Convert km/L to MPG
+ * @param {number} kmPerLiter 
+ * @returns {number}
+ */
 export const kmPerLiterToMpg = (kmPerLiter) => {
     if (!kmPerLiter || isNaN(kmPerLiter)) return null;
     return Math.round(kmPerLiter / 0.425144 * 10) / 10;
 };
 
+/**
+ * Search for a vehicle by year/make/model and return the first match
+ * Convenience function for quick lookups
+ * @param {number} year 
+ * @param {string} make 
+ * @param {string} model 
+ * @returns {Promise<Object|null>}
+ */
 export const searchVehicle = async (year, make, model) => {
     try {
         const options = await fetchOptions(year, make, model);
         if (options.length === 0) return null;
 
+        // Get details for the first option
         return await fetchVehicleDetails(options[0].value);
     } catch {
         return null;
     }
 };
 
+/**
+ * Clear the API cache
+ */
 export const clearCache = () => {
     apiCache.clear();
 };
 
+// ============================================
+// Pakistani Vehicle Database Functions
+// ============================================
+
+// Cache for Pakistani vehicles
 let pakistaniVehiclesCache = null;
 
+/**
+ * Load Pakistani vehicles from static JSON
+ * @returns {Promise<Object>}
+ */
 export const loadPakistaniVehicles = async () => {
     if (pakistaniVehiclesCache) {
         return pakistaniVehiclesCache;
@@ -179,12 +261,21 @@ export const loadPakistaniVehicles = async () => {
     }
 };
 
+/**
+ * Get list of makes for Pakistani vehicles
+ * @returns {Promise<Array<{text: string, value: string}>>}
+ */
 export const fetchPakistaniMakes = async () => {
     const data = await loadPakistaniVehicles();
     const makes = [...new Set(data.vehicles.map(v => v.make))];
     return makes.map(make => ({ text: make, value: make }));
 };
 
+/**
+ * Get models for a Pakistani make
+ * @param {string} make 
+ * @returns {Promise<Array<{text: string, value: string}>>}
+ */
 export const fetchPakistaniModels = async (make) => {
     if (!make) return [];
 
@@ -196,6 +287,12 @@ export const fetchPakistaniModels = async (make) => {
     return [...new Set(models)].map(model => ({ text: model, value: model }));
 };
 
+/**
+ * Get years for a Pakistani make/model
+ * @param {string} make 
+ * @param {string} model 
+ * @returns {Promise<Array<{text: string, value: string}>>}
+ */
 export const fetchPakistaniYears = async (make, model) => {
     if (!make || !model) return [];
 
@@ -209,6 +306,12 @@ export const fetchPakistaniYears = async (make, model) => {
         .map(year => ({ text: String(year), value: String(year) }));
 };
 
+/**
+ * Get variants for a Pakistani vehicle
+ * @param {string} make 
+ * @param {string} model 
+ * @returns {Promise<Array<{text: string, value: string, data: Object}>>}
+ */
 export const fetchPakistaniVariants = async (make, model) => {
     if (!make || !model) return [];
 
@@ -224,6 +327,14 @@ export const fetchPakistaniVariants = async (make, model) => {
     }));
 };
 
+/**
+ * Get full details for a Pakistani vehicle variant
+ * @param {string} make
+ * @param {string} model
+ * @param {string} variantName
+ * @param {number} year
+ * @returns {Object|null}
+ */
 export const getPakistaniVehicleDetails = async (make, model, variantName, year) => {
     const data = await loadPakistaniVehicles();
     const vehicle = data.vehicles.find(v => v.make === make && v.model === model);
@@ -240,19 +351,23 @@ export const getPakistaniVehicleDetails = async (make, model, variantName, year)
         model,
         variant: variantName,
 
+        // Pakistani vehicles use km/L directly (no conversion needed)
         cityMpg: null,
         highwayMpg: null,
         combinedMpg: null,
 
+        // Direct km/L values
         expectedMileage: variant.expectedMileage,
 
         fuelType: variant.fuelType,
         tankCapacity: variant.tankCapacity,
         engine: variant.engine,
 
+        // Mark as local data source
         dataSource: 'local-pk',
     };
 
+    // Add capacity source metadata
     if (variant.tankCapacity) {
         details.tankCapacitySource = 'local-database';
         details.tankCapacityConfidence = 'high';
@@ -262,6 +377,11 @@ export const getPakistaniVehicleDetails = async (make, model, variantName, year)
     return details;
 };
 
+/**
+ * Get vehicles by country - dispatcher function
+ * @param {string} countryCode 
+ * @returns {Object} Functions for the specified country
+ */
 export const getVehicleAPIForCountry = (countryCode) => {
     if (countryCode === 'PK') {
         return {
@@ -270,21 +390,23 @@ export const getVehicleAPIForCountry = (countryCode) => {
             fetchYears: fetchPakistaniYears,
             fetchVariants: fetchPakistaniVariants,
             getVehicleDetails: getPakistaniVehicleDetails,
-            usesYearFirst: false,
+            usesYearFirst: false, // Pakistani flow: Make → Model → Year → Variant
         };
     }
 
+    // Default: EPA API (US, UK, etc)
     return {
         fetchMakes,
         fetchModels,
         fetchYears,
         fetchVariants: fetchOptions,
         getVehicleDetails: fetchVehicleDetails,
-        usesYearFirst: true,
+        usesYearFirst: true, // EPA flow: Year → Make → Model → Variant
     };
 };
 
 export default {
+    // EPA API functions
     fetchYears,
     fetchMakes,
     fetchModels,
@@ -295,6 +417,7 @@ export default {
     kmPerLiterToMpg,
     clearCache,
 
+    // Pakistani vehicle functions
     loadPakistaniVehicles,
     fetchPakistaniMakes,
     fetchPakistaniModels,
@@ -302,8 +425,10 @@ export default {
     fetchPakistaniVariants,
     getPakistaniVehicleDetails,
 
+    // Country dispatcher
     getVehicleAPIForCountry,
 
+    // Export enhanced fuel capacity functions for backward compatibility
     estimateFuelTankCapacity: estimateEnhancedTankCapacity,
     getFuelTankCapacity,
     estimateEnhancedTankCapacity,

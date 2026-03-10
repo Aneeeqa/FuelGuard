@@ -2,6 +2,14 @@ import { clsx } from 'clsx';
 import { X } from '@phosphor-icons/react';
 import { useEffect, useRef } from 'react';
 
+/**
+ * Modal/Dialog component
+ * - Backdrop blur effect
+ * - Scale animation
+ * - Escape key handling
+ * - Click outside to close
+ * - Focus trap
+ */
 const Modal = ({ 
   isOpen, 
   onClose, 
@@ -125,6 +133,9 @@ const Modal = ({
   );
 };
 
+/**
+ * Modal Footer subcomponent
+ */
 Modal.Footer = ({ children, className }) => (
   <div 
     className={clsx('flex items-center justify-end gap-3 px-6 py-4 border-t mt-auto', className)}

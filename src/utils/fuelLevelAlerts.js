@@ -1,6 +1,18 @@
-const WARNING_THRESHOLD_PERCENTAGE = 20;
-const CRITICAL_THRESHOLD_PERCENTAGE = 10;
+/**
+ * Fuel Level Alert Utilities
+ * Generate alerts when fuel drops below certain thresholds
+ */
 
+// Default thresholds
+const WARNING_THRESHOLD_PERCENTAGE = 20; // Warning when fuel below 20%
+const CRITICAL_THRESHOLD_PERCENTAGE = 10; // Critical alert when fuel below 10%
+
+/**
+ * Calculate remaining fuel level based on tank capacity and fuel amount
+ * @param {number} fuelAmount - Current fuel amount in liters
+ * @param {number} tankCapacity - Vehicle's tank capacity in liters
+ * @returns {Object} Fuel level information
+ */
 export const calculateFuelLevel = (fuelAmount, tankCapacity) => {
   if (!fuelAmount || !tankCapacity || tankCapacity <= 0) {
     return {
@@ -32,6 +44,12 @@ export const calculateFuelLevel = (fuelAmount, tankCapacity) => {
   };
 };
 
+/**
+ * Check if fuel level alert should be triggered
+ * @param {number} fuelAmount - Current fuel amount in liters
+ * @param {number} tankCapacity - Vehicle's tank capacity in liters
+ * @returns {Object} Alert information
+ */
 export const checkFuelLevelAlert = (fuelAmount, tankCapacity) => {
   const fuelLevel = calculateFuelLevel(fuelAmount, tankCapacity);
 
@@ -70,6 +88,12 @@ export const checkFuelLevelAlert = (fuelAmount, tankCapacity) => {
   };
 };
 
+/**
+ * Estimate remaining distance based on fuel level and average mileage
+ * @param {number} fuelAmount - Current fuel amount in liters
+ * @param {number} averageMileage - Vehicle's average mileage in km/L
+ * @returns {Object} Distance estimate
+ */
 export const estimateRemainingDistance = (fuelAmount, averageMileage) => {
   if (!fuelAmount || !averageMileage || averageMileage <= 0) {
     return {
@@ -79,13 +103,18 @@ export const estimateRemainingDistance = (fuelAmount, averageMileage) => {
   }
 
   const distance = fuelAmount * averageMileage;
-
+  
   return {
     distance,
     message: `Estimated ${distance.toFixed(0)} km remaining`,
   };
 };
 
+/**
+ * Get fuel level display information with emoji indicator
+ * @param {Object} fuelLevel - Fuel level object from calculateFuelLevel
+ * @returns {Object} Display information
+ */
 export const getFuelLevelDisplay = (fuelLevel) => {
   const { percentage, level } = fuelLevel;
 
@@ -125,6 +154,13 @@ export const getFuelLevelDisplay = (fuelLevel) => {
   return displays[level] || displays.unknown;
 };
 
+/**
+ * Generate comprehensive fuel status message
+ * @param {number} fuelAmount - Current fuel amount in liters
+ * @param {number} tankCapacity - Vehicle's tank capacity in liters
+ * @param {number} averageMileage - Vehicle's average mileage in km/L
+ * @returns {Object} Complete status information
+ */
 export const getFuelStatus = (fuelAmount, tankCapacity, averageMileage) => {
   const fuelLevel = calculateFuelLevel(fuelAmount, tankCapacity);
   const fuelAlert = checkFuelLevelAlert(fuelAmount, tankCapacity);

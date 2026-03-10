@@ -5,9 +5,26 @@ import Card from '../ui/Card';
 import { checkBudgetAlert } from '../../utils/calculations';
 import { getCurrencySymbol } from '../../utils/currency';
 
+/**
+ * BudgetCard Component
+ *
+ * Displays budget status with progress bar, alerts, and statistics.
+ * Shows current expenditure vs budget for the current month.
+ *
+ * @param {Object} props
+ * @param {Array} props.logs - Array of fuel log entries
+ * @param {number} props.monthlyBudget - Monthly budget amount in currency
+ * @param {string} props.currency - Currency code (e.g., 'USD', 'EUR')
+ * @param {boolean} props.compact - Whether to show compact version (default: false)
+ *
+ * Time Complexity: O(n) where n is the number of logs (filtered by month)
+ * Space Complexity: O(1) - constant space for calculations
+ */
+
 const BudgetCard = ({ logs = [], monthlyBudget = 200, currency = 'USD', compact = false }) => {
   const currencySymbol = getCurrencySymbol(currency);
 
+  // Calculate current month's expenditure
   const currentDate = new Date();
   const currentMonthExpenditure = logs
     .filter(log => {
@@ -17,10 +34,14 @@ const BudgetCard = ({ logs = [], monthlyBudget = 200, currency = 'USD', compact 
     })
     .reduce((sum, log) => sum + (log.price || 0), 0);
 
+  // Calculate remaining budget
   const remainingBudget = Math.max(0, monthlyBudget - currentMonthExpenditure);
   const budgetUsedPercentage = Math.min(100, (currentMonthExpenditure / monthlyBudget) * 100);
 
+  // Check budget alert
   const budgetAlert = checkBudgetAlert(currentMonthExpenditure, monthlyBudget);
+
+  // Determine color based on usage
   const getProgressColor = () => {
     if (budgetAlert.level === 'critical') return 'var(--accent-alert)';
     if (budgetAlert.level === 'warning') return '#f59e0b'; // amber-500

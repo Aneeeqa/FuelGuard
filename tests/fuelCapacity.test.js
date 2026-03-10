@@ -45,7 +45,7 @@ async function testUnknownVehicleKnownClass() {
   const result = await getFuelTankCapacity({
     make: 'UnknownMake',
     model: 'UnknownModel',
-    year: 2024,
+    year: 2020,
     vehicleClass: 'Compact Cars',
     tankCapacity: null
   });

@@ -6,24 +6,26 @@ import { formatCostPerUnit, getCurrencySymbol } from '../utils/units';
 import { exportToPDF, exportToExcel } from '../utils/export';
 import Badge, { PillBadge } from '../components/ui/Badge';
 import Card from '../components/ui/Card';
+// import TankToTankTripCard from '../components/TankToTankTripCard'; // TODO: Create in Task 6
 import { calculateTrips, formatTripDateRange, getTripStatusColor } from '../utils/tripCalculations';
 import { calculateTankToTankStatistics } from '../utils/tankToTankCalculations';
 
 const History = () => {
   const { data, loading, deleteLog } = useFuelData();
-  const [filter, setFilter] = useState('all');
-  const [vehicleFilter, setVehicleFilter] = useState('all');
+  const [filter, setFilter] = useState('all'); // 'all' | 'flagged'
+  const [vehicleFilter, setVehicleFilter] = useState('all'); // 'all' | vehicleId
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [exporting, setExporting] = useState(null);
+  const [exporting, setExporting] = useState(null); // 'pdf' | 'excel' | null
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const [activeTab, setActiveTab] = useState('entries');
-  const [tripFilter, setTripFilter] = useState('all');
-  const [tankToTankFilter, setTankToTankFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('entries'); // 'entries' | 'trips' | 'tankToTank'
+  const [tripFilter, setTripFilter] = useState('all'); // 'all' | 'normal' | 'suspicious' | 'theft'
+  const [tankToTankFilter, setTankToTankFilter] = useState('all'); // 'all' | 'normal' | 'theft'
   const currencySymbol = getCurrencySymbol(data.vehicleProfile?.currency || 'USD');
   const fuelUnit = data.vehicleProfile?.fuelVolumeUnit || 'L';
   const distanceUnit = data.vehicleProfile?.distanceUnit || 'km';
 
+  // Get vehicle info helper
   const getVehicleInfo = useMemo(() => {
     return (vehicleId) => {
       if (!vehicleId) return null;
@@ -31,6 +33,7 @@ const History = () => {
     };
   }, [data.vehicles]);
 
+  // Count logs per vehicle for filter buttons
   const vehicleCounts = useMemo(() => {
     const counts = {};
     data.logs?.forEach((log) => {
@@ -56,10 +59,12 @@ const History = () => {
 
   const { logs } = data;
 
+  // Calculate trips from logs
   const trips = useMemo(() => {
     return calculateTrips(logs || [], data.vehicleProfile || {});
   }, [logs, data.vehicleProfile]);
 
+  // Calculate trip statistics
   const tripStats = useMemo(() => {
     if (!trips || trips.length === 0) {
       return {
@@ -95,6 +100,7 @@ const History = () => {
     };
   }, [trips]);
 
+  // Filter trips based on trip filter
   const filteredTrips = useMemo(() => {
     if (tripFilter === 'all') return trips;
     if (tripFilter === 'normal') return trips.filter((t) => t.status === 'Normal');
@@ -103,14 +109,19 @@ const History = () => {
     return trips;
   }, [trips, tripFilter]);
 
+  // ========================================
+  // NEW: Tank-to-Tank Trips (Task 7)
+  // ========================================
   const tankToTankTrips = useMemo(() => {
     return data.vehicleProfile?.tankToTankTrips || [];
   }, [data.vehicleProfile?.tankToTankTrips]);
 
+  // Calculate Tank-to-Tank statistics
   const tankToTankStats = useMemo(() => {
     return calculateTankToTankStatistics(tankToTankTrips);
   }, [tankToTankTrips]);
 
+  // Filter tank-to-tank trips
   const filteredTankToTankTrips = useMemo(() => {
     if (tankToTankFilter === 'all') return tankToTankTrips;
     if (tankToTankFilter === 'normal') return tankToTankTrips.filter((t) => !t.isTheftSuspected);
@@ -118,12 +129,15 @@ const History = () => {
     return tankToTankTrips;
   }, [tankToTankTrips, tankToTankFilter]);
 
+  // Apply both filter (all/flagged), vehicle filter, and search query
   let filteredLogs = logs;
 
+  // Apply flagged filter
   if (filter === 'flagged') {
     filteredLogs = filteredLogs.filter((log) => log.isFlagged);
   }
 
+  // Apply vehicle filter
   if (vehicleFilter !== 'all') {
     filteredLogs = filteredLogs.filter((log) => {
       const logVehicleId = log.vehicleId || data.currentVehicleId;
@@ -131,6 +145,7 @@ const History = () => {
     });
   }
 
+  // Apply search filter
   if (searchQuery.trim() !== '') {
     const query = searchQuery.toLowerCase();
     filteredLogs = filteredLogs.filter((log) => {
@@ -139,6 +154,7 @@ const History = () => {
       const litersStr = log.liters.toString();
       const priceStr = log.price ? log.price.toString() : '';
 
+      // Also search in vehicle name
       const vehicleInfo = getVehicleInfo(log.vehicleId || data.currentVehicleId);
       const vehicleNameStr = vehicleInfo?.name?.toLowerCase() || '';
 
@@ -158,6 +174,7 @@ const History = () => {
     setConfirmDelete(null);
   };
 
+  // Empty state
   if (logs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center animate-fade-in">
@@ -188,6 +205,7 @@ const History = () => {
 
   return (
     <div className="p-4 lg:p-8 space-y-6 max-w-5xl mx-auto">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -209,6 +227,7 @@ const History = () => {
         )}
       </div>
 
+       {/* Search Bar - Only show for entries tab */}
        {activeTab === 'entries' && (
          <div className="relative animate-fade-in-up delay-100">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors" style={{ color: 'var(--text-muted)' }} />
@@ -227,9 +246,11 @@ const History = () => {
          </div>
        )}
 
+       {/* Filter and Export - Only show for entries tab */}
        {activeTab === 'entries' && (
          <div className="space-y-3 animate-fade-in-up delay-200">
-           <div className="flex flex-wrap gap-2">
+          {/* Status Filter Buttons */}
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('all')}
               className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 min-h-[44px] flex items-center gap-2 ${filter === 'all'
@@ -272,8 +293,9 @@ const History = () => {
               <AlertTriangle className="w-4 h-4" />
               Flagged ({logs.filter((l) => l.isFlagged).length})
             </button>
-           </div>
+          </div>
 
+          {/* Vehicle Filter - Only show if there are multiple vehicles */}
           {data.vehicles && data.vehicles.length > 1 && (
             <div className="flex flex-wrap gap-2 pt-1">
               <button
@@ -314,9 +336,10 @@ const History = () => {
                   {vehicleCounts[vehicle.id] ? ` (${vehicleCounts[vehicle.id]})` : ''}
                 </button>
                ))}
-             </div>
-           )}
+              </div>
+            )}
 
+        {/* Export Menu */}
         <div className="flex justify-end animate-fade-in-up delay-200">
           <div className="relative">
             <button
@@ -345,7 +368,8 @@ const History = () => {
               )}
             </button>
 
-             {showExportMenu && (
+            {/* Export Dropdown */}
+            {showExportMenu && (
               <div className="absolute right-0 top-14 z-50 w-52 rounded-xl shadow-xl overflow-hidden animate-fade-in-up"
                 style={{
                   backgroundColor: 'var(--bg-secondary)',
@@ -396,10 +420,11 @@ const History = () => {
               )}
               </div>
             </div>
-          </div>
-        )}
+         </div>
+       )}
 
-           <div className="flex gap-2 animate-fade-in-up delay-300">
+          {/* Tab Switcher */}
+          <div className="flex gap-2 animate-fade-in-up delay-300">
            <button
              onClick={() => setActiveTab('entries')}
              className={`flex-1 px-4 py-3 rounded-xl font-medium text-sm transition-all min-h-[48px] flex items-center justify-center gap-2 ${
@@ -465,8 +490,10 @@ const History = () => {
            </button>
          </div>
 
-         {activeTab === 'trips' ? (
-           <div className="animate-fade-in-up delay-400 space-y-6 pb-24">
+        {/* Tab Content */}
+        {activeTab === 'trips' ? (
+          /* Trip Analysis */
+          <div className="animate-fade-in-up delay-400 space-y-6 pb-24">
             {trips.length === 0 ? (
               <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center animate-fade-in">
                 <div
@@ -494,10 +521,11 @@ const History = () => {
                 >
                   Add Entry
                 </a>
-               </div>
-             ) : (
-               <>
-                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+              </div>
+            ) : (
+              <>
+                {/* Trip Stats Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                   <Card className="p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Activity className="w-5 h-5" style={{ color: 'var(--accent-blue)' }} />
@@ -540,9 +568,10 @@ const History = () => {
                       {tripStats.normalTrips}
                     </p>
                   </Card>
-                 </div>
+                </div>
 
-                 <div className="flex flex-wrap gap-2">
+                {/* Trip Filter Buttons */}
+                <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setTripFilter('all')}
                     className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 min-h-[44px] flex items-center gap-2 ${tripFilter === 'all' ? 'shadow-glow-blue' : ''}`}
@@ -592,9 +621,10 @@ const History = () => {
                       Theft Alerts ({tripStats.theftAlertTrips})
                     </button>
                   )}
-                 </div>
+                </div>
 
-                 {tripStats.theftAlertTrips > 0 && (
+                {/* Theft Alert Warning */}
+                {tripStats.theftAlertTrips > 0 && (
                   <Card className="p-4 border-l-4" style={{ borderLeftColor: 'var(--accent-alert)', backgroundColor: 'color-mix(in srgb, var(--accent-alert) 5%, transparent)' }}>
                     <div className="flex items-start gap-3">
                       <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" style={{ color: 'var(--accent-alert)' }} />
@@ -608,9 +638,10 @@ const History = () => {
                       </div>
                     </div>
                   </Card>
-                 )}
+                )}
 
-                 {filteredTrips.length === 0 ? (
+                {/* Trips List */}
+                {filteredTrips.length === 0 ? (
                   <Card className="p-8 text-center">
                     <Filter className="w-16 h-16 mx-auto mb-4 opacity-20" style={{ color: 'var(--text-muted)' }} />
                     <p className="text-lg font-medium" style={{ color: 'var(--text-muted)' }}>
@@ -748,9 +779,10 @@ const History = () => {
                 )}
               </>
             )}
-            </div>
-          ) : activeTab === 'tankToTank' ? (
-            <div className="animate-fade-in-up delay-400 space-y-6 pb-24">
+           </div>
+         ) : activeTab === 'tankToTank' ? (
+           /* Tank-to-Tank Trips */
+           <div className="animate-fade-in-up delay-400 space-y-6 pb-24">
              {tankToTankTrips.length === 0 ? (
                <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center animate-fade-in">
                  <div
@@ -778,10 +810,11 @@ const History = () => {
                  >
                    Add Entry
                  </a>
-              </div>
-            ) : (
-              <>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+               </div>
+             ) : (
+               <>
+                 {/* Tank-to-Tank Statistics Cards */}
+                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                    <Card className="p-4">
                      <div className="flex items-center gap-2 mb-2">
                        <Route className="w-5 h-5" style={{ color: 'var(--accent-blue)' }} />
@@ -827,9 +860,10 @@ const History = () => {
                        {fuelUnit}
                      </p>
                    </Card>
-                  </div>
+                 </div>
 
-                  <div className="flex flex-wrap gap-2">
+                 {/* Tank-to-Tank Filter Buttons */}
+                 <div className="flex flex-wrap gap-2">
                    <button
                      onClick={() => setTankToTankFilter('all')}
                      className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 min-h-[44px] flex items-center gap-2 ${
@@ -892,9 +926,10 @@ const History = () => {
                        Theft Alerts ({tankToTankStats.theftIncidents})
                      </button>
                    )}
-                  </div>
+                 </div>
 
-                  {tankToTankStats.theftIncidents > 0 && (
+                 {/* Theft Alert Warning */}
+                 {tankToTankStats.theftIncidents > 0 && (
                    <Card className="p-4 border-l-4" style={{ borderLeftColor: 'var(--accent-alert)', backgroundColor: 'color-mix(in srgb, var(--accent-alert) 5%, transparent)' }}>
                      <div className="flex items-start gap-3">
                        <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" style={{ color: 'var(--accent-alert)' }} />
@@ -913,9 +948,10 @@ const History = () => {
                        </div>
                      </div>
                    </Card>
-                  )}
+                 )}
 
-                   {filteredTankToTankTrips.length === 0 ? (
+                  {/* Tank-to-Tank Trips List */}
+                  {filteredTankToTankTrips.length === 0 ? (
                     <Card className="p-8 text-center">
                       <Filter className="w-16 h-16 mx-auto mb-4 opacity-20" style={{ color: 'var(--text-muted)' }} />
                       <p className="text-lg font-medium" style={{ color: 'var(--text-muted)' }}>
@@ -923,10 +959,15 @@ const History = () => {
                       </p>
                     </Card>
                   ) : (
-                   <div className="space-y-4">
-                       {filteredTankToTankTrips.map((trip, index) => {
-                         const pricePerLiter = data.logs?.[0]?.price / data.logs?.[0]?.liters || 0;
-                         return (
+                    <div className="space-y-4">
+                      {filteredTankToTankTrips.map((trip, index) => {
+                        // Calculate price per liter for theft cost
+                        // Use last log's price or average price
+                        const pricePerLiter = data.logs?.[0]?.price / data.logs?.[0]?.liters || 0;
+                        
+                        // TODO: Implement TankToTankTripCard component in Task 6
+                        // For now, showing simplified card
+                        return (
                           <Card
                             key={trip.currentLogId}
                             variant="elevated"

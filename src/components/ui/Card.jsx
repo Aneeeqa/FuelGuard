@@ -1,5 +1,13 @@
 import { clsx } from 'clsx';
 
+/**
+ * Card component with multiple variants
+ * - Rounded corners, shadow, padding
+ * - Supports different padding sizes
+ * - Optional hover/active states
+ * - Glassmorphism support
+ * - Gradient variants
+ */
 const Card = ({
   children,
   className,

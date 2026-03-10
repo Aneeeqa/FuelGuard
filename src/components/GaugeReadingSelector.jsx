@@ -1,6 +1,29 @@
+/**
+ * Gauge Reading Selector Component
+ *
+ * Purpose: Quick-select buttons for fuel gauge reading with percentage input
+ *
+ * @component GaugeReadingSelector
+ * @description Provides quick-select buttons for common gauge readings (Full, 3/4, 1/2, 1/4, Empty)
+ * along with a manual percentage input for precise values.
+ */
+
 import { Gauge } from 'lucide-react';
 import { estimateFuelLevelFromGauge } from '../utils/tankToTankCalculations';
 
+/**
+ * GaugeReadingSelector Component
+ *
+ * Props:
+ * - value: number - Currently selected percentage (0-100)
+ * - onChange: (percentage: number) => void - Callback when selection changes
+ * - tankCapacity: number - Vehicle's tank capacity in liters
+ * - allowManual: boolean - Whether to show manual percentage input (default: true)
+ * - units: string - Volume unit ('L' or 'gal')
+ *
+ * Time Complexity: O(1) - Simple render with quick lookup
+ * Space Complexity: O(1) - Fixed component size
+ */
 const GaugeReadingSelector = ({
   value,
   onChange,

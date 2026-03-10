@@ -1,5 +1,11 @@
 import { clsx } from 'clsx';
 
+/**
+ * LoadingSpinner component
+ * - Animated spinner
+ * - Multiple sizes: sm, md, lg, xl
+ * - With or without label
+ */
 const LoadingSpinner = ({ 
   size = 'md', 
   label,
@@ -31,6 +37,9 @@ const LoadingSpinner = ({
   );
 };
 
+/**
+ * Inline spinner for buttons and small spaces
+ */
 export const InlineSpinner = ({ className }) => (
   <svg 
     className={clsx('animate-spin', className)}

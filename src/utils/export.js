@@ -1,8 +1,18 @@
+/**
+ * Export utilities for PDF and Excel formats
+ * Includes tank-to-tank fuel consumption and theft analysis exports
+ */
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { getTankToTankTheftSeverity, calculateTankToTankStatistics } from './tankToTankCalculations';
 
+/**
+ * Export fuel logs to PDF
+ * @param {Array} logs - Array of fuel log entries
+ * @param {Object} vehicleProfile - Vehicle profile info
+ * @param {string} currency - Currency symbol
+ */
 export const exportToPDF = (logs, vehicleProfile, currency) => {
   try {
     if (!logs || logs.length === 0) {
@@ -105,6 +115,12 @@ export const exportToPDF = (logs, vehicleProfile, currency) => {
   }
 };
 
+/**
+ * Export fuel logs to Excel (XLSX)
+ * @param {Array} logs - Array of fuel log entries
+ * @param {Object} vehicleProfile - Vehicle profile info
+ * @param {string} currency - Currency symbol
+ */
 export const exportToExcel = (logs, vehicleProfile, currency) => {
   try {
     if (!logs || logs.length === 0) {
@@ -179,6 +195,11 @@ export const exportToExcel = (logs, vehicleProfile, currency) => {
   }
 };
 
+/**
+ * Export trip data to CSV
+ * @param {Array} trips - Array of trip entries
+ * @param {string} currency - Currency symbol
+ */
 export const exportTripsToCSV = (trips, currency) => {
   try {
     if (!trips || trips.length === 0) {
@@ -187,11 +208,11 @@ export const exportTripsToCSV = (trips, currency) => {
     }
 
     const headers = ['Date', 'Start Odometer', 'End Odometer', 'Distance (km)', 'Fuel Used (L)', 'Cost (' + currency + ')', 'Mileage (km/L)', 'Status'];
-
+    
     const rows = trips.map(trip => {
       const startLog = trip.logs && trip.logs[0] ? trip.logs[0] : {};
       const endLog = trip.logs && trip.logs[1] ? trip.logs[1] : {};
-
+      
       return [
         new Date(trip.startDate).toLocaleDateString(),
         startLog.odometer || '-',
@@ -224,6 +245,16 @@ export const exportTripsToCSV = (trips, currency) => {
   }
 };
 
+/**
+ * Export single tank-to-tank trip to PDF
+ * @param {Object} tripData - Tank-to-Tank calculation result
+ * @param {Object} vehicleProfile - Vehicle profile info
+ * @param {string} currency - Currency symbol
+ * @param {number} pricePerLiter - Price per liter for theft cost calculation
+ *
+ * Time Complexity: O(1) - Fixed number of operations
+ * Space Complexity: O(1) - Fixed data structures
+ */
 export const exportTankToTankTripToPDF = (tripData, vehicleProfile, currency = '$', pricePerLiter = 0) => {
   try {
     if (!tripData || !tripData.isValid) {
@@ -238,20 +269,25 @@ export const exportTankToTankTripToPDF = (tripData, vehicleProfile, currency = '
 
     const doc = new jsPDF();
 
+    // Document title
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
     doc.text('Fuel Guard - Tank-to-Tank Analysis', 14, 15);
 
+    // Vehicle info
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text('Vehicle: ' + (vehicleProfile?.name || 'Not set'), 14, 25);
     doc.text('Export Date: ' + new Date().toLocaleDateString(), 14, 32);
 
+    // Divider
     doc.setDrawColor(200, 200, 200);
     doc.line(14, 38, 196, 38);
 
+    // Trip Summary Section
     const severity = getTankToTankTheftSeverity(tripData.theftPercentage);
 
+    // Title with severity color
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
 
@@ -269,12 +305,14 @@ export const exportTankToTankTripToPDF = (tripData, vehicleProfile, currency = '
     }
     doc.setTextColor(0, 0, 0);
 
+    // Trip period
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     const startDate = new Date(tripData.startDate).toLocaleDateString();
     const endDate = new Date(tripData.endDate).toLocaleDateString();
     doc.text(`Trip Period: ${startDate} - ${endDate} (${tripData.durationDays} days)`, 14, 56);
 
+    // Key Metrics Table
     const metricsData = [
       ['Metric', 'Value'],
       ['Distance Traveled', `${Math.round(tripData.distance)} ${distanceUnit}`],
@@ -306,6 +344,7 @@ export const exportTankToTankTripToPDF = (tripData, vehicleProfile, currency = '
       },
     });
 
+    // Theft Analysis Section
     const currentY = doc.lastAutoTable.finalY + 10;
 
     doc.setFontSize(12);
@@ -344,6 +383,7 @@ export const exportTankToTankTripToPDF = (tripData, vehicleProfile, currency = '
         1: { cellWidth: 60 },
       },
       didParseCell: function (data) {
+        // Color-code theft indicators
         if (data.section === 'body' && data.column.index === 1) {
           if (data.row.index === 1 && tripData.theftAmount > 0) {
             data.cell.styles.textColor = [220, 38, 38];
@@ -357,6 +397,7 @@ export const exportTankToTankTripToPDF = (tripData, vehicleProfile, currency = '
       },
     });
 
+    // Odometer Readings
     const odometerY = doc.lastAutoTable.finalY + 10;
 
     doc.setFontSize(12);
@@ -390,6 +431,7 @@ export const exportTankToTankTripToPDF = (tripData, vehicleProfile, currency = '
       },
     });
 
+    // Fuel Level Analysis
     const fuelY = doc.lastAutoTable.finalY + 10;
 
     doc.setFontSize(12);
@@ -425,6 +467,7 @@ export const exportTankToTankTripToPDF = (tripData, vehicleProfile, currency = '
       },
     });
 
+    // Footer
     const footerY = doc.lastAutoTable.finalY + 15;
 
     doc.setFontSize(8);
@@ -444,6 +487,16 @@ export const exportTankToTankTripToPDF = (tripData, vehicleProfile, currency = '
   }
 };
 
+/**
+ * Export multiple tank-to-tank trips to PDF
+ * @param {Array} trips - Array of tank-to-tank trip data
+ * @param {Object} vehicleProfile - Vehicle profile info
+ * @param {string} currency - Currency symbol
+ * @param {number} pricePerLiter - Price per liter
+ *
+ * Time Complexity: O(n) where n is number of trips
+ * Space Complexity: O(1) - Fixed data structures
+ */
 export const exportTankToTankTripsToPDF = (trips, vehicleProfile, currency = '$', pricePerLiter = 0) => {
   try {
     if (!trips || trips.length === 0) {
@@ -458,15 +511,18 @@ export const exportTankToTankTripsToPDF = (trips, vehicleProfile, currency = '$'
 
     const doc = new jsPDF();
 
+    // Document title
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.text('Fuel Guard - Tank-to-Tank Report', 14, 15);
 
+    // Vehicle info
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text('Vehicle: ' + (vehicleProfile?.name || 'Not set'), 14, 25);
     doc.text('Export Date: ' + new Date().toLocaleDateString(), 14, 32);
 
+    // Statistics
     const stats = calculateTankToTankStatistics(trips);
 
     doc.setFontSize(12);
@@ -507,13 +563,13 @@ export const exportTankToTankTripsToPDF = (trips, vehicleProfile, currency = '$'
       },
       didParseCell: function (data) {
         if (data.section === 'body' && data.column.index === 1) {
-          if (data.row.index === 4) {
+          if (data.row.index === 4) { // Total Thefts
             if (stats.theftIncidents > 0) {
               data.cell.styles.textColor = [220, 38, 38];
               data.cell.styles.fontStyle = 'bold';
             }
           }
-          if (data.row.index === 5) {
+          if (data.row.index === 5) { // Total Fuel Stolen
             if (stats.totalTheftAmount > 0) {
               data.cell.styles.textColor = [220, 38, 38];
               data.cell.styles.fontStyle = 'bold';
@@ -523,6 +579,7 @@ export const exportTankToTankTripsToPDF = (trips, vehicleProfile, currency = '$'
       },
     });
 
+    // Trips table
     const tableY = doc.lastAutoTable.finalY + 10;
 
     doc.setFontSize(12);
@@ -575,6 +632,7 @@ export const exportTankToTankTripsToPDF = (trips, vehicleProfile, currency = '$'
       },
     });
 
+    // Footer
     const footerY = doc.lastAutoTable.finalY + 10;
 
     doc.setFontSize(8);
@@ -593,6 +651,16 @@ export const exportTankToTankTripsToPDF = (trips, vehicleProfile, currency = '$'
   }
 };
 
+/**
+ * Export tank-to-tank trips to Excel (XLSX)
+ * @param {Array} trips - Array of tank-to-tank trip data
+ * @param {Object} vehicleProfile - Vehicle profile info
+ * @param {string} currency - Currency symbol
+ * @param {number} pricePerLiter - Price per liter
+ *
+ * Time Complexity: O(n) where n is number of trips
+ * Space Complexity: O(n) - Creates sheet data
+ */
 export const exportTankToTankToExcel = (trips, vehicleProfile, currency = '$', pricePerLiter = 0) => {
   try {
     if (!trips || trips.length === 0) {
@@ -605,6 +673,7 @@ export const exportTankToTankToExcel = (trips, vehicleProfile, currency = '$', p
     const efficiencyUnit = fuelVolumeUnit === 'gal' ? 'mpg' : 'km/L';
     const fuelDisplayUnit = fuelVolumeUnit === 'gal' ? 'gal' : 'L';
 
+    // Create Summary Sheet
     const stats = calculateTankToTankStatistics(trips);
 
     const summaryData = [
@@ -626,6 +695,7 @@ export const exportTankToTankToExcel = (trips, vehicleProfile, currency = '$', p
       summaryData.push({ 'Metric': 'Total Loss', 'Value': currency + (stats.totalTheftAmount * pricePerLiter).toFixed(2) });
     }
 
+    // Create Trips Sheet
     const tripsData = trips.map((trip, index) => {
       const obj = {
         '#': index + 1,
@@ -657,6 +727,7 @@ export const exportTankToTankToExcel = (trips, vehicleProfile, currency = '$', p
       return obj;
     });
 
+    // Create Theft Incidents Sheet
     const theftTrips = trips.filter(t => t.isTheftSuspected);
 
     if (theftTrips.length > 0) {
@@ -684,6 +755,7 @@ export const exportTankToTankToExcel = (trips, vehicleProfile, currency = '$', p
       const wsTrips = XLSX.utils.json_to_sheet(tripsData);
       const wsTheft = XLSX.utils.json_to_sheet(theftData);
 
+      // Set column widths
       wsSummary['!cols'] = [{ wch: 25 }, { wch: 20 }];
       wsTrips['!cols'] = tripsData[0] ? Object.keys(tripsData[0]).map(() => ({ wch: 18 })) : [];
       wsTheft['!cols'] = theftData[0] ? Object.keys(theftData[0]).map(() => ({ wch: 18 })) : [];
@@ -717,10 +789,31 @@ export const exportTankToTankToExcel = (trips, vehicleProfile, currency = '$', p
   }
 };
 
+/**
+ * Export single tank-to-tank trip to Excel
+ * @param {Object} tripData - Single tank-to-tank trip data
+ * @param {Object} vehicleProfile - Vehicle profile info
+ * @param {string} currency - Currency symbol
+ * @param {number} pricePerLiter - Price per liter
+ *
+ * Time Complexity: O(1)
+ * Space Complexity: O(1)
+ */
 export const exportSingleTankToTankToExcel = (tripData, vehicleProfile, currency = '$', pricePerLiter = 0) => {
   return exportTankToTankToExcel([tripData], vehicleProfile, currency, pricePerLiter);
 };
 
+/**
+ * Generate text report for tank-to-tank trip (for copying to clipboard)
+ * @param {Object} tripData - Tank-to-Tank calculation result
+ * @param {Object} vehicleProfile - Vehicle profile info
+ * @param {string} currency - Currency symbol
+ * @param {number} pricePerLiter - Price per liter
+ * @returns {string} Formatted text report
+ *
+ * Time Complexity: O(1)
+ * Space Complexity: O(1)
+ */
 export const generateTankToTankTextReport = (tripData, vehicleProfile, currency = '$', pricePerLiter = 0) => {
   if (!tripData || !tripData.isValid) {
     return 'No valid Tank-to-Tank data available.';
@@ -734,9 +827,9 @@ export const generateTankToTankTextReport = (tripData, vehicleProfile, currency 
   const severity = getTankToTankTheftSeverity(tripData.theftPercentage);
 
   let report = `
-══════════════════════════════════════════════════════════════
-FUEL GUARD - TANK-TO-TANK ANALYSIS REPORT
-══════════════════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════════
+  FUEL GUARD - TANK-TO-TANK ANALYSIS REPORT
+═══════════════════════════════════════════════════════════════
 
 VEHICLE INFORMATION
   Vehicle: ${vehicleProfile?.name || 'Not set'}
@@ -792,10 +885,10 @@ FUEL LEVEL ANALYSIS
   Fuel After Fill: ${tripData.tankCapacity} ${fuelDisplayUnit} (100%)
   Fill Percentage: ${tripData.fillPercentage.toFixed(0)}%
 
-══════════════════════════════════════════════════════════════
-Generated by Fuel Guard
-${new Date().toLocaleString()}
-══════════════════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════════
+  Generated by Fuel Guard
+  ${new Date().toLocaleString()}
+═══════════════════════════════════════════════════════════════
 `;
 
   return report;

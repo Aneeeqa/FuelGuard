@@ -1,6 +1,28 @@
+/**
+ * Full Tank Toggle Component
+ *
+ * Purpose: Toggle switch to enable/disable tank-to-tank tracking
+ *
+ * @component FullTankToggle
+ * @description A toggle that enables Tank-to-Tank tracking when the user fills their tank to full.
+ * This is critical for accurate fuel consumption tracking and theft detection.
+ */
+
 import { useState } from 'react';
 import { Info, Fuel } from 'lucide-react';
 
+/**
+ * FullTankToggle Component
+ *
+ * Props:
+ * - checked: boolean - Current toggle state (true = full tank, false = partial)
+ * - onChange: (checked: boolean) => void - Callback when toggle changes
+ * - tankCapacity: number - Vehicle's tank capacity in liters
+ * - showLearnMore: boolean - Whether to show the "Learn more" link (default: true)
+ *
+ * Time Complexity: O(1) - Simple toggle with conditional rendering
+ * Space Complexity: O(1) - Fixed component size
+ */
 const FullTankToggle = ({ checked, onChange, tankCapacity, showLearnMore = true }) => {
   const [showLearnMoreModal, setShowLearnMoreModal] = useState(false);
 

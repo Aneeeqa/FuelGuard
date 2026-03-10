@@ -1,37 +1,16 @@
-import { useState } from 'react';
+/**
+ * TankToTankTripCard Demo Component
+ *
+ * This file demonstrates how to use the TankToTankTripCard component
+ * with various scenarios (normal, theft warning, critical theft)
+ */
 
+import TankToTankTripCard from '../components/TankToTankTripCard';
+
+/**
+ * Demo Component showing different Tank-to-Tank scenarios
+ */
 const TankToTankTripCardDemo = () => {
-  const vehicleProfile = {
-    tankCapacity: 100,
-    expectedMileage: 15,
-    theftThreshold: 25
-  };
-
-  const units = {
-    distanceUnit: 'km',
-    fuelVolumeUnit: 'L'
-  };
-
-  const currency = 'USD';
-
-  const mockTripData = {
-    isValid: true,
-    isTheftSuspected: false,
-    distance: 300,
-    actualFuelConsumed: 20,
-    expectedFuelConsumed: 13.33,
-    theftAmount: 0,
-    theftPercentage: 0,
-    mileageEfficiency: 100,
-    startDate: '2024-01-15T10:00:00Z',
-    endDate: '2024-01-20T14:30:00Z',
-    startOdometer: 15000,
-    endOdometer: 15300,
-    durationDays: 5,
-    currentLogId: 'log-2'
-  };
-
-  const TankToTankTripCardDemo = () => {
   // Sample vehicle profile
   const vehicleProfile = {
     tankCapacity: 100,
@@ -61,15 +40,15 @@ const TankToTankTripCardDemo = () => {
     actualMileage: 14.06,
     expectedMileage: 15,
     mileageEfficiency: 93.75,
-    startDate: '2024-01-15T10:00:00Z',
-    endDate: '2024-01-20T14:30:00Z',
+    startDate: '2020-01-15T10:00:00Z',
+    endDate: '2020-01-20T14:30:00Z',
     startOdometer: 15000,
     endOdometer: 16125,
     duration: 436500000,
     durationDays: 5,
     previousFullFillLogId: 'log-1',
     currentLogId: 'log-2',
-    calculatedAt: '2024-01-24T10:30:00Z',
+    calculatedAt: '2020-01-24T10:30:00Z',
     theftThreshold: 25
   };
 
@@ -89,15 +68,15 @@ const TankToTankTripCardDemo = () => {
     actualMileage: 5.56,
     expectedMileage: 15,
     mileageEfficiency: 37,
-    startDate: '2024-01-20T10:00:00Z',
-    endDate: '2024-01-24T14:30:00Z',
+    startDate: '2020-01-20T10:00:00Z',
+    endDate: '2020-01-24T14:30:00Z',
     startOdometer: 15000,
     endOdometer: 15200,
     duration: 350100000,
     durationDays: 4,
     previousFullFillLogId: 'log-1',
     currentLogId: 'log-3',
-    calculatedAt: '2024-01-24T14:30:00Z',
+    calculatedAt: '2020-01-24T14:30:00Z',
     theftThreshold: 25
   };
 
@@ -117,30 +96,33 @@ const TankToTankTripCardDemo = () => {
     actualMileage: 3.75,
     expectedMileage: 15,
     mileageEfficiency: 25,
-    startDate: '2024-01-10T08:00:00Z',
-    endDate: '2024-01-15T16:00:00Z',
+    startDate: '2020-01-10T08:00:00Z',
+    endDate: '2020-01-15T16:00:00Z',
     startOdometer: 10000,
     endOdometer: 10150,
     duration: 432000000,
     durationDays: 5,
     previousFullFillLogId: 'log-1',
     currentLogId: 'log-4',
-    calculatedAt: '2024-01-15T16:00:00Z',
+    calculatedAt: '2020-01-15T16:00:00Z',
     theftThreshold: 25
   };
 
   // Handle view details
   const handleViewDetails = (tripData) => {
+    console.log('View Details:', tripData);
     alert(`Viewing details for trip:\n${JSON.stringify(tripData, null, 2)}`);
   };
 
   // Handle export report
   const handleExportReport = (tripData) => {
+    console.log('Export Report:', tripData);
     alert('Exporting report for trip...');
   };
 
   // Handle copy report
   const handleCopyReport = (tripData) => {
+    console.log('Copy Report:', tripData);
     alert('Copying report to clipboard...');
   };
 

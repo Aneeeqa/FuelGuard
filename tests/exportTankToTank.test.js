@@ -41,8 +41,8 @@ const mockTripData = {
   actualMileage: 5.56,
   expectedMileage: 15,
   mileageEfficiency: 37.07,
-  startDate: '2024-01-20T10:00:00Z',
-  endDate: '2024-01-24T14:30:00Z',
+  startDate: '2020-01-20T10:00:00Z',
+  endDate: '2020-01-24T14:30:00Z',
   startOdometer: 15034,
   endOdometer: 15234,
   duration: 350640000,
@@ -53,7 +53,7 @@ const mockTripData = {
   theftThreshold: 25,
   previousFullFillLogId: 'log-1',
   currentLogId: 'log-2',
-  calculatedAt: '2024-01-24T14:30:00Z',
+  calculatedAt: '2020-01-24T14:30:00Z',
 };
 
 const mockNormalTripData = {
@@ -307,8 +307,8 @@ describe('Tank-to-Tank Export - Text Report', () => {
         3.33
       );
 
-      expect(report).toContain('1/20/2024');
-      expect(report).toContain('1/24/2024');
+      expect(report).toContain('1/20/2020');
+      expect(report).toContain('1/24/2020');
     });
 
     test('should include estimated loss when pricePerLiter provided', () => {

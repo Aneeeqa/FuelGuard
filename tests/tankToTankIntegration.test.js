@@ -81,7 +81,7 @@ test('Track multiple tank-to-tank cycles', () => {
   // First fill (baseline)
   logs.push({
     id: '1',
-    date: '2024-01-01T10:00:00Z',
+    date: '2020-01-01T10:00:00Z',
     odometer: 10000,
     liters: 50,
     isFullTank: true,
@@ -92,7 +92,7 @@ test('Track multiple tank-to-tank cycles', () => {
   // Second fill (normal consumption)
   logs.push({
     id: '2',
-    date: '2024-01-10T10:00:00Z',
+    date: '2020-01-10T10:00:00Z',
     odometer: 10300,
     liters: 20,
     isFullTank: true,
@@ -103,7 +103,7 @@ test('Track multiple tank-to-tank cycles', () => {
   // Third fill (normal consumption)
   logs.push({
     id: '3',
-    date: '2024-01-20T10:00:00Z',
+    date: '2020-01-20T10:00:00Z',
     odometer: 10600,
     liters: 20,
     isFullTank: true,
@@ -142,7 +142,7 @@ test('Detect abnormal fuel consumption (theft)', () => {
   // Full tank
   logs.push({
     id: '1',
-    date: '2024-01-01T10:00:00Z',
+    date: '2020-01-01T10:00:00Z',
     odometer: 10000,
     liters: 100,
     isFullTank: true,
@@ -153,7 +153,7 @@ test('Detect abnormal fuel consumption (theft)', () => {
   // Refill with theft (from user's example)
   logs.push({
     id: '2',
-    date: '2024-01-15T10:00:00Z',
+    date: '2020-01-15T10:00:00Z',
     odometer: 10200,
     liters: 36,
     isFullTank: true,
@@ -189,7 +189,7 @@ test('Only use full fills for calculations', () => {
   // Full fill
   logs.push({
     id: '1',
-    date: '2024-01-01T10:00:00Z',
+    date: '2020-01-01T10:00:00Z',
     odometer: 10000,
     liters: 50,
     isFullTank: true,
@@ -200,7 +200,7 @@ test('Only use full fills for calculations', () => {
   // Partial fill (should be ignored)
   logs.push({
     id: '2',
-    date: '2024-01-05T10:00:00Z',
+    date: '2020-01-05T10:00:00Z',
     odometer: 10100,
     liters: 10,
     isFullTank: false,
@@ -211,7 +211,7 @@ test('Only use full fills for calculations', () => {
   // Another partial fill (should be ignored)
   logs.push({
     id: '3',
-    date: '2024-01-08T10:00:00Z',
+    date: '2020-01-08T10:00:00Z',
     odometer: 10150,
     liters: 8,
     isFullTank: false,
@@ -222,7 +222,7 @@ test('Only use full fills for calculations', () => {
   // Full fill (should calculate from log #1)
   logs.push({
     id: '4',
-    date: '2024-01-15T10:00:00Z',
+    date: '2020-01-15T10:00:00Z',
     odometer: 10300,
     liters: 20,
     isFullTank: true,
@@ -254,7 +254,7 @@ test('Handle very short distance', () => {
 
   const previousFullFill = {
     id: '1',
-    date: '2024-01-01T10:00:00Z',
+    date: '2020-01-01T10:00:00Z',
     odometer: 10000,
     liters: 50,
     tankCapacity: 50,
@@ -263,7 +263,7 @@ test('Handle very short distance', () => {
 
   const currentLog = {
     id: '2',
-    date: '2024-01-02T10:00:00Z',
+    date: '2020-01-02T10:00:00Z',
     odometer: 10005,  // Only 5 km
     liters: 5,
     tankCapacity: 50,
@@ -286,7 +286,7 @@ test('Handle very long distance', () => {
 
   const previousFullFill = {
     id: '1',
-    date: '2024-01-01T10:00:00Z',
+    date: '2020-01-01T10:00:00Z',
     odometer: 10000,
     liters: 50,
     tankCapacity: 50,
@@ -295,7 +295,7 @@ test('Handle very long distance', () => {
 
   const currentLog = {
     id: '2',
-    date: '2024-02-01T10:00:00Z',  // 31 days later
+    date: '2020-02-01T10:00:00Z',  // 31 days later
     odometer: 11000,  // 1000 km
     liters: 45,
     tankCapacity: 50,
@@ -320,7 +320,7 @@ test('Handle extreme tank sizes', () => {
 
   const previousFullFill = {
     id: '1',
-    date: '2024-01-01T10:00:00Z',
+    date: '2020-01-01T10:00:00Z',
     odometer: 10000,
     liters: 200,
     tankCapacity: 200,
@@ -329,7 +329,7 @@ test('Handle extreme tank sizes', () => {
 
   const currentLog = {
     id: '2',
-    date: '2024-01-15T10:00:00Z',
+    date: '2020-01-15T10:00:00Z',
     odometer: 10200,
     liters: 50,
     tankCapacity: 200,
@@ -376,7 +376,7 @@ test('Validate migrated data', () => {
     logs: [
       {
         id: '1',
-        date: '2024-01-01T10:00:00Z',
+        date: '2020-01-01T10:00:00Z',
         odometer: 10000,
         liters: 50
       }
@@ -563,7 +563,7 @@ test('Test different theft thresholds', () => {
 
   const previousFullFill = {
     id: '1',
-    date: '2024-01-01T10:00:00Z',
+    date: '2020-01-01T10:00:00Z',
     odometer: 10000,
     liters: 100,
     tankCapacity: 100,
@@ -573,7 +573,7 @@ test('Test different theft thresholds', () => {
   // Theft scenario: fill more than expected
   const currentLog = {
     id: '2',
-    date: '2024-01-15T10:00:00Z',
+    date: '2020-01-15T10:00:00Z',
     odometer: 10200,
     liters: 20,  // More than expected 13.33L
     tankCapacity: 100,
@@ -595,7 +595,7 @@ test('Test lenient theft threshold', () => {
 
   const previousFullFill = {
     id: '1',
-    date: '2024-01-01T10:00:00Z',
+    date: '2020-01-01T10:00:00Z',
     odometer: 10000,
     liters: 100,
     tankCapacity: 100,
@@ -605,7 +605,7 @@ test('Test lenient theft threshold', () => {
   // Small theft scenario: just above expected
   const currentLog = {
     id: '2',
-    date: '2024-01-15T10:00:00Z',
+    date: '2020-01-15T10:00:00Z',
     odometer: 10200,
     liters: 14,  // Slightly above expected 13.33L
     tankCapacity: 100,

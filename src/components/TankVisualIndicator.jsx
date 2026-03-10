@@ -1,9 +1,33 @@
-import { useState } from 'react';
+/**
+ * Tank Visual Indicator Component
+ *
+ * Purpose: Visual representation of fuel level in tank with interactive slider
+ *
+ * @component TankVisualIndicator
+ * @description Displays a visual fuel tank with liquid level that users can adjust using a slider.
+ * Color-coded based on fuel level: Green (100-70%), Yellow (70-40%), Orange (40-20%), Red (<20%).
+ */
 
+import { Fuel } from 'lucide-react';
+import { getFuelLevelColor } from '../utils/tankToTankCalculations';
+
+/**
+ * TankVisualIndicator Component
+ *
+ * Props:
+ * - currentLevel: number - Current fuel level in liters (0 to tankCapacity)
+ * - tankCapacity: number - Tank capacity in liters
+ * - editable: boolean - Whether user can adjust the level (default: false)
+ * - onChange: (level: number) => void - Callback when level changes
+ * - units: string - Volume unit ('L' or 'gal')
+ *
+ * Time Complexity: O(1) - Simple render with color lookup
+ * Space Complexity: O(1) - Fixed component size
+ */
 const TankVisualIndicator = ({
-  level,
+  currentLevel,
   tankCapacity,
-  editable = true,
+  editable = false,
   onChange,
   units = 'L'
 }) => {

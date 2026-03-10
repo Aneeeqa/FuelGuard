@@ -6,10 +6,12 @@ import { ThemeProvider } from './context/ThemeContext.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import './index.css';
 
+// Ensure proper initialization
 let root = document.getElementById('root');
 
 if (!root) {
   console.error('Root element not found!');
+  // Create root element if it doesn't exist
   root = document.createElement('div');
   root.id = 'root';
   document.body.appendChild(root);
@@ -18,6 +20,7 @@ if (!root) {
 const rootElement = root;
 
 try {
+  // REMOVED React.StrictMode - it was causing issues with error boundary
   ReactDOM.createRoot(rootElement).render(
     <ErrorBoundary>
       <ThemeProvider>
@@ -29,9 +32,10 @@ try {
   );
 } catch (error) {
   console.error('Failed to render React app:', error);
+  // Show error message to user
   rootElement.innerHTML = `
     <div style="
-      padding:20px;
+      padding: 20px;
       text-align: center;
       font-family: system-ui, sans-serif;
       background: #f8fafc;
@@ -41,18 +45,20 @@ try {
       justify-content: center;
       align-items: center;
     ">
-      <h2 style="color: #dc2626; margin-bottom:10px;">App Failed to Load</h2>
+      <h2 style="color: #dc2626; margin-bottom: 10px;">App Failed to Load</h2>
       <p style="color: #334155;">Please refresh the page to try again.</p>
       <button onclick="location.reload()" style="
-        margin-top:20px;
-        padding:12px 24px;
+        margin-top: 20px;
+        padding: 12px 24px;
         background: #3b82f6;
         color: white;
         border: none;
-        border-radius:8px;
+        border-radius: 8px;
         cursor: pointer;
-        font-size:16px;
+        font-size: 16px;
       ">Reload</button>
     </div>
   `;
 }
+
+

@@ -12,6 +12,28 @@ import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
 import './ExportDialog.css';
 
+/**
+ * Export Dialog Component
+ *
+ * Provides export options for tank-to-tank trip data including:
+ * - PDF export (single trip or all trips)
+ * - Excel export (single trip or all trips)
+ * - Text report (copy to clipboard)
+ *
+ * Time Complexity: O(1) - Static component rendering
+ * Space Complexity: O(1) - No additional data structures
+ *
+ * @param {Object} props
+ * @param {boolean} props.isOpen - Whether dialog is open
+ * @param {Function} props.onClose - Callback when dialog closes
+ * @param {Object} props.tripData - Tank-to-Tank calculation result
+ * @param {Array} props.allTrips - Array of all tank-to-tank trips
+ * @param {boolean} props.showAllTripsOption - Show "Export All Trips" option
+ * @param {Function} props.onExportToPDF - Callback for PDF export
+ * @param {Function} props.onExportToExcel - Callback for Excel export
+ * @param {Function} props.onCopyReport - Callback for copying report
+ * @param {boolean} props.isExporting - Whether export is in progress
+ */
 const ExportDialog = ({
   isOpen,
   onClose,

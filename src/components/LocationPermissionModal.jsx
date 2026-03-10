@@ -1,5 +1,13 @@
 import { MapPin, ShieldCheck, X } from '@phosphor-icons/react';
 
+/**
+ * Friendly modal to explain why location is needed before requesting browser permission.
+ * This increases the likelihood that users will accept the permission request.
+ * 
+ * @param {boolean} isOpen 
+ * @param {function} onClose 
+ * @param {function} onConfirm 
+ */
 const LocationPermissionModal = ({ isOpen, onClose, onConfirm }) => {
     if (!isOpen) return null;
 

@@ -2,6 +2,13 @@ import { clsx } from 'clsx';
 import { CheckCircle, WarningCircle, Info, X } from '@phosphor-icons/react';
 import { useEffect, useState } from 'react';
 
+/**
+ * Toast notification component
+ * - Slide-in from top-right
+ * - Auto-dismiss after 5 seconds
+ * - Manual dismiss option
+ * - Multiple variants: success, error, warning, info
+ */
 const Toast = ({ 
   message, 
   variant = 'info', 
@@ -99,6 +106,9 @@ const Toast = ({
   );
 };
 
+/**
+ * Toast container component for managing multiple toasts
+ */
 export const ToastContainer = ({ toasts = [], removeToast }) => {
   return (
     <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
@@ -116,6 +126,9 @@ export const ToastContainer = ({ toasts = [], removeToast }) => {
   );
 };
 
+/**
+ * Hook for managing toasts
+ */
 export const useToast = () => {
   const [toasts, setToasts] = useState([]);
 
