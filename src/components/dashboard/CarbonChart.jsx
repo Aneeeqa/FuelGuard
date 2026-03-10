@@ -1,5 +1,6 @@
 import React, { memo, lazy, Suspense } from 'react';
 import Skeleton from '../ui/Skeleton';
+import { getCO2LevelColor } from '../../config/carbonConfig';
 
 // Lazy load recharts components
 const LazyChart = lazy(() =>
@@ -34,18 +35,17 @@ const LazyChart = lazy(() =>
         ? chartData.reduce((sum, d) => sum + d.co2, 0) / chartData.length
         : 0;
 
-      // Color scale based on CO2 levels (green to red)
+      // Color scale based on CO2 levels (green to red) - use config
       const getBarColor = (co2) => {
-        // Normalize CO2: 0-100kg = green, 100-200kg = yellow, 200+kg = red
-        if (co2 < 100) return 'var(--accent-success)';
-        if (co2 < 200) return 'var(--accent-warning)';
-        return 'var(--accent-alert)';
+        return getCO2LevelColor(co2);
       };
 
       // Custom tooltip for touch-friendly display
       const CustomTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
           const data = payload[0].payload;
+          const co2Color = getCO2LevelColor(data.co2);
+
           return (
             <div className="bg-[var(--bg-secondary)] p-3 rounded-lg shadow-lg border border-[var(--border-color)] min-w-[140px]">
               <p className="text-xs text-[var(--text-muted)] mb-1">{data.monthFormatted}</p>

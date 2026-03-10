@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Drop, Lightning, TrendUp, Wallet, Warning, Leaf } from '@phosphor-icons/react';
+import { Droplet, Zap, TrendingUp, Wallet, AlertTriangle, Leaf } from 'lucide-react';
 import { useFuelData } from '../../hooks/useFuelData';
 
 /**
@@ -33,13 +33,13 @@ const EmptyDashboardState = () => {
 
   const features = [
     {
-      icon: Warning,
+      icon: AlertTriangle,
       title: 'Theft Detection',
       description: 'Automatic alerts for unusual fuel drain and mileage drops',
       color: 'var(--accent-alert)'
     },
     {
-      icon: TrendUp,
+      icon: TrendingUp,
       title: 'Mileage Tracking',
       description: 'Track your fuel efficiency over time with detailed charts',
       color: 'var(--accent-blue)'
@@ -69,7 +69,7 @@ const EmptyDashboardState = () => {
             boxShadow: 'var(--shadow-glow-blue)'
           }}
         >
-          <Drop size={48} weight="duotone" color="white" />
+          <Droplet size={48} weight="duotone" color="white" />
         </div>
 
         <h1 className="text-3xl lg:text-5xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
@@ -107,12 +107,12 @@ const EmptyDashboardState = () => {
             </>
           ) : demoSuccess ? (
             <>
-              <Lightning size={24} weight="fill" />
+              <Zap size={24} weight="fill" />
               <span>Demo Data Generated! ✓</span>
             </>
           ) : (
             <>
-              <Lightning size={24} weight="duotone" />
+              <Zap size={24} weight="duotone" />
               <span>🎲 Generate Demo Data</span>
             </>
           )}
@@ -129,7 +129,7 @@ const EmptyDashboardState = () => {
             boxShadow: 'var(--card-shadow)'
           }}
         >
-          <Drop size={24} weight="duotone" />
+          <Droplet size={24} weight="duotone" />
           <span>Add Your First Entry</span>
         </button>
       </div>
@@ -148,18 +148,19 @@ const EmptyDashboardState = () => {
               className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ backgroundColor: 'color-mix(in srgb, var(--accent-blue) 20%, transparent)' }}
             >
-              <Lightning size={28} weight="duotone" style={{ color: 'var(--accent-blue)' }} />
+              <Zap size={28} weight="duotone" style={{ color: 'var(--accent-blue)' }} />
             </div>
             <div>
               <h3 className="font-semibold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>
                 Try Demo Mode
               </h3>
               <p className="text-base mb-3" style={{ color: 'var(--text-secondary)' }}>
-                Generate realistic sample data with <strong className="font-bold" style={{ color: 'var(--accent-alert)' }}>3 fuel theft alerts</strong> to explore all features immediately.
+                Generate realistic sample data with <strong className="font-bold" style={{ color: 'var(--accent-alert)' }}>3 fuel theft alerts</strong> and 
+                <strong className="font-bold" style={{ color: 'var(--accent-blue)' }}> tank-to-tank trips</strong> to explore all features immediately.
                 Perfect for testing and demonstrations!
               </p>
               <div className="flex flex-wrap gap-2 text-sm">
-                {['30 entries', '3 theft alerts', 'Realistic trends', 'Random each time'].map((feature, index) => (
+                {['30 entries', '3 theft alerts', 'Tank-to-tank trips', 'Realistic trends', 'Random each time'].map((feature, index) => (
                   <span
                     key={index}
                     className="px-3 py-1 rounded-full font-medium"

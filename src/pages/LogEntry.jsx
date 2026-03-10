@@ -17,6 +17,12 @@ import FuelMap from '../components/Map/FuelMap';
 import { getLocationName } from '../services/geocodingService';
 import { formatFuelVolume, litersToGallons, gallonsToLiters, getCurrencySymbol as getCurrencySymbolFromCode } from '../utils/units';
 
+// Tank-to-Tank UI Components
+import FullTankToggle from '../components/FullTankToggle';
+import TankVisualIndicator from '../components/TankVisualIndicator';
+import GaugeReadingSelector from '../components/GaugeReadingSelector';
+import TankCapacityDisplay from '../components/TankCapacityDisplay';
+
 const LogEntry = () => {
   const navigate = useNavigate();
   const { addLog, data, updateVehicleProfile } = useFuelData();
@@ -65,6 +71,15 @@ const LogEntry = () => {
   const [displayFuelValue, setDisplayFuelValue] = useState('');
   const [userHasTyped, setUserHasTyped] = useState(false);
 
+  // ========================================
+  // NEW: Tank-to-Tank Form State (Task 5)
+  // ========================================
+  const [isFullTank, setIsFullTank] = useState(false);
+  const [fuelLevelBeforeFill, setFuelLevelBeforeFill] = useState(0);
+  const [gaugeReading, setGaugeReading] = useState('');
+  const [showTankCapacityEdit, setShowTankCapacityEdit] = useState(false);
+  const [manualTankCapacity, setManualTankCapacity] = useState('');
+
   useEffect(() => {
     if (formData.liters && !userHasTyped) {
       const value = fuelUnit === 'gal' ? litersToGallons(parseFloat(formData.liters)) : formData.liters;
@@ -81,7 +96,8 @@ const LogEntry = () => {
 
   const handleFuelAmountBlur = () => {
     const numValue = parseFloat(displayFuelValue);
-    if (isNaN(numValue) || numValue <= 0) {
+    // Allow 0 for tracking entries, but reject negative or NaN
+    if (isNaN(numValue) || numValue < 0) {
       return;
     }
     const liters = fuelUnit === 'gal' ? gallonsToLiters(numValue) : numValue;
@@ -127,9 +143,26 @@ const LogEntry = () => {
     if (!isNaN(liters) && !isNaN(pricePerLiter)) {
       setFormData(prev => ({ ...prev, price: (liters * pricePerLiter).toFixed(2) }));
     } else if (!isNaN(liters) && !isNaN(total) && liters > 0) {
+      // Only calculate price per liter if we have actual fuel amount (not 0)
       setFormData(prev => ({ ...prev, pricePerLiter: (total / liters).toFixed(2) }));
     }
   }, [formData.liters, formData.pricePerLiter, formData.price, fuelUnit]);
+
+  // ========================================
+  // NEW: Tank-to-Tank Auto-calculation (Task 5)
+  // ========================================
+  // Auto-calculate estimated fuel level before fill based on tank capacity and fuel amount
+  useEffect(() => {
+    if (isFullTank && formData.liters && data.vehicleProfile?.tankCapacity && parseFloat(formData.liters) > 0) {
+      const tankCapacity = data.vehicleProfile.tankCapacity;
+      const liters = parseFloat(formData.liters);
+      const estimatedRemaining = Math.max(0, tankCapacity - liters);
+      const estimatedPercentage = (estimatedRemaining / tankCapacity) * 100;
+
+      // Update fuel level state (but don't override if user manually adjusted)
+      setFuelLevelBeforeFill(estimatedRemaining);
+    }
+  }, [formData.liters, isFullTank, data.vehicleProfile?.tankCapacity]);
 
   const calculateGpsDistance = () => {
     setGpsLoading(true);
@@ -322,8 +355,10 @@ const LogEntry = () => {
       newErrors.odometer = 'Please enter a valid odometer reading';
     }
 
-    if (!formData.liters || parseFloat(formData.liters) <= 0) {
-      newErrors.liters = 'Please enter a valid fuel amount';
+    // Allow 0 fuel for tracking entries (trips without refueling)
+    // Only validate if fuel is provided and negative
+    if (formData.liters !== '' && parseFloat(formData.liters) < 0) {
+      newErrors.liters = 'Fuel amount cannot be negative';
     }
 
     if (!formData.date) {
@@ -339,13 +374,14 @@ const LogEntry = () => {
 
     if (!validateForm()) return;
 
-    const fuelAmountLiters = parseFloat(formData.liters);
+    const fuelAmountLiters = formData.liters !== '' ? parseFloat(formData.liters) : 0;
     const distance = formData.distance ? parseFloat(formData.distance) : null;
     const price = formData.price ? parseFloat(formData.price) : null;
 
     let costPerKm = null;
     let costPerMile = null;
 
+    // Only calculate cost per distance if we have both price and distance
     if (price && distance && distance > 0) {
       costPerKm = price / distance;
       costPerMile = price / (distance * 0.621371);
@@ -368,6 +404,16 @@ const LogEntry = () => {
       vehicleId: data.currentVehicleId || data.vehicleProfile?.vehicleId,
       note: formData.note || null,
       pumpName: formData.pumpName || null,
+
+      // ========================================
+      // NEW: Tank-to-Tank Fields (Task 5)
+      // ========================================
+      // For 0 fuel entries, these should be null
+      isFullTank: fuelAmountLiters > 0 ? isFullTank : false,
+      fuelLevelBeforeFill: fuelAmountLiters > 0 && isFullTank ? fuelLevelBeforeFill : null,
+      fuelLevelAfterFill: fuelAmountLiters > 0 && isFullTank ? data.vehicleProfile?.tankCapacity : null,
+      tankCapacity: fuelAmountLiters > 0 ? data.vehicleProfile?.tankCapacity : null,
+      gaugeReading: fuelAmountLiters > 0 ? gaugeReading : null,
     };
 
     addLog(newLog);
@@ -399,6 +445,21 @@ const LogEntry = () => {
     return "Poor Signal";
   };
 
+  // ========================================
+  // NEW: Handle Tank Capacity Edit (Task 5)
+  // ========================================
+  const handleSaveTankCapacity = () => {
+    const newCapacity = parseFloat(manualTankCapacity);
+    if (isNaN(newCapacity) || newCapacity <= 0) {
+      setErrors(prev => ({ ...prev, tankCapacity: 'Please enter a valid tank capacity' }));
+      return;
+    }
+    updateVehicleProfile({ tankCapacity: newCapacity });
+    setShowTankCapacityEdit(false);
+    setManualTankCapacity('');
+    setErrors(prev => ({ ...prev, tankCapacity: null }));
+  };
+
   if (success) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
@@ -421,6 +482,128 @@ const LogEntry = () => {
         onClose={() => setShowPermissionModal(false)}
         onConfirm={handlePermissionConfirm}
       />
+
+      {/* ======================================== */}
+      {/* NEW: Tank Capacity Edit Modal (Task 5) */}
+      {/* ======================================== */}
+      {showTankCapacityEdit && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowTankCapacityEdit(false)}
+        >
+          <div
+            className="rounded-xl max-w-md w-full p-6 shadow-2xl animate-in zoom-in duration-200"
+            style={{ backgroundColor: 'var(--bg-card)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2
+              className="text-xl font-bold mb-4"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Edit Tank Capacity
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="tankCapacity"
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Tank Capacity ({fuelUnit})
+                </label>
+                <input
+                  type="number"
+                  id="tankCapacity"
+                  min="1"
+                  step="1"
+                  value={manualTankCapacity || data.vehicleProfile?.tankCapacity || ''}
+                  onChange={(e) => setManualTankCapacity(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
+                  style={{
+                    backgroundColor: 'var(--bg-input)',
+                    color: 'var(--text-primary)',
+                    border: `1px solid ${errors.tankCapacity ? 'var(--accent-alert)' : 'var(--border-color)'}`,
+                  }}
+                />
+                {errors.tankCapacity && (
+                  <p className="mt-1 text-sm" style={{ color: 'var(--accent-alert)' }}>
+                    {errors.tankCapacity}
+                  </p>
+                )}
+                <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Enter the total fuel capacity of your vehicle's fuel tank. You can find this
+                  information in your vehicle's owner's manual or on the manufacturer's
+                  website.
+                </p>
+              </div>
+
+              {/* Common Tank Capacities */}
+              <div>
+                <label
+                  className="block text-xs font-medium mb-2"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Common tank capacities:
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {[35, 40, 45, 50, 55, 60, 70, 80, 100].map((capacity) => (
+                    <button
+                      key={capacity}
+                      type="button"
+                      onClick={() => setManualTankCapacity(capacity.toString())}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
+                      style={{
+                        backgroundColor: (manualTankCapacity || data.vehicleProfile?.tankCapacity) === capacity
+                          ? 'var(--accent-blue)'
+                          : 'var(--bg-tertiary)',
+                        color: (manualTankCapacity || data.vehicleProfile?.tankCapacity) === capacity
+                          ? 'white'
+                          : 'var(--text-primary)',
+                        borderColor: (manualTankCapacity || data.vehicleProfile?.tankCapacity) === capacity
+                          ? 'var(--accent-blue)'
+                          : 'var(--border-color)'
+                      }}
+                    >
+                      {capacity} {fuelUnit}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTankCapacityEdit(false);
+                    setManualTankCapacity('');
+                    setErrors(prev => ({ ...prev, tankCapacity: null }));
+                  }}
+                  className="flex-1 px-4 py-3 rounded-xl font-semibold transition-colors"
+                  style={{
+                    backgroundColor: 'var(--bg-input)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-color)'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveTankCapacity}
+                  className="flex-1 px-4 py-3 rounded-xl font-semibold transition-colors"
+                  style={{
+                    backgroundColor: 'var(--accent-blue)',
+                    color: 'white'
+                  }}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Add Entry</h1>
@@ -760,13 +943,13 @@ const LogEntry = () => {
             className="block text-sm font-medium mb-2"
             style={{ color: 'var(--text-secondary)' }}
           >
-            Fuel Amount ({fuelUnit === 'L' ? 'Liters' : 'Gallons'})
+            Fuel Amount ({fuelUnit === 'L' ? 'Liters' : 'Gallons'}) <span style={{ color: 'var(--text-muted)' }}>(Optional - Enter 0 for tracking only)</span>
           </label>
           <input
             type="text"
             inputMode="decimal"
             id="liters"
-            placeholder={`e.g., ${fuelUnit === 'L' ? '35' : '9.2'}`}
+            placeholder={`e.g., ${fuelUnit === 'L' ? '35' : '9.2'} or 0 for trip tracking`}
             value={displayFuelValue}
             onChange={(e) => setDisplayFuelAmount(e.target.value)}
             onBlur={handleFuelAmountBlur}
@@ -774,11 +957,73 @@ const LogEntry = () => {
             style={{
               backgroundColor: 'var(--bg-input)',
               color: 'var(--text-primary)',
-              border: `1px solid ${errors.liters ? 'var(--accent-alert)' : 'var(--border-color)'}`,
+              border: displayFuelValue === '0' || formData.liters === '0'
+                ? '2px solid var(--accent-blue)'
+                : `1px solid ${errors.liters ? 'var(--accent-alert)' : 'var(--border-color)'}`,
             }}
           />
           {errors.liters && (
             <p className="mt-1 text-sm" style={{ color: 'var(--accent-alert)' }}>{errors.liters}</p>
+          )}
+          {displayFuelValue === '0' || formData.liters === '0' ? (
+            <p className="mt-1 text-xs px-2 py-1.5 rounded-lg" style={{ backgroundColor: 'color-mix(in srgb, var(--accent-blue) 10%, transparent)', color: 'var(--accent-blue)' }}>
+              📊 Tracking Mode: This entry will track distance and odometer readings without fuel consumption calculations.
+            </p>
+          ) : (formData.liters === '' || displayFuelValue === '') ? (
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+              💡 Enter 0 fuel to track trips and distance without refueling. This helps monitor mileage between fill-ups.
+            </p>
+          ) : null}
+        </div>
+
+        {/* ======================================== */}
+        {/* NEW: Tank Fill Information (Task 5) */}
+        {/* ======================================== */}
+        <div className="space-y-4">
+          {/* Full Tank Toggle */}
+          <FullTankToggle
+            checked={isFullTank}
+            onChange={setIsFullTank}
+            tankCapacity={data.vehicleProfile?.tankCapacity}
+            showLearnMore={true}
+          />
+
+          {/* Expanded Options (show when toggle ON) */}
+          {isFullTank && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+              {/* Tank Visual Indicator */}
+              <TankVisualIndicator
+                currentLevel={fuelLevelBeforeFill}
+                tankCapacity={data.vehicleProfile?.tankCapacity || 50}
+                editable={true}
+                onChange={setFuelLevelBeforeFill}
+                units={fuelUnit}
+              />
+
+              {/* Gauge Reading Selector */}
+              <GaugeReadingSelector
+                value={(fuelLevelBeforeFill / (data.vehicleProfile?.tankCapacity || 50)) * 100}
+                onChange={(percentage) => {
+                  const newLevel = (percentage / 100) * (data.vehicleProfile?.tankCapacity || 50);
+                  setFuelLevelBeforeFill(newLevel);
+                }}
+                tankCapacity={data.vehicleProfile?.tankCapacity || 50}
+                allowManual={true}
+                units={fuelUnit}
+              />
+
+              {/* Tank Capacity Display */}
+              <TankCapacityDisplay
+                capacity={data.vehicleProfile?.tankCapacity || 50}
+                confidence={data.vehicleProfile?.tankCapacity ? 'high' : 'medium'}
+                source={data.vehicleProfile?.make && data.vehicleProfile?.model
+                  ? `${data.vehicleProfile.year} ${data.vehicleProfile.make} ${data.vehicleProfile.model}`
+                  : 'Vehicle Database'
+                }
+                onEdit={() => setShowTankCapacityEdit(true)}
+                units={fuelUnit}
+              />
+            </div>
           )}
         </div>
 
@@ -830,11 +1075,16 @@ const LogEntry = () => {
                 border: '1px solid var(--border-color)',
               }}
             />
-             {formData.liters && formData.pricePerLiter && (
-               <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-                 Auto-calculated: {formData.liters} {fuelUnit} × {currencySymbol}{formData.pricePerLiter} = {currencySymbol}{formData.price}
-               </p>
-             )}
+              {formData.liters && formData.pricePerLiter && parseFloat(formData.liters) > 0 && (
+                <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Auto-calculated: {formData.liters} {fuelUnit} × {currencySymbol}{formData.pricePerLiter} = {currencySymbol}{formData.price}
+                </p>
+              )}
+              {formData.liters && parseFloat(formData.liters) === 0 && formData.pricePerLiter && (
+                <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Note: Price calculations skipped for 0 fuel entries
+                </p>
+              )}
           </div>
         </div>
 

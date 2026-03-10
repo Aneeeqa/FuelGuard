@@ -149,7 +149,7 @@ const Settings = () => {
     injectDemoData();
     setDemoInjected(true);
     setVehicleForm({
-      name: 'Demo Vehicle',
+      name: '2020 Toyota Corolla',
       expectedMileage: 15,
       tankCapacity: 50,
       currency: 'USD',
@@ -585,7 +585,8 @@ const Settings = () => {
           <div className="flex-1">
             <h2 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>Demo Mode</h2>
             <p className="text-sm mt-1 mb-4" style={{ color: 'var(--text-secondary)' }}>
-              Generate random realistic data with <span style={{ color: 'var(--accent-alert)', fontWeight: '600' }}>3 alerts</span> (fuel theft scenarios). Click multiple times for different random data!
+              Generate random realistic data with <span style={{ color: 'var(--accent-alert)', fontWeight: '600' }}>3 alerts</span> (fuel theft scenarios), 
+              including <span style={{ color: 'var(--accent-blue)', fontWeight: '600' }}>tank-to-tank trips</span>. Click multiple times for different random data!
             </p>
             <button
               onClick={handleInjectDemo}
@@ -1116,6 +1117,7 @@ const Settings = () => {
           <Info className="w-4 h-4" />
           <span>Fuel Guard</span>
         </div>
+        <p>Fuel Management Application</p>
         <div className="mt-3 flex items-center justify-center gap-2">
           <a
             href="/privacy"

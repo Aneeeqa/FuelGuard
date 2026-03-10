@@ -1,6 +1,21 @@
 import { useState, useMemo } from 'react';
 import { useFuelData } from '../hooks/useFuelData';
-import { Drop, TrendUp, Warning, Path, Lightning, Leaf, CurrencyDollar, Wallet, Phone, DropHalf, Star } from '@phosphor-icons/react';
+import {
+  Droplet,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle,
+  Route,
+  Zap,
+  Leaf,
+  DollarSign,
+  Wallet,
+  Phone,
+  Star,
+  Settings,
+  AlertCircle,
+  Flame
+} from 'lucide-react';
 import Skeleton from '../components/ui/Skeleton';
 import StatCard from '../components/dashboard/StatCard';
 import MileageChart from '../components/dashboard/MileageChart';
@@ -24,6 +39,8 @@ import { getCurrencySymbol } from '../utils/currency';
 import { analyzeFuelDrain, generateDrainAlertMessage, formatDrainRate } from '../utils/fuelDrainCalculator';
 import { getFuelStatus } from '../utils/fuelLevelAlerts';
 import { calculateTrips, calculateTripStatistics } from '../utils/tripCalculations';
+import { calculateTankToTankStatistics } from '../utils/tankToTankCalculations';
+import TankToTankTripCard from '../components/TankToTankTripCard';
 
 const Dashboard = () => {
   const { data, loading } = useFuelData();
@@ -53,6 +70,26 @@ const Dashboard = () => {
   const tripStats = useMemo(() => {
     return calculateTripStatistics(trips);
   }, [trips]);
+
+  // ========================================
+  // NEW: Tank-to-Tank Analysis (Task 8)
+  // ========================================
+  const tankToTankTrips = useMemo(() => {
+    return data.vehicleProfile?.tankToTankTrips || [];
+  }, [data.vehicleProfile?.tankToTankTrips]);
+
+  const lastTankToTankTrip = tankToTankTrips.length > 0 ? tankToTankTrips[0] : null;
+  const tankToTankStats = useMemo(() => {
+    return calculateTankToTankStatistics(tankToTankTrips);
+  }, [tankToTankTrips]);
+
+  // Calculate price per liter for theft cost calculation
+  const pricePerLiter = useMemo(() => {
+    if (logs.length > 0 && logs[0].price && logs[0].liters) {
+      return logs[0].price / logs[0].liters;
+    }
+    return 0;
+  }, [logs]);
 
   // Calculate fuel level status - MUST be before loading check
   const lastFuelLog = logs.length > 0 ? logs[0] : null;
@@ -194,104 +231,255 @@ const Dashboard = () => {
             WebkitScrollbarDisplay: 'none',
           }}>
             {/* Cost Cards - Using actual data */}
-             <div className="animate-fade-in-up delay-100 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
-               <StatCard
-                 icon={CurrencyDollar}
-                 label="Total Spent"
-                 value={(costStats?.totalExpenditure || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                 unit={currencySymbol}
-                 gradientId={0}
-               />
-             </div>
-
-             <div className="animate-fade-in-up delay-200 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
-               <StatCard
-                 icon={Wallet}
-                 label="Cost/Km"
-                 value={(costStats?.costPerKm || 0).toFixed(3)}
-                 unit={currencySymbol}
-                 gradientId={1}
-               />
-             </div>
-
-              <div className="animate-fade-in-up delay-300 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
-               <StatCard
-                 icon={TrendUp}
-                 label="Avg Mileage"
-                 value={(stats?.avgMileage || 0).toFixed(1)}
-                 unit={efficiencyUnit}
-                 gradientId={2}
-               />
+              <div className="animate-fade-in-up delay-100 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
+                <StatCard
+                  icon={DollarSign}
+                  label="Total Spent"
+                  value={(costStats?.totalExpenditure || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                  unit={currencySymbol}
+                  gradientId={0}
+                />
               </div>
 
-             <div className="animate-fade-in-up delay-200 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
-               <StatCard
-                 icon={Drop}
-                 label="Total Fuel"
-                 value={(stats?.totalFuel || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                 unit={fuelDisplayUnit}
-                 gradientId={3}
-               />
-             </div>
+              <div className="animate-fade-in-up delay-200 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
+                <StatCard
+                  icon={Wallet}
+                  label="Cost/Km"
+                  value={(costStats?.costPerKm || 0).toFixed(3)}
+                  unit={currencySymbol}
+                  gradientId={1}
+                />
+              </div>
 
-             <div className="animate-fade-in-up delay-300 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
-               <StatCard
-                 icon={Path}
-                 label="Distance"
-                 value={(stats?.totalDistance || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                 unit={distanceUnit}
-                 gradientId={4}
-               />
-             </div>
+               <div className="animate-fade-in-up delay-300 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
+                <StatCard
+                  icon={TrendingUp}
+                  label="Avg Mileage"
+                  value={(stats?.avgMileage || 0).toFixed(1)}
+                  unit={efficiencyUnit}
+                  gradientId={2}
+                />
+               </div>
 
-           <div className="animate-fade-in-up delay-400 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
-             <StatCard
-               icon={DropHalf}
-               label="Fuel Drain"
-               value={(drainAnalysis?.drainRate || 0).toFixed(2)}
-               unit={`${fuelDisplayUnit}/day`}
-               gradientId={5}
-             />
-           </div>
+              <div className="animate-fade-in-up delay-200 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
+                <StatCard
+                  icon={Droplet}
+                  label="Total Fuel"
+                  value={(stats?.totalFuel || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                  unit={fuelDisplayUnit}
+                  gradientId={3}
+                />
+              </div>
 
-           <div className="animate-fade-in-up delay-400 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
-             <StatCard
-               icon={Warning}
-               label="Alerts"
-               value={flaggedCount.toString()}
-               unit="flagged"
-               gradientId={6}
-               trend={flaggedCount > 0 ? { direction: 'up', value: flaggedCount } : undefined}
-             />
-           </div>
+              <div className="animate-fade-in-up delay-300 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
+                <StatCard
+                  icon={Route}
+                  label="Distance"
+                  value={(stats?.totalDistance || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                  unit={distanceUnit}
+                  gradientId={4}
+                />
+              </div>
 
-           <div className="animate-fade-in-up delay-400 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
-             <StatCard
-               icon={CurrencyDollar}
-               label="Budget"
-               value={Math.round((currentMonthExpenditure / monthlyBudget) * 100).toString()}
-               unit="%"
-               gradientId={7}
-               trend={budgetAlert?.triggered ? { direction: 'up', value: '⚠' } : undefined}
-             />
-           </div>
+            <div className="animate-fade-in-up delay-400 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
+              <StatCard
+                icon={Zap}
+                label="Fuel Drain"
+                value={(drainAnalysis?.drainRate || 0).toFixed(2)}
+                unit={`${fuelDisplayUnit}/day`}
+                gradientId={5}
+              />
+            </div>
+
+            <div className="animate-fade-in-up delay-400 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
+              <StatCard
+                icon={AlertTriangle}
+                label="Alerts"
+                value={flaggedCount.toString()}
+                unit="flagged"
+                gradientId={6}
+                trend={flaggedCount > 0 ? { direction: 'up', value: flaggedCount } : undefined}
+              />
+            </div>
+
+            <div className="animate-fade-in-up delay-400 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
+              <StatCard
+                icon={DollarSign}
+                label="Budget"
+                value={Math.round((currentMonthExpenditure / monthlyBudget) * 100).toString()}
+                unit="%"
+                gradientId={7}
+                trend={budgetAlert?.triggered ? { direction: 'up', value: '⚠' } : undefined}
+              />
+            </div>
            <div className="flex-shrink-0 w-12 sm:hidden"></div>
             </div>
 
-           {/* Trip Analysis Section - NEW */}
-           {trips.length > 0 && (
-             <div className="animate-fade-in-up delay-500 space-y-6">
-               {/* Last Trip Summary Card */}
-               <LastTripSummary trip={lastTrip} vehicleProfile={data.vehicleProfile} />
+            {/* Trip Analysis Section - NEW */}
+            {trips.length > 0 && (
+              <div className="animate-fade-in-up delay-500 space-y-6">
+                {/* Last Trip Summary Card */}
+                <LastTripSummary trip={lastTrip} vehicleProfile={data.vehicleProfile} />
 
-               {/* Trip Mileage Bar Chart */}
-               <Card variant="elevated" interactive>
-                 <div className="p-4">
-                   <TripMileageBarChart trips={trips} vehicleProfile={data.vehicleProfile} />
-                 </div>
-               </Card>
-             </div>
-           )}
+                {/* Trip Mileage Bar Chart */}
+                <Card variant="elevated" interactive>
+                  <div className="p-4">
+                    <TripMileageBarChart trips={trips} vehicleProfile={data.vehicleProfile} />
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* ========================================
+                NEW: Tank-to-Tank Analysis Section (Task 8)
+                ======================================== */}
+            {tankToTankTrips.length > 0 && (
+              <div className="animate-fade-in-up delay-500 space-y-6">
+                {/* Section Header */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{
+                      backgroundColor: 'color-mix(in srgb, #8b5cf6 15%, transparent)',
+                    }}
+                  >
+                    <Route size={16} weight="duotone" className="text-[#8b5cf6]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+                      Tank-to-Tank Analysis
+                    </h3>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                      Accurate fuel consumption tracking with full tank measurements
+                    </p>
+                  </div>
+                </div>
+
+                {/* Last Tank-to-Tank Trip Card */}
+                {lastTankToTankTrip && (
+                  <TankToTankTripCard
+                    tripData={lastTankToTankTrip}
+                    vehicleProfile={data.vehicleProfile}
+                    currency={vehicleProfile?.currency || 'USD'}
+                    pricePerLiter={pricePerLiter}
+                    units={{
+                      distanceUnit: distanceUnit,
+                      fuelVolumeUnit: fuelDisplayUnit
+                    }}
+                  />
+                )}
+
+                {/* Tank-to-Tank Statistics Summary */}
+                <Card variant="elevated" interactive>
+                  <div className="p-4">
+                    <h4 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                      <AlertTriangle size={16} className="text-[#8b5cf6]" />
+                      Tank-to-Tank Statistics
+                    </h4>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      {/* Total Trips */}
+                      <div className="text-center p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+                        <div className="text-2xl font-bold tabular-nums" style={{ color: 'var(--accent-blue)' }}>
+                          {tankToTankStats.count}
+                        </div>
+                        <div className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
+                          Full-Tank Trips
+                        </div>
+                      </div>
+
+                      {/* Average Distance */}
+                      <div className="text-center p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+                        <div className="text-2xl font-bold tabular-nums" style={{ color: 'var(--accent-blue)' }}>
+                          {tankToTankStats.avgDistance}
+                        </div>
+                        <div className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
+                          Avg Distance ({distanceUnit})
+                        </div>
+                      </div>
+
+                      {/* Average Fuel Consumption */}
+                      <div className="text-center p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+                        <div className="text-2xl font-bold tabular-nums" style={{ color: 'var(--accent-blue)' }}>
+                          {tankToTankStats.avgFuelConsumed}
+                        </div>
+                        <div className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
+                          Avg Fuel ({fuelDisplayUnit})
+                        </div>
+                      </div>
+
+                      {/* Theft Incidents */}
+                      <div className="text-center p-3 rounded-xl" style={{
+                        backgroundColor: tankToTankStats.theftIncidents > 0
+                          ? 'color-mix(in srgb, var(--accent-alert) 15%, transparent)'
+                          : 'color-mix(in srgb, var(--accent-success) 15%, transparent)'
+                      }}>
+                        <div className="text-2xl font-bold tabular-nums" style={{
+                          color: tankToTankStats.theftIncidents > 0
+                            ? 'var(--accent-alert)'
+                            : 'var(--accent-success)'
+                        }}>
+                          {tankToTankStats.theftIncidents}
+                        </div>
+                        <div className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
+                          Theft Incidents
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Theft Summary */}
+                    {tankToTankStats.totalTheftAmount > 0 && (
+                      <div className="mt-4 p-4 rounded-xl" style={{
+                        backgroundColor: 'color-mix(in srgb, var(--accent-alert) 10%, transparent)',
+                        border: '1px solid var(--accent-alert)'
+                      }}>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                              Total Fuel Stolen Across All Trips
+                            </div>
+                            <div className="flex items-baseline gap-2 mt-1">
+                              <span className="text-xl font-bold tabular-nums" style={{ color: 'var(--accent-alert)' }}>
+                                {tankToTankStats.totalTheftAmount} {fuelDisplayUnit}
+                              </span>
+                              <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                                ({tankToTankStats.theftPercentage}% of total fuel)
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                              Estimated Loss
+                            </div>
+                            <div className="text-xl font-bold tabular-nums mt-1" style={{ color: 'var(--accent-alert)' }}>
+                              {currencySymbol}{(tankToTankStats.totalTheftAmount * pricePerLiter).toFixed(2)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* No Theft Message */}
+                    {tankToTankStats.totalTheftAmount === 0 && tankToTankStats.count > 0 && (
+                      <div className="mt-4 p-4 rounded-xl flex items-center gap-3" style={{
+                        backgroundColor: 'color-mix(in srgb, var(--accent-success) 10%, transparent)',
+                        border: '1px solid var(--accent-success)'
+                      }}>
+                        <CheckCircle size={24} weight="fill" style={{ color: 'var(--accent-success)' }} />
+                        <div>
+                          <div className="font-semibold" style={{ color: 'var(--accent-success)' }}>
+                            No fuel theft detected!
+                          </div>
+                          <div className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+                            All {tankToTankStats.count} tank-to-tank trips show normal fuel consumption.
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              </div>
+            )}
 
            {/* Mileage Chart */}
            {logs.length > 1 && (
@@ -446,13 +634,13 @@ const Dashboard = () => {
                        {efficiencyUnit}
                      </span>
                    {log.isFlagged && (
-                     <div className="mt-1 flex items-center gap-1 justify-end">
-                       <Warning size={12} weight="fill" style={{ color: 'var(--accent-alert)' }} />
-                       <span className="text-xs font-medium" style={{ color: 'var(--accent-alert)' }}>
-                         Alert
-                       </span>
-                     </div>
-                   )}
+                      <div className="mt-1 flex items-center gap-1 justify-end">
+                        <AlertTriangle size={12} weight="fill" style={{ color: 'var(--accent-alert)' }} />
+                        <span className="text-xs font-medium" style={{ color: 'var(--accent-alert)' }}>
+                          Alert
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

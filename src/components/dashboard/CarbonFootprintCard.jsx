@@ -6,9 +6,9 @@ import {
   formatCO2Label,
   compareWithAverage,
   calculateEcoDrivingScore,
-  getEcoBadge,
   calculateMonthlyCO2,
 } from '../../utils/carbonCalculations';
+import { getEcoBadge } from '../../config/carbonConfig';
 
 /**
  * CarbonFootprintCard component

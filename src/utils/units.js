@@ -61,6 +61,18 @@ export const formatFuelVolume = (liters, unit = 'L', decimals = 2) => {
 };
 
 /**
+ * Format distance with unit
+ * @param {number} kilometers - Distance in kilometers (base unit)
+ * @param {string} unit - 'km' or 'mi'
+ * @param {number} decimals - Decimal places (default: 0)
+ * @returns {string}
+ */
+export const formatDistance = (kilometers, unit = 'km', decimals = 0) => {
+    const value = unit === 'mi' ? kilometers * KILOMETERS_TO_MILES : kilometers;
+    return `${value.toFixed(decimals)} ${unit}`;
+};
+
+/**
  * Calculate cost per kilometer
  * @param {number} totalCost - Total fuel cost
  * @param {number} distance - Distance traveled (km)
@@ -266,6 +278,7 @@ export default {
     litersToGallons,
     gallonsToLiters,
     formatFuelVolume,
+    formatDistance,
     calculateCostPerKm,
     calculateCostPerMile,
     formatCostPerUnit,

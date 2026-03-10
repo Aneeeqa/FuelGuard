@@ -207,7 +207,14 @@ const SystemStatus = () => {
             <StatusBadge status={serviceWorkerStatus} />
           </div>
 
-
+          <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-input)' }}>
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              Application
+            </span>
+            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              Fuel Guard
+            </span>
+          </div>
         </div>
       </div>
 

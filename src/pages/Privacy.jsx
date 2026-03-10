@@ -61,7 +61,18 @@ const Privacy = () => {
         </p>
       </div>
 
-
+      {/* Effective Date */}
+      <div
+        className="text-center p-4 rounded-xl mb-8"
+        style={{
+          backgroundColor: 'color-mix(in srgb, var(--accent-blue) 10%, var(--bg-secondary))',
+          border: '1px solid var(--accent-blue)',
+        }}
+      >
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          Last Updated: <span className="font-medium" style={{ color: 'var(--text-primary)' }}>Recently</span>
+        </p>
+      </div>
 
       {/* Privacy Sections */}
       <div className="space-y-6">

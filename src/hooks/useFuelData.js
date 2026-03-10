@@ -1,15 +1,20 @@
 import { useContext, useMemo } from 'react';
 import { FuelContext } from '../context/FuelContext';
 
+/**
+ * Custom hook wrapper for FuelContext
+ * Provides computed values and easy access to fuel data
+ */
 export const useFuelData = () => {
   const context = useContext(FuelContext);
 
-if (!context) {
+  if (!context) {
     throw new Error('useFuelData must be used within a FuelProvider');
   }
 
   const { data, loading, storageType, addLog, deleteLog, updateVehicleProfile, updateVehicleProfileWithCurrencyConversion, addVehicle, updateVehicle, deleteVehicle, selectVehicle, addDriver, updateDriver, deleteDriver, injectDemoData, clearAllData } = context;
 
+  // Computed values
   const computed = useMemo(() => {
     const { logs = [], stats = {} } = data;
 
@@ -49,3 +54,4 @@ if (!context) {
 };
 
 export default useFuelData;
+

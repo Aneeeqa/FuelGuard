@@ -2,8 +2,10 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 
+// Eager load Dashboard (landing page)
 import Dashboard from './pages/Dashboard';
 
+// Lazy load other pages for better initial bundle size
 const History = lazy(() => import('./pages/History'));
 const Settings = lazy(() => import('./pages/Settings'));
 const LogEntry = lazy(() => import('./pages/LogEntry'));
@@ -15,6 +17,7 @@ const Contact = lazy(() => import('./pages/Contact'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const SystemStatus = lazy(() => import('./pages/SystemStatus'));
 
+// Mobile-friendly loading skeleton
 const PageLoader = () => (
   <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
     <div className="w-full max-w-md space-y-4">
@@ -28,6 +31,7 @@ const PageLoader = () => (
   </div>
 );
 
+// Error boundary fallback
 const ErrorFallback = () => (
   <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
     <div className="text-center max-w-md">
@@ -35,7 +39,7 @@ const ErrorFallback = () => (
         <span className="text-3xl">⚠️</span>
       </div>
       <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--accent-alert)' }}>Something went wrong</h1>
-      <p className="mb-4" style={{ color: 'var(--text-muted)' }}>Please refresh page to try again.</p>
+      <p className="mb-4" style={{ color: 'var(--text-muted)' }}>Please refresh the page to try again.</p>
       <button
         onClick={() => window.location.reload()}
         className="px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover-lift active-scale"
@@ -48,6 +52,7 @@ const ErrorFallback = () => (
 );
 
 const App = () => {
+  console.log('App component rendering');
   return (
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
@@ -72,3 +77,5 @@ const App = () => {
 };
 
 export default App;
+
+

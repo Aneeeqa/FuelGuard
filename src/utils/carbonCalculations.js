@@ -11,6 +11,20 @@
  * Source: EPA and IPCC guidelines
  */
 
+// Import configurable thresholds
+import {
+  COMPARISON_THRESHOLDS,
+  COMPARISON_STATUS,
+  AVERAGE_CO2_PER_KM,
+  VEHICLE_MULTIPLIERS,
+  ECO_DRIVING_SCORES,
+  ECO_DRIVING_CATEGORIES,
+  ECO_DRIVING_THRESHOLDS,
+  getComparisonStatus,
+  getEcoDrivingCategory,
+  getVehicleMultiplier,
+} from '../config/carbonConfig';
+
 // CO2 emission factors in kg CO2 per liter
 const CO2_EMISSION_FACTORS = {
   gasoline: 2.31,
@@ -22,18 +36,6 @@ const CO2_EMISSION_FACTORS = {
   'premium gasoline': 2.31,
   'diesel': 2.68,
 };
-
-// Average vehicle CO2 emissions benchmarks (kg CO2/year)
-const AVERAGE_VEHICLE_EMISSIONS = {
-  compact: 3989,    // 4.4 tonnes
-  sedan: 4669,      // 5.1 tonnes
-  suv: 6350,        // 7.0 tonnes
-  truck: 7711,       // 8.5 tonnes
-  default: 4990,     // 5.5 tonnes (average all vehicles)
-};
-
-// Per km average (kg CO2/km) - based on 12,000 miles/year average
-const AVERAGE_PER_KM = 0.38; // ~0.38 kg CO2 per km
 
 /**
  * Get CO2 emission factor for a fuel type
@@ -162,16 +164,10 @@ export const calculateYearlyCO2 = (logs, fuelType = 'gasoline') => {
 export const compareWithAverage = (userCO2PerKm, vehicleType = 'sedan') => {
   console.log('compareWithAverage - Input:', { userCO2PerKm, vehicleType });
 
-  const averagePerKm = AVERAGE_PER_KM;
+  const averagePerKm = AVERAGE_CO2_PER_KM;
 
-  // Vehicle type multiplier (SUVs/trucks emit more)
-  const vehicleMultiplier = {
-    compact: 0.85,
-    sedan: 1.0,
-    suv: 1.35,
-    truck: 1.55,
-  }[vehicleType?.toLowerCase()] || 1.0;
-
+  // Vehicle type multiplier (SUVs/trucks emit more) - use config
+  const vehicleMultiplier = getVehicleMultiplier(vehicleType);
   const adjustedAverage = averagePerKm * vehicleMultiplier;
 
   // Handle undefined/null/invalid inputs
@@ -182,7 +178,7 @@ export const compareWithAverage = (userCO2PerKm, vehicleType = 'sedan') => {
       averageCO2: adjustedAverage,
       difference: -100, // -100% means unknown
       percentage: 0,
-      status: 'neutral',
+      status: COMPARISON_STATUS.NEUTRAL,
     };
   }
 
@@ -193,7 +189,7 @@ export const compareWithAverage = (userCO2PerKm, vehicleType = 'sedan') => {
       averageCO2: adjustedAverage,
       difference: -100, // -100% means unknown
       percentage: 0,
-      status: 'neutral',
+      status: COMPARISON_STATUS.NEUTRAL,
     };
   }
 
@@ -202,16 +198,8 @@ export const compareWithAverage = (userCO2PerKm, vehicleType = 'sedan') => {
 
   console.log('compareWithAverage - Calculated:', { difference, percentage });
 
-  let status;
-  if (percentage <= -15) {
-    status = 'excellent'; // 15% or more below average
-  } else if (percentage <= 0) {
-    status = 'good'; // Up to 15% below average
-  } else if (percentage <= 20) {
-    status = 'moderate'; // Up to 20% above average
-  } else {
-    status = 'poor'; // More than 20% above average
-  }
+  // Use config to determine status
+  const status = getComparisonStatus(percentage);
 
   return {
     userCO2: userCO2PerKm,
@@ -254,54 +242,51 @@ export const calculateEcoDrivingScore = (logs) => {
   const flaggedLogs = logs.filter((log) => log.isFlagged).length;
   const flaggedRatio = flaggedLogs / logs.length;
 
-  // Calculate score (0-100)
+  // Calculate score (0-100) - use config thresholds
   let score = 75; // Base score
 
-  // Trend bonus/penalty
+  // Trend bonus/penalty - use config thresholds
   if (trend > 0) {
-    score += Math.min(trend * 3, 15); // Up to +15 for improvement
+    score += Math.min(trend * 3, ECO_DRIVING_THRESHOLDS.TREND_BONUS_MAX);
   } else if (trend < 0) {
-    score -= Math.min(Math.abs(trend) * 3, 10); // Up to -10 for decline
+    score -= Math.min(Math.abs(trend) * 3, ECO_DRIVING_THRESHOLDS.TREND_PENALTY_MAX);
   }
 
-  // Flagged logs penalty
-  score -= flaggedRatio * 50; // -50 if 100% flagged
+  // Flagged logs penalty - use config threshold
+  score -= flaggedRatio * ECO_DRIVING_THRESHOLDS.FLAGGED_RATIO_PENALTY;
 
-  // Mileage consistency bonus
+  // Mileage consistency bonus - use config threshold
   const variance = calculateVariance(recentLogs.map((log) => log.mileage || 0));
-  if (variance < 2) {
-    score += 10; // +10 for very consistent driving
+  if (variance < ECO_DRIVING_THRESHOLDS.VARIANCE_THRESHOLD) {
+    score += ECO_DRIVING_THRESHOLDS.CONSISTENCY_BONUS;
   }
 
   // Clamp score to 0-100
   score = Math.max(0, Math.min(100, score));
 
-  // Determine category and suggestions
-  let category, suggestions;
+  // Determine category and suggestions - use config
+  const category = getEcoDrivingCategory(score);
+  let suggestions;
 
-  if (score >= 85) {
-    category = 'excellent';
+  if (category === ECO_DRIVING_CATEGORIES.EXCELLENT) {
     suggestions = [
       '🌱 Excellent driving! You\'re among the top eco-drivers',
       'Share your driving habits to help others improve',
       'Consider carpooling to further reduce your impact',
     ];
-  } else if (score >= 70) {
-    category = 'good';
+  } else if (category === ECO_DRIVING_CATEGORIES.GOOD) {
     suggestions = [
       '✓ Good driving efficiency overall',
       'Avoid rapid acceleration and hard braking',
       'Use cruise control on highways when safe',
     ];
-  } else if (score >= 50) {
-    category = 'moderate';
+  } else if (category === ECO_DRIVING_CATEGORIES.MODERATE) {
     suggestions = [
       '⚠ Moderate efficiency - room for improvement',
       'Avoid idling for long periods',
       'Check tire pressure monthly for optimal fuel economy',
     ];
   } else {
-    category = 'needs-improvement';
     suggestions = [
       '❌ Poor efficiency detected - review driving habits',
       'Avoid short trips (engine not warmed up)',
@@ -359,21 +344,4 @@ export const formatCO2Label = (co2kg) => {
   }
 
   return `${value.toFixed(2)} kg`;
-};
-
-/**
- * Get eco-driving badge based on score
- * @param {number} score - Eco-driving score (0-100)
- * @returns {Object} Badge info with emoji and color
- */
-export const getEcoBadge = (score) => {
-  if (score >= 85) {
-    return { emoji: '🌱', label: 'Eco Champion', color: 'green' };
-  } else if (score >= 70) {
-    return { emoji: '🌿', label: 'Eco Friendly', color: 'blue' };
-  } else if (score >= 50) {
-    return { emoji: '🍃', label: 'Moderate', color: 'yellow' };
-  } else {
-    return { emoji: '🍂', label: 'Needs Work', color: 'red' };
-  }
 };
