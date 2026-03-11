@@ -17,9 +17,9 @@ const HistoryTabDemo = () => {
   // Mock data for demonstration
   const mockData = {
     logs: [
-      { id: 1, date: '2020-01-20', odometer: 15000, liters: 36 },
-      { id: 2, date: '2020-01-22', odometer: 15050, liters: 8 },
-      { id: 3, date: '2020-01-24', odometer: 15200, liters: 10 },
+      { id: 1, date: '2024-03-15', odometer: 15000, liters: 36 },
+      { id: 2, date: '2024-03-17', odometer: 15050, liters: 8 },
+      { id: 3, date: '2024-03-19', odometer: 15200, liters: 10 },
     ],
     trips: [
       { id: 'trip-1', status: 'Normal', distance: 200, fuelConsumed: 15 },
@@ -35,8 +35,8 @@ const HistoryTabDemo = () => {
         theftAmount: 0,
         theftPercentage: 0,
         mileageEfficiency: 100,
-        startDate: '2020-01-15T10:00:00Z',
-        endDate: '2020-01-20T14:30:00Z',
+        startDate: '2024-03-10T10:00:00Z',
+        endDate: '2024-03-15T14:30:00Z',
         startOdometer: 15000,
         endOdometer: 15300,
         durationDays: 5,
@@ -51,8 +51,8 @@ const HistoryTabDemo = () => {
         theftAmount: 22.67,
         theftPercentage: 63,
         mileageEfficiency: 37,
-        startDate: '2020-01-20T10:00:00Z',
-        endDate: '2020-01-24T14:30:00Z',
+        startDate: '2024-03-16T10:00:00Z',
+        endDate: '2024-03-20T14:30:00Z',
         startOdometer: 15300,
         endOdometer: 15500,
         durationDays: 4,

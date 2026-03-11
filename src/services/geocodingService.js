@@ -1,11 +1,13 @@
 /**
  * OpenStreetMap Nominatim Reverse Geocoding Service
  * Free, no API key required fallback for Google Maps
- * 
+ *
  * Usage Policy: https://operations.osmfoundation.org/policies/nominatim/
  * - Limit: 1 request per second
  * - Provide User-Agent header
  */
+
+import { validateLatitude, validateLongitude, sanitizeQuery } from '../utils/validation';
 
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org/reverse';
 const REQUEST_DELAY = 1000; // 1 second between requests (Nominatim policy)
@@ -31,14 +33,25 @@ const withRateLimit = async (requestFn) => {
 /**
  * Perform reverse geocoding using OpenStreetMap Nominatim
  * Converts lat/lon coordinates to human-readable address
- * 
+ *
  * @param {number} lat - Latitude
  * @param {number} lon - Longitude
  * @returns {Promise<{formatted: string, components: Object}|null>}
  */
 export const reverseGeocode = async (lat, lon) => {
-  if (lat === null || lat === undefined || lon === null || lon === undefined) {
-    console.warn('Invalid coordinates for reverse geocoding');
+  // Validate coordinates before API call
+  const latValidation = validateLatitude(lat);
+  const lonValidation = validateLongitude(lon);
+
+  if (!latValidation.valid) {
+    console.error('Invalid latitude for reverse geocoding:', latValidation.error);
+    console.warn('Security: Invalid latitude input detected:', { input: lat, error: latValidation.error });
+    return null;
+  }
+
+  if (!lonValidation.valid) {
+    console.error('Invalid longitude for reverse geocoding:', lonValidation.error);
+    console.warn('Security: Invalid longitude input detected:', { input: lon, error: lonValidation.error });
     return null;
   }
 
@@ -46,8 +59,8 @@ export const reverseGeocode = async (lat, lon) => {
     return await withRateLimit(async () => {
       const params = new URLSearchParams({
         format: 'json',
-        lat: lat.toString(),
-        lon: lon.toString(),
+        lat: latValidation.value.toString(),
+        lon: lonValidation.value.toString(),
         zoom: '18', // Building level
         addressdetails: '1', // Include address components
         accept_language: 'en', // Force English results
@@ -57,7 +70,7 @@ export const reverseGeocode = async (lat, lon) => {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'FuelGuard/1.0 (fuel-tracking-app)', // Required by Nominatim policy
+          'User-Agent': 'FuelGuard (fuel-tracking-app)', // Required by Nominatim policy
         },
       });
 
@@ -113,12 +126,17 @@ export const getLocationName = async (lat, lon) => {
 
 /**
  * Geocoding (address to coordinates) - forward geocoding
- * 
+ *
  * @param {string} query - Address or place name
  * @returns {Promise<Array<{lat: number, lon: number, formatted: string}>|null>}
  */
 export const geocode = async (query) => {
-  if (!query || query.trim().length === 0) {
+  // Validate and sanitize query
+  const queryValidation = sanitizeQuery(query);
+
+  if (!queryValidation.valid) {
+    console.error('Invalid query for geocoding:', queryValidation.error);
+    console.warn('Security: Invalid geocoding query detected:', { input: query, error: queryValidation.error });
     return null;
   }
 
@@ -126,7 +144,7 @@ export const geocode = async (query) => {
     return await withRateLimit(async () => {
       const params = new URLSearchParams({
         format: 'json',
-        q: query.trim(),
+        q: queryValidation.value,
         limit: '5',
         addressdetails: '1',
         accept_language: 'en',

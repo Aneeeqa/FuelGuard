@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Cpu, HardDrive, Wifi, WifiOff, Server, CheckCircle, XCircle, AlertCircle, Globe, Smartphone, Clock } from 'lucide-react';
+import { safeLocalStorageGet } from '../utils/secureStorage';
 
 const SystemStatus = () => {
   const [onlineStatus, setOnlineStatus] = useState(navigator.onLine);
@@ -35,8 +36,8 @@ const SystemStatus = () => {
   }, []);
 
   const storageInfo = {
-    type: localStorage.getItem('fuelGuardDB') ? 'LocalStorage' : 'IndexedDB',
-    estimatedSize: new Blob([JSON.stringify(localStorage.getItem('fuelGuardDB'))]).size,
+    type: safeLocalStorageGet('fuelGuardDB', { parseJson: false }) ? 'LocalStorage' : 'IndexedDB',
+    estimatedSize: new Blob([JSON.stringify(safeLocalStorageGet('fuelGuardDB', { parseJson: false }))]).size,
   };
 
   const serviceWorkerStatus = navigator.serviceWorker?.ready ? 'Active' : 'Not Installed';
@@ -207,14 +208,7 @@ const SystemStatus = () => {
             <StatusBadge status={serviceWorkerStatus} />
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-input)' }}>
-            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Application
-            </span>
-            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              Fuel Guard
-            </span>
-          </div>
+
         </div>
       </div>
 

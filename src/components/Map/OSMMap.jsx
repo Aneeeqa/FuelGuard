@@ -10,15 +10,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Fix for default markers in React-Leaflet
-// The default marker images need to be imported because Leaflet's webpack
-// configuration doesn't handle them automatically
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
+// Note: Leaflet icon configuration is now set globally in main.jsx
+// to prevent Vite build warnings about unresolved images
 
 // Custom icons for better visual distinction
 const createCustomIcon = (color, scale = 1) => {

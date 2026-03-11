@@ -126,8 +126,8 @@ export const isFullTankFill = (logEntry, vehicleProfile) => {
  * Space Complexity: O(1)
  *
  * @example
- * findPreviousFullFill(logs, 'vehicle-1', 'YYYY-MM-DD')
- * // Returns: { id: 'log-1', date: 'YYYY-MM-DD', ... }
+ * findPreviousFullFill(logs, 'vehicle-1', '2024-03-24')
+ * // Returns: { id: 'log-1', date: '2024-03-20', ... }
  */
 export const findPreviousFullFill = (logs, vehicleId, currentDate) => {
   if (!logs || logs.length === 0) {

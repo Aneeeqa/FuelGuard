@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { safeGetTheme, safeSetTheme } from '../utils/secureStorage';
 
 const ThemeContext = createContext();
 
@@ -12,8 +13,8 @@ export const ThemeProvider = ({ children }) => {
   // Check for saved theme or system preference
   const getInitialTheme = () => {
     console.log('ThemeProvider: Determining initial theme...');
-    // Check localStorage first
-    const savedTheme = localStorage.getItem(THEME_KEY);
+    // Check localStorage first with secure storage
+    const savedTheme = safeGetTheme(THEME_KEY);
     console.log('ThemeProvider: Saved theme:', savedTheme);
     if (savedTheme) {
       return savedTheme;
@@ -42,8 +43,8 @@ export const ThemeProvider = ({ children }) => {
       document.documentElement.classList.remove('dark');
     }
 
-    // Save preference
-    localStorage.setItem(THEME_KEY, theme);
+    // Save preference with secure storage
+    safeSetTheme(THEME_KEY, theme);
     console.log('ThemeProvider: Theme applied to document');
   }, [theme]);
 
@@ -53,7 +54,7 @@ export const ThemeProvider = ({ children }) => {
 
     const handleChange = (e) => {
       // Only auto-switch if user hasn't manually set a preference
-      const savedTheme = localStorage.getItem(THEME_KEY);
+      const savedTheme = safeGetTheme(THEME_KEY);
       if (!savedTheme) {
         setTheme(e.matches ? 'dark' : 'light');
       }
