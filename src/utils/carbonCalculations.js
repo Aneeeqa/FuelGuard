@@ -107,7 +107,7 @@ export const calculateCO2PerKm = (totalCO2, totalDistance) => {
  * Calculate monthly CO2 emissions from logs
  * @param {Array} logs - Array of fuel log entries
  * @param {string} fuelType - Primary fuel type (fallback)
- * @returns {Array} Array of monthly data: [{ month: '2024-01', co2: 123.45 }]
+ * @returns {Array} Array of monthly data: [{ month: '01-2024', co2: 123.45 }]
  */
 export const calculateMonthlyCO2 = (logs, fuelType = 'gasoline') => {
   if (!logs || logs.length === 0) return [];
@@ -133,7 +133,7 @@ export const calculateMonthlyCO2 = (logs, fuelType = 'gasoline') => {
  * Calculate yearly CO2 emissions from logs
  * @param {Array} logs - Array of fuel log entries
  * @param {string} fuelType - Primary fuel type (fallback)
- * @returns {Array} Array of yearly data: [{ year: 2024, co2: 1234.56 }]
+ * @returns {Array} Array of yearly data: [{ year: 'current', co2: 1234.56 }]
  */
 export const calculateYearlyCO2 = (logs, fuelType = 'gasoline') => {
   if (!logs || logs.length === 0) return [];

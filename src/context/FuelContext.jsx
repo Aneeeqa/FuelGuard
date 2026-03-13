@@ -767,7 +767,7 @@ export const FuelProvider = ({ children }) => {
   // End GPS Tracking Functions
   // ========================================
 
-  // Inject demo data for demonstration with random values and 3 alerts
+  // Inject demo data with random values and 3 alerts
   const injectDemoData = useCallback(() => {
     const now = new Date();
 
@@ -1008,7 +1008,7 @@ export const FuelProvider = ({ children }) => {
       monthlyBudget: 200, // Default $200 budget for demo
       assignedDriverId: 'driver-1',
       status: 'Active',
-      createdAt: new Date().toISOString(),
+      createdAt: new Date('2025-01-01').toISOString(),
       // Tank-to-tank settings
       lastFullFillLogId: sortedFullFills.length > 0 ? sortedFullFills[sortedFullFills.length - 1].id : null,
       lastFullFillDate: sortedFullFills.length > 0 ? sortedFullFills[sortedFullFills.length - 1].date : null,
@@ -1032,7 +1032,7 @@ export const FuelProvider = ({ children }) => {
           email: `${selectedDriver.toLowerCase().replace(' ', '.')}@example.com`,
           phone: '+1 ' + Math.floor(randomInRange(200, 999)) + ' ' + Math.floor(randomInRange(100, 999)) + ' ' + Math.floor(randomInRange(1000, 9999)),
           assignedVehicleId: 'vehicle-1',
-      createdAt: new Date().toISOString(),
+      createdAt: new Date('2024-01-01').toISOString(),
         },
       ],
       vehicles: [demoVehicle],

@@ -70,7 +70,7 @@ const Privacy = () => {
         }}
       >
         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          Last Updated: <span className="font-medium" style={{ color: 'var(--text-primary)' }}>Recently</span>
+          Last Updated
         </p>
       </div>
 
