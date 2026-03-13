@@ -54,15 +54,15 @@ console.log('   Editable input field (user can change if needed)');
 console.log('\nUser clicks "Add Vehicle" - vehicle saved!');
 
 // Scenario 2: User adds a less common vehicle
-console.log('\n\nSCENARIO 2: User adds 2024 FutureConcept (hypothetical)');
+console.log('\n\nSCENARIO 2: User adds 2025 FutureConcept (hypothetical)');
 console.log('--------------------------------------------------------');
 
-console.log('1. User selects: Year=2024, Make=FutureConcept, Model=X1');
+console.log('1. User selects: Year=2025, Make=FutureConcept, Model=X1');
 console.log('\nSystem tries to fetch vehicle data...');
 
 const unknownVehicleData = {
   vehicleId: null,
-  year: 2024,
+  year: 2025,
   make: 'FutureConcept',
   model: 'X1',
   variant: 'Base',

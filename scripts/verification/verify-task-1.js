@@ -125,25 +125,25 @@ console.log('\n🔍 Testing findPreviousFullFill()');
 console.log('-'.repeat(70));
 
 const testLogs = [
-  { id: 'log-4', date: '2024-03-24T10:00:00Z', vehicleId: 'vehicle-1', isFullTank: true, odometer: 15200 },
-  { id: 'log-3', date: '2024-03-20T10:00:00Z', vehicleId: 'vehicle-1', isFullTank: false, odometer: 15000 },
-  { id: 'log-2', date: '2024-03-15T10:00:00Z', vehicleId: 'vehicle-1', isFullTank: true, odometer: 14800 },
-  { id: 'log-1', date: '2024-03-10T10:00:00Z', vehicleId: 'vehicle-1', isFullTank: true, odometer: 14500 },
+  { id: 'log-4', date: '2025-01-24T10:00:00Z', vehicleId: 'vehicle-1', isFullTank: true, odometer: 15200 },
+  { id: 'log-3', date: '2025-01-20T10:00:00Z', vehicleId: 'vehicle-1', isFullTank: false, odometer: 15000 },
+  { id: 'log-2', date: '2025-01-15T10:00:00Z', vehicleId: 'vehicle-1', isFullTank: true, odometer: 14800 },
+  { id: 'log-1', date: '2025-01-10T10:00:00Z', vehicleId: 'vehicle-1', isFullTank: true, odometer: 14500 },
 ];
 
 test('Find previous full tank (should skip partial)', () => {
-  const result = findPreviousFullFill(testLogs, 'vehicle-1', '2024-03-24T10:00:00Z');
+  const result = findPreviousFullFill(testLogs, 'vehicle-1', '2025-01-24T10:00:00Z');
   assertEqual(result.id, 'log-2', 'Should find log-2 (not log-3 which is partial)');
   assertEqual(result.isFullTank, true, 'Result should be a full tank');
 });
 
 test('Find previous full tank from earliest', () => {
-  const result = findPreviousFullFill(testLogs, 'vehicle-1', '2024-03-15T10:00:00Z');
+  const result = findPreviousFullFill(testLogs, 'vehicle-1', '2025-01-15T10:00:00Z');
   assertEqual(result.id, 'log-1', 'Should find log-1');
 });
 
 test('No previous full tank exists', () => {
-  const result = findPreviousFullFill(testLogs, 'vehicle-1', '2024-03-10T10:00:00Z');
+  const result = findPreviousFullFill(testLogs, 'vehicle-1', '2025-01-10T10:00:00Z');
   assertEqual(result, null, 'Should return null when no previous full tank');
 });
 
@@ -152,7 +152,7 @@ console.log('-'.repeat(70));
 
 const previousFullFill = {
   id: 'log-1',
-  date: '2024-03-20T10:00:00Z',
+  date: '2025-01-20T10:00:00Z',
   odometer: 15000,
   liters: 100,
   tankCapacity: 100,
@@ -168,7 +168,7 @@ const vehicleProfile = {
 test('Calculate normal consumption (no theft)', () => {
   const currentLog = {
     id: 'log-2',
-    date: '2024-03-24T10:00:00Z',
+    date: '2025-01-24T10:00:00Z',
     odometer: 15200, // 200 km driven
     liters: 13.33,   // Expected consumption (200 / 15)
     tankCapacity: 100,
@@ -188,7 +188,7 @@ test('Calculate normal consumption (no theft)', () => {
 test('Calculate theft scenario (from implementation plan)', () => {
   const currentLog = {
     id: 'log-2',
-    date: '2024-03-24T10:00:00Z',
+    date: '2025-01-24T10:00:00Z',
     odometer: 15200, // 200 km driven
     liters: 36,     // Actual fill (theft scenario)
     tankCapacity: 100,
@@ -222,7 +222,7 @@ test('Handle first fill (no previous full tank)', () => {
 test('Handle invalid odometer (decreased)', () => {
   const currentLog = {
     id: 'log-2',
-    date: '2024-03-24T10:00:00Z',
+    date: '2025-01-24T10:00:00Z',
     odometer: 14900, // Decreased!
     liters: 36,
     tankCapacity: 100,
@@ -238,7 +238,7 @@ test('Handle invalid odometer (decreased)', () => {
 test('Handle invalid vehicle profile', () => {
   const currentLog = {
     id: 'log-2',
-    date: '2024-03-24T10:00:00Z',
+    date: '2025-01-24T10:00:00Z',
     odometer: 15200,
     liters: 36,
     tankCapacity: 100,

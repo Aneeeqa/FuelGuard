@@ -76,9 +76,9 @@ console.log('-'.repeat(80));
 
 const apiAbuseAttacks = [
   { input: '9999999999', label: 'Extreme year value' },
-  { input: '-2024', label: 'Negative year' },
+  { input: '-2025', label: 'Negative year' },
   { input: '0', label: 'Zero year' },
-  { input: '20240', label: 'Too many digits' },
+  { input: '20250', label: 'Too many digits' },
 ];
 
 console.log('🚫 Attempted API Abuse:');

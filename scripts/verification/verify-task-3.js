@@ -58,7 +58,7 @@ const mockPrevState = {
   logs: [
     {
       id: 'log-1',
-      date: '2024-03-20T10:00:00Z',
+      date: '2025-01-20T10:00:00Z',
       odometer: 15000,
       liters: 50,
       isFullTank: true,
@@ -81,7 +81,7 @@ const mockPrevState = {
 console.log('\n📝 Test 1: Full tank fill with previous full fill');
 test('Should calculate Tank-to-Tank data for full tank fill', () => {
   const newLog = {
-    date: '2024-03-24T10:00:00Z',
+    date: '2025-01-24T10:00:00Z',
     odometer: 15200,  // 200 km
     liters: 36,      // Theft scenario
     isFullTank: true,
@@ -117,7 +117,7 @@ test('Should calculate Tank-to-Tank data for full tank fill', () => {
 console.log('\n📝 Test 2: First full tank fill (no previous)');
 test('Should handle first full tank fill without Tank-to-Tank data', () => {
   const newLog = {
-    date: '2024-03-20T10:00:00Z',
+    date: '2025-01-20T10:00:00Z',
     odometer: 15000,
     liters: 50,
     isFullTank: true,
@@ -141,7 +141,7 @@ test('Should handle first full tank fill without Tank-to-Tank data', () => {
 console.log('\n📝 Test 3: Partial fill (should not calculate Tank-to-Tank)');
 test('Should skip Tank-to-Tank for partial fills', () => {
   const newLog = {
-    date: '2024-03-24T10:00:00Z',
+    date: '2025-01-24T10:00:00Z',
     odometer: 15200,
     liters: 10,  // Partial fill
     isFullTank: false,
@@ -198,7 +198,7 @@ test('Should calculate average from multiple trips', () => {
 console.log('\n📝 Test 7: Vehicle profile fields updated correctly');
 test('Should set lastFullFillLogId and lastFullFillDate', () => {
   const newLog = {
-    date: '2024-03-24T10:00:00Z',
+    date: '2025-01-24T10:00:00Z',
     odometer: 15200,
     liters: 36,
     isFullTank: true
@@ -211,7 +211,7 @@ test('Should set lastFullFillLogId and lastFullFillDate', () => {
   };
 
   assertTruthy(updatedProfile.lastFullFillLogId, 'Should have lastFullFillLogId');
-  assertEqual(updatedProfile.lastFullFillDate, '2024-03-24T10:00:00Z', 'Should have lastFullFillDate');
+  assertEqual(updatedProfile.lastFullFillDate, '2025-01-24T10:00:00Z', 'Should have lastFullFillDate');
 });
 
 console.log('\n🗑️ Test 8: Delete log and recalculate Tank-to-Tank data');
@@ -219,7 +219,7 @@ test('Should recalculate Tank-to-Tank data after deletion', () => {
   const logs = [
     {
       id: 'log-1',
-      date: '2024-03-20T10:00:00Z',
+      date: '2025-01-20T10:00:00Z',
       odometer: 15000,
       liters: 50,
       isFullTank: true,
@@ -228,7 +228,7 @@ test('Should recalculate Tank-to-Tank data after deletion', () => {
     },
     {
       id: 'log-2',
-      date: '2024-03-24T10:00:00Z',
+      date: '2025-01-24T10:00:00Z',
       odometer: 15200,
       liters: 36,
       isFullTank: true,
@@ -267,7 +267,7 @@ test('Should use Tank-to-Tank theft threshold', () => {
 console.log('\n🔍 Test 10: Backward compatibility - legacy fields preserved');
 test('Should preserve all existing log fields', () => {
   const newLog = {
-    date: '2024-03-24T10:00:00Z',
+    date: '2025-01-24T10:00:00Z',
     odometer: 15200,
     liters: 36,
     price: 120
