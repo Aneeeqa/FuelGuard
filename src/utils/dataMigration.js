@@ -10,6 +10,11 @@ import {
   findPreviousFullFill,
   calculateTankToTankConsumption
 } from './tankToTankCalculations.js';
+import {
+  safeLocalStorageGet,
+  safeLocalStorageSet,
+  safeLocalStorageRemove,
+} from './secureStorage';
 
 /**
  * Migration version
@@ -24,7 +29,7 @@ export const CURRENT_VERSION_KEY = 'fuelGuardDB_version';
  */
 export const getCurrentSchemaVersion = async () => {
   try {
-    const version = await localStorage.getItem(CURRENT_VERSION_KEY);
+    const version = safeLocalStorageGet(CURRENT_VERSION_KEY, { parseJson: false });
     return version;
   } catch (error) {
     console.error('Failed to get schema version:', error);
@@ -38,7 +43,7 @@ export const getCurrentSchemaVersion = async () => {
  */
 export const setCurrentSchemaVersion = async (version) => {
   try {
-    await localStorage.setItem(CURRENT_VERSION_KEY, version);
+    safeLocalStorageSet(CURRENT_VERSION_KEY, version);
   } catch (error) {
     console.error('Failed to set schema version:', error);
   }
@@ -316,10 +321,10 @@ export const rollbackMigration = async () => {
 
   try {
     // Clear migrated data
-    await localStorage.removeItem('fuelGuardDB');
+    safeLocalStorageRemove('fuelGuardDB');
 
     // Clear version marker
-    await localStorage.removeItem(CURRENT_VERSION_KEY);
+    safeLocalStorageRemove(CURRENT_VERSION_KEY);
 
     console.log('✅ Migration rolled back successfully');
     return true;

@@ -2,6 +2,12 @@
  * Currency formatting utilities for Fuel Guard
  */
 
+import { safeJsonParse, Schemas } from './safeJson';
+import {
+  safeSetExchangeRates,
+  safeGetExchangeRates,
+} from './secureStorage';
+
 export const SUPPORTED_CURRENCIES = [
     { code: 'INR', symbol: '₹', name: 'Indian Rupee', locale: 'en-IN' },
     { code: 'USD', symbol: '$', name: 'US Dollar', locale: 'en-US' },
@@ -131,9 +137,9 @@ export const fetchExchangeRates = async (baseCurrency = 'USD') => {
                 base: baseCurrency
             };
 
-            // Cache the rates
+            // Cache the rates with secure storage
             if (typeof window !== 'undefined') {
-                localStorage.setItem(EXCHANGE_RATES_KEY, JSON.stringify(ratesWithTimestamp));
+                safeSetExchangeRates(EXCHANGE_RATES_KEY, ratesWithTimestamp);
             }
 
             return ratesWithTimestamp;
@@ -155,15 +161,18 @@ export const getCachedExchangeRates = () => {
     try {
         if (typeof window === 'undefined') return null;
 
-        const cached = localStorage.getItem(EXCHANGE_RATES_KEY);
+        const cached = safeGetExchangeRates(EXCHANGE_RATES_KEY);
         if (!cached) return null;
 
-        const data = JSON.parse(cached);
-        const age = Date.now() - data.timestamp;
+        // Validate with schema (additional layer of validation)
+        const validation = safeJsonParse(JSON.stringify(cached), { schema: Schemas.exchangeRates });
+        if (!validation) return null;
+
+        const age = Date.now() - cached.timestamp;
 
         // Return cached rates if they're not too old
         if (age < EXCHANGE_RATES_CACHE_DURATION) {
-            return data;
+            return cached;
         }
 
         return null;

@@ -8,6 +8,8 @@
  * This API is completely free and requires no API key
  */
 
+import { validateVin, validateYear, validateMake, validateModel } from '../utils/validation';
+
 // NHTSA API base URL (no CORS proxy needed - supports CORS)
 const BASE_URL = 'https://vpic.nhtsa.dot.gov/api';
 
@@ -21,11 +23,16 @@ const CACHE_TTL = 60 * 60 * 1000; // 1 hour
  * @returns {Promise<Object|null>}
  */
 export const fetchVehicleByVIN = async (vin) => {
-    if (!vin || vin.length < 17) {
+    // Validate VIN before API call
+    const vinValidation = validateVin(vin);
+
+    if (!vinValidation.valid) {
+        console.error('Invalid VIN parameter:', vinValidation.error);
+        console.warn('Security: Invalid VIN input detected:', { input: vin, error: vinValidation.error });
         return null;
     }
 
-    const cacheKey = `vin-${vin}`;
+    const cacheKey = `vin-${vinValidation.value}`;
     const cached = nhtsaCache.get(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -33,7 +40,7 @@ export const fetchVehicleByVIN = async (vin) => {
     }
 
     try {
-        const url = `${BASE_URL}/vehicles/DecodeVin/${vin}?format=json`;
+        const url = `${BASE_URL}/vehicles/DecodeVin/${vinValidation.value}?format=json`;
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -56,7 +63,7 @@ export const fetchVehicleByVIN = async (vin) => {
             const fuelCapacityLiters = fuelCapacity ? fuelCapacity * 3.78541 : null; // Convert gallons to liters
 
             const result = {
-                vin,
+                vin: vinValidation.value,
                 fuelCapacityGallons: fuelCapacity,
                 fuelCapacityLiters,
                 specifications,
@@ -81,11 +88,30 @@ export const fetchVehicleByVIN = async (vin) => {
  * @returns {Promise<Array<{make, model, year, vin, trim}>>}
  */
 export const searchVehiclesByMakeModelYear = async (make, model, year) => {
-    if (!make || !model || !year) {
+    // Validate inputs
+    const makeValidation = validateMake(make);
+    const modelValidation = validateModel(model);
+    const yearValidation = validateYear(year);
+
+    if (!makeValidation.valid) {
+        console.error('Invalid make parameter:', makeValidation.error);
+        console.warn('Security: Invalid make input detected:', { input: make, error: makeValidation.error });
         return [];
     }
 
-    const cacheKey = `search-${make}-${model}-${year}`;
+    if (!modelValidation.valid) {
+        console.error('Invalid model parameter:', modelValidation.error);
+        console.warn('Security: Invalid model input detected:', { input: model, error: modelValidation.error });
+        return [];
+    }
+
+    if (!yearValidation.valid) {
+        console.error('Invalid year parameter:', yearValidation.error);
+        console.warn('Security: Invalid year input detected:', { input: year, error: yearValidation.error });
+        return [];
+    }
+
+    const cacheKey = `search-${makeValidation.value}-${modelValidation.value}-${yearValidation.value}`;
     const cached = nhtsaCache.get(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -93,7 +119,7 @@ export const searchVehiclesByMakeModelYear = async (make, model, year) => {
     }
 
     try {
-        const url = `${BASE_URL}/vehicles/GetModelsForMakeYear/make/${encodeURIComponent(make)}/modelyear/${year}?format=json`;
+        const url = `${BASE_URL}/vehicles/GetModelsForMakeYear/make/${encodeURIComponent(makeValidation.value)}/modelyear/${yearValidation.value}?format=json`;
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -107,7 +133,7 @@ export const searchVehiclesByMakeModelYear = async (make, model, year) => {
             const filteredResults = data.Results
                 .filter((item) => {
                     const itemModel = item.Model_Name.toLowerCase();
-                    const searchModel = model.toLowerCase();
+                    const searchModel = modelValidation.value.toLowerCase();
                     return itemModel.includes(searchModel) || searchModel.includes(itemModel);
                 })
                 .map((item) => ({
@@ -136,11 +162,29 @@ export const searchVehiclesByMakeModelYear = async (make, model, year) => {
  * @returns {Promise<Object|null>}
  */
 export const getVehicleEquipment = async (make, model, year) => {
-    if (!make || !model || !year) {
+    // Validate inputs
+    const makeValidation = validateMake(make);
+    const modelValidation = validateModel(model);
+    const yearValidation = validateYear(year);
+
+    if (!makeValidation.valid || !modelValidation.valid || !yearValidation.valid) {
+        console.error('Invalid parameters for getVehicleEquipment:', {
+            make: makeValidation.error,
+            model: modelValidation.error,
+            year: yearValidation.error,
+        });
+        console.warn('Security: Invalid vehicle equipment input detected', {
+            input: { make, model, year },
+            errors: {
+                make: makeValidation.error,
+                model: modelValidation.error,
+                year: yearValidation.error,
+            },
+        });
         return null;
     }
 
-    const cacheKey = `equipment-${make}-${model}-${year}`;
+    const cacheKey = `equipment-${makeValidation.value}-${modelValidation.value}-${yearValidation.value}`;
     const cached = nhtsaCache.get(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -149,7 +193,7 @@ export const getVehicleEquipment = async (make, model, year) => {
 
     try {
         // Get manufacturer's suggested retail price and equipment data
-        const url = `${BASE_URL}/vehicles/GetEquipmentPlantCodes/make/${encodeURIComponent(make)}/model/${encodeURIComponent(model)}/modelyear/${year}?format=json`;
+        const url = `${BASE_URL}/vehicles/GetEquipmentPlantCodes/make/${encodeURIComponent(makeValidation.value)}/model/${encodeURIComponent(modelValidation.value)}/modelyear/${yearValidation.value}?format=json`;
         const response = await fetch(url);
 
         if (!response.ok) {

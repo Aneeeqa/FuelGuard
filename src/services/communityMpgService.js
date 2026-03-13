@@ -1,8 +1,10 @@
 /**
  * Community MPG Service - FuelEconomy.gov My MPG Data
- * 
+ *
  * Fetches real-world MPG data reported by users from FuelEconomy.gov
  */
+
+import { safeJsonParse, Schemas } from '../utils/safeJson';
 
 const CORS_PROXY = 'https://corsproxy.io/?';
 const BASE_URL = 'https://www.fueleconomy.gov/ws/rest';
@@ -12,8 +14,8 @@ const CACHE_KEY_PREFIX = 'fuelguard_community_mpg_';
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
- * Get cached data from session storage
- * @param {string} vehicleId 
+ * Get cached data from session storage with safe JSON parsing
+ * @param {string} vehicleId
  * @returns {Object|null}
  */
 const getCached = (vehicleId) => {
@@ -22,7 +24,10 @@ const getCached = (vehicleId) => {
         const cached = sessionStorage.getItem(key);
         if (!cached) return null;
 
-        const parsed = JSON.parse(cached);
+        // Use safe JSON parser with community MPG schema
+        const parsed = safeJsonParse(cached, { schema: Schemas.communityMpg });
+        if (!parsed) return null;
+
         if (Date.now() - parsed.timestamp > CACHE_TTL) {
             sessionStorage.removeItem(key);
             return null;

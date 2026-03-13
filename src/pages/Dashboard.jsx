@@ -118,7 +118,7 @@ const Dashboard = () => {
         const logDate = new Date(log.date);
         const now = new Date();
         return logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear()
-          ? sum + (log.cost || 0)
+          ? sum + (log.price || 0)
           : sum;
       }, 0)
     : 0;
@@ -285,7 +285,7 @@ const Dashboard = () => {
               <StatCard
                 icon={Zap}
                 label="Fuel Drain"
-                value={(drainAnalysis?.drainRate || 0).toFixed(2)}
+                value={(drainAnalysis?.latestDrain?.litersPerDay || 0).toFixed(2)}
                 unit={`${fuelDisplayUnit}/day`}
                 gradientId={5}
               />

@@ -11,7 +11,10 @@ import {
   calculateCostPerKm,
   checkBudgetAlert,
 } from '../utils/calculations';
-import { convertCurrencySync } from '../utils/currency';
+import {
+  convertCurrencySync,
+  fetchExchangeRates
+} from '../utils/currency';
 import {
   isFullTankFill,
   findPreviousFullFill,
@@ -452,8 +455,7 @@ export const FuelProvider = ({ children }) => {
       console.log(`Converting currency from ${oldCurrency} to ${newCurrency}`);
 
       try {
-        // Import and fetch exchange rates
-        const { fetchExchangeRates, convertCurrencySync } = await import('../utils/currency');
+        // Fetch exchange rates using imported function
         const rates = await fetchExchangeRates(oldCurrency);
         console.log('Exchange rates fetched:', rates);
 
@@ -1006,7 +1008,7 @@ export const FuelProvider = ({ children }) => {
       monthlyBudget: 200, // Default $200 budget for demo
       assignedDriverId: 'driver-1',
       status: 'Active',
-      createdAt: new Date('2020-01-01').toISOString(),
+      createdAt: new Date('2025-01-01').toISOString(),
       // Tank-to-tank settings
       lastFullFillLogId: sortedFullFills.length > 0 ? sortedFullFills[sortedFullFills.length - 1].id : null,
       lastFullFillDate: sortedFullFills.length > 0 ? sortedFullFills[sortedFullFills.length - 1].date : null,
@@ -1018,7 +1020,7 @@ export const FuelProvider = ({ children }) => {
     };
 
     // Random driver names
-    const driverNames = ['Sample Driver 1', 'Sample Driver 2', 'Sample Driver 3', 'Sample Driver 4'];
+    const driverNames = ['John Smith', 'Sarah Johnson', 'Michael Chen', 'Emily Davis'];
     const selectedDriver = driverNames[Math.floor(randomInRange(0, driverNames.length))];
 
     setData({
@@ -1030,7 +1032,7 @@ export const FuelProvider = ({ children }) => {
           email: `${selectedDriver.toLowerCase().replace(' ', '.')}@example.com`,
           phone: '+1 ' + Math.floor(randomInRange(200, 999)) + ' ' + Math.floor(randomInRange(100, 999)) + ' ' + Math.floor(randomInRange(1000, 9999)),
           assignedVehicleId: 'vehicle-1',
-      createdAt: new Date('2020-01-01').toISOString(),
+      createdAt: new Date('2024-01-01').toISOString(),
         },
       ],
       vehicles: [demoVehicle],

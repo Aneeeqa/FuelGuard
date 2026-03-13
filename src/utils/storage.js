@@ -5,6 +5,13 @@
  */
 
 import { get as idbGet, set as idbSet, del as idbDel } from 'idb-keyval';
+import { safeJsonParse, Schemas } from './safeJson';
+import {
+  safeLocalStorageSet,
+  safeLocalStorageGet,
+  safeLocalStorageRemove,
+  validateStorageKey,
+} from './secureStorage';
 
 const STORAGE_KEY = 'fuelGuardDB';
 
@@ -30,11 +37,16 @@ const detectStorage = async () => {
   // Test localStorage availability
   try {
     const testKey = '__ls_test__';
-    localStorage.setItem(testKey, 'test');
-    localStorage.removeItem(testKey);
-    useLocalStorage = true;
-    storageType = 'localstorage';
-    return;
+
+    // Validate test key
+    const keyValidation = validateStorageKey(testKey);
+    if (keyValidation.valid) {
+      safeLocalStorageSet(testKey, 'test');
+      safeLocalStorageRemove(testKey);
+      useLocalStorage = true;
+      storageType = 'localstorage';
+      return;
+    }
   } catch {
     // localStorage failed, use in-memory
   }
@@ -49,11 +61,12 @@ const storageReady = detectStorage();
 
 export const storage = {
   /**
-   * Get data from storage
+   * Get data from storage with safe JSON parsing
    * @param {string} key - Storage key (defaults to STORAGE_KEY)
+   * @param {Object} schema - Optional schema for validation
    * @returns {Promise<any>} Stored data or null
    */
-  async get(key = STORAGE_KEY) {
+  async get(key = STORAGE_KEY, schema = null) {
     await storageReady;
 
     if (useInMemory) {
@@ -62,22 +75,40 @@ export const storage = {
 
     if (useLocalStorage) {
       try {
-        const data = localStorage.getItem(key);
-        return data ? JSON.parse(data) : null;
-      } catch {
+        const data = safeLocalStorageGet(key, { parseJson: false });
+        if (!data) return null;
+
+        // Use safe JSON parser with schema validation
+        return safeJsonParse(data, { schema });
+      } catch (error) {
+        console.error('localStorage read failed:', error);
         return null;
       }
     }
 
     // IndexedDB (default)
     try {
-      return await idbGet(key);
+      const data = await idbGet(key);
+      if (!data) return null;
+
+      // If data from IndexedDB is a string, parse it safely
+      if (typeof data === 'string') {
+        return safeJsonParse(data, { schema });
+      }
+
+      // If it's already an object, validate it
+      if (schema && typeof data === 'object') {
+        const result = safeJsonParse(JSON.stringify(data), { schema });
+        return result !== null ? result : data;
+      }
+
+      return data;
     } catch (error) {
       // Fallback to localStorage on failure
       console.warn('IndexedDB get failed, falling back to localStorage:', error);
       useLocalStorage = true;
       storageType = 'localstorage';
-      return this.get(key);
+      return this.get(key, schema);
     }
   },
 
@@ -97,8 +128,17 @@ export const storage = {
 
     if (useLocalStorage) {
       try {
-        localStorage.setItem(key, JSON.stringify(value));
-        return true;
+        const success = safeLocalStorageSet(key, value);
+
+        if (success) {
+          return true;
+        }
+
+        // Safe storage failed, fall back to in-memory
+        console.warn('Safe localStorage set failed, falling back to in-memory');
+        useInMemory = true;
+        storageType = 'memory';
+        return this.set(key, value);
       } catch (error) {
         console.warn('localStorage set failed:', error);
         useInMemory = true;
@@ -132,7 +172,7 @@ export const storage = {
     }
 
     if (useLocalStorage) {
-      localStorage.removeItem(key);
+      safeLocalStorageRemove(key);
       return;
     }
 
@@ -140,7 +180,7 @@ export const storage = {
     try {
       await idbDel(key);
     } catch {
-      localStorage.removeItem(key);
+      safeLocalStorageRemove(key);
     }
   },
 

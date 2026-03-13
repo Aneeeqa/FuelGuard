@@ -6,21 +6,33 @@
  */
 
 import { getFuelTankCapacity, estimateEnhancedTankCapacity } from './fuelCapacityService';
+import {
+  validateYear,
+  validateMake,
+  validateModel,
+  validateVehicleId,
+} from '../utils/validation';
 
 // Re-export for backward compatibility
 export const estimateFuelTankCapacity = estimateEnhancedTankCapacity;
 
-// CORS proxy for development (FuelEconomy.gov doesn't support CORS)
-const CORS_PROXY = 'https://corsproxy.io/?';
-const BASE_URL = 'https://www.fueleconomy.gov/ws/rest';
+// API Configuration
+// In production: use backend proxy server
+// In development: can use direct API or proxy depending on VITE_API_BASE_URL
+const USE_PROXY = import.meta.env.VITE_USE_PROXY === 'true';
+const PROXY_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/fueleconomy';
+const EPA_BASE_URL = 'https://www.fueleconomy.gov/ws/rest';
+
+// Determine which base URL to use
+const BASE_URL = USE_PROXY ? PROXY_BASE_URL : EPA_BASE_URL;
 
 // Cache for API responses to minimize calls
 const apiCache = new Map();
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 /**
- * Make an API request with CORS proxy and caching
- * @param {string} endpoint 
+ * Make an API request with caching
+ * @param {string} endpoint
  * @returns {Promise<any>}
  */
 const fetchWithProxy = async (endpoint) => {
@@ -32,7 +44,16 @@ const fetchWithProxy = async (endpoint) => {
     }
 
     try {
-        const url = `${CORS_PROXY}${encodeURIComponent(BASE_URL + endpoint)}`;
+        // Construct URL based on proxy mode
+        let url;
+        if (USE_PROXY) {
+            // Using backend proxy: prepend proxy base URL
+            url = `${BASE_URL}/${endpoint}`;
+        } else {
+            // Direct API call (development mode with Vite proxy)
+            url = `${BASE_URL}/${endpoint}`;
+        }
+
         const response = await fetch(url, {
             headers: {
                 'Accept': 'application/json',
@@ -73,14 +94,22 @@ export const fetchYears = async () => {
 
 /**
  * Fetch makes for a given year
- * @param {string|number} year 
+ * @param {string|number} year
  * @returns {Promise<Array<{text: string, value: string}>>}
  */
 export const fetchMakes = async (year) => {
-    if (!year) return [];
+    // Validate year before API call
+    const yearValidation = validateYear(year);
+
+    if (!yearValidation.valid) {
+        console.error('Invalid year parameter:', yearValidation.error);
+        // Security log: potential API abuse attempt
+        console.warn('Security: Invalid year input detected:', { input: year, error: yearValidation.error });
+        return [];
+    }
 
     try {
-        const data = await fetchWithProxy(`/vehicle/menu/make?year=${year}`);
+        const data = await fetchWithProxy(`/vehicle/menu/make?year=${yearValidation.value}`);
         return data.menuItem || [];
     } catch (error) {
         console.error('Error fetching makes:', error);
@@ -90,15 +119,31 @@ export const fetchMakes = async (year) => {
 
 /**
  * Fetch models for a given year and make
- * @param {string|number} year 
- * @param {string} make 
+ * @param {string|number} year
+ * @param {string} make
  * @returns {Promise<Array<{text: string, value: string}>>}
  */
 export const fetchModels = async (year, make) => {
-    if (!year || !make) return [];
+    // Validate inputs
+    const yearValidation = validateYear(year);
+    const makeValidation = validateMake(make);
+
+    if (!yearValidation.valid) {
+        console.error('Invalid year parameter:', yearValidation.error);
+        console.warn('Security: Invalid year input detected:', { input: year, error: yearValidation.error });
+        return [];
+    }
+
+    if (!makeValidation.valid) {
+        console.error('Invalid make parameter:', makeValidation.error);
+        console.warn('Security: Invalid make input detected:', { input: make, error: makeValidation.error });
+        return [];
+    }
 
     try {
-        const data = await fetchWithProxy(`/vehicle/menu/model?year=${year}&make=${encodeURIComponent(make)}`);
+        const data = await fetchWithProxy(
+            `/vehicle/menu/model?year=${yearValidation.value}&make=${encodeURIComponent(makeValidation.value)}`
+        );
         return data.menuItem || [];
     } catch (error) {
         console.error('Error fetching models:', error);
@@ -109,17 +154,38 @@ export const fetchModels = async (year, make) => {
 /**
  * Fetch vehicle options/variants for a given year, make, and model
  * Returns vehicle IDs that can be used to fetch full details
- * @param {string|number} year 
- * @param {string} make 
- * @param {string} model 
+ * @param {string|number} year
+ * @param {string} make
+ * @param {string} model
  * @returns {Promise<Array<{text: string, value: string}>>}
  */
 export const fetchOptions = async (year, make, model) => {
-    if (!year || !make || !model) return [];
+    // Validate all inputs
+    const yearValidation = validateYear(year);
+    const makeValidation = validateMake(make);
+    const modelValidation = validateModel(model);
+
+    if (!yearValidation.valid) {
+        console.error('Invalid year parameter:', yearValidation.error);
+        console.warn('Security: Invalid year input detected:', { input: year, error: yearValidation.error });
+        return [];
+    }
+
+    if (!makeValidation.valid) {
+        console.error('Invalid make parameter:', makeValidation.error);
+        console.warn('Security: Invalid make input detected:', { input: make, error: makeValidation.error });
+        return [];
+    }
+
+    if (!modelValidation.valid) {
+        console.error('Invalid model parameter:', modelValidation.error);
+        console.warn('Security: Invalid model input detected:', { input: model, error: modelValidation.error });
+        return [];
+    }
 
     try {
         const data = await fetchWithProxy(
-            `/vehicle/menu/options?year=${year}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}`
+            `/vehicle/menu/options?year=${yearValidation.value}&make=${encodeURIComponent(makeValidation.value)}&model=${encodeURIComponent(modelValidation.value)}`
         );
         // Normalize - API may return single object or array
         const items = data.menuItem;
@@ -137,10 +203,17 @@ export const fetchOptions = async (year, make, model) => {
  * @returns {Promise<Object|null>}
  */
 export const fetchVehicleDetails = async (vehicleId) => {
-    if (!vehicleId) return null;
+    // Validate vehicle ID
+    const idValidation = validateVehicleId(vehicleId);
+
+    if (!idValidation.valid) {
+        console.error('Invalid vehicle ID parameter:', idValidation.error);
+        console.warn('Security: Invalid vehicle ID input detected:', { input: vehicleId, error: idValidation.error });
+        return null;
+    }
 
     try {
-        const data = await fetchWithProxy(`/vehicle/${vehicleId}`);
+        const data = await fetchWithProxy(`/vehicle/${idValidation.value}`);
 
         // Create vehicle object with EPA data
         const vehicle = {
@@ -208,9 +281,9 @@ export const kmPerLiterToMpg = (kmPerLiter) => {
 /**
  * Search for a vehicle by year/make/model and return the first match
  * Convenience function for quick lookups
- * @param {number} year 
- * @param {string} make 
- * @param {string} model 
+ * @param {number} year
+ * @param {string} make
+ * @param {string} model
  * @returns {Promise<Object|null>}
  */
 export const searchVehicle = async (year, make, model) => {
@@ -273,15 +346,22 @@ export const fetchPakistaniMakes = async () => {
 
 /**
  * Get models for a Pakistani make
- * @param {string} make 
+ * @param {string} make
  * @returns {Promise<Array<{text: string, value: string}>>}
  */
 export const fetchPakistaniModels = async (make) => {
-    if (!make) return [];
+    // Validate make
+    const makeValidation = validateMake(make);
+
+    if (!makeValidation.valid) {
+        console.error('Invalid make parameter:', makeValidation.error);
+        console.warn('Security: Invalid make input detected:', { input: make, error: makeValidation.error });
+        return [];
+    }
 
     const data = await loadPakistaniVehicles();
     const models = data.vehicles
-        .filter(v => v.make === make)
+        .filter(v => v.make === makeValidation.value)
         .map(v => v.model);
 
     return [...new Set(models)].map(model => ({ text: model, value: model }));

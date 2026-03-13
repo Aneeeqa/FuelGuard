@@ -40,15 +40,15 @@ const TankToTankTripCardDemo = () => {
     actualMileage: 14.06,
     expectedMileage: 15,
     mileageEfficiency: 93.75,
-    startDate: '2020-01-15T10:00:00Z',
-    endDate: '2020-01-20T14:30:00Z',
+    startDate: '2024-01-15T10:00:00Z',
+    endDate: '2024-01-20T14:30:00Z',
     startOdometer: 15000,
     endOdometer: 16125,
     duration: 436500000,
     durationDays: 5,
     previousFullFillLogId: 'log-1',
     currentLogId: 'log-2',
-    calculatedAt: '2020-01-24T10:30:00Z',
+    calculatedAt: '2024-01-24T10:30:00Z',
     theftThreshold: 25
   };
 
@@ -68,15 +68,15 @@ const TankToTankTripCardDemo = () => {
     actualMileage: 5.56,
     expectedMileage: 15,
     mileageEfficiency: 37,
-    startDate: '2020-01-20T10:00:00Z',
-    endDate: '2020-01-24T14:30:00Z',
+    startDate: '2024-01-20T10:00:00Z',
+    endDate: '2024-01-24T14:30:00Z',
     startOdometer: 15000,
     endOdometer: 15200,
     duration: 350100000,
     durationDays: 4,
     previousFullFillLogId: 'log-1',
     currentLogId: 'log-3',
-    calculatedAt: '2020-01-24T14:30:00Z',
+    calculatedAt: '2024-01-24T14:30:00Z',
     theftThreshold: 25
   };
 
@@ -96,15 +96,15 @@ const TankToTankTripCardDemo = () => {
     actualMileage: 3.75,
     expectedMileage: 15,
     mileageEfficiency: 25,
-    startDate: '2020-01-10T08:00:00Z',
-    endDate: '2020-01-15T16:00:00Z',
+    startDate: '2024-01-10T08:00:00Z',
+    endDate: '2024-01-15T16:00:00Z',
     startOdometer: 10000,
     endOdometer: 10150,
     duration: 432000000,
     durationDays: 5,
     previousFullFillLogId: 'log-1',
     currentLogId: 'log-4',
-    calculatedAt: '2020-01-15T16:00:00Z',
+    calculatedAt: '2024-01-15T16:00:00Z',
     theftThreshold: 25
   };
 
