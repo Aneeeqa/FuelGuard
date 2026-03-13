@@ -39,15 +39,15 @@ describe('TankToTankTripCard Component', () => {
     actualMileage: 14.06,
     expectedMileage: 15,
     mileageEfficiency: 93.75,
-    startDate: '2024-03-15T10:00:00Z',
-    endDate: '2024-03-20T14:30:00Z',
+    startDate: '2025-01-15T10:00:00Z',
+    endDate: '2025-01-20T14:30:00Z',
     startOdometer: 15000,
     endOdometer: 16125,
     duration: 436500000,
     durationDays: 5,
     previousFullFillLogId: 'log-1',
     currentLogId: 'log-2',
-    calculatedAt: '2024-03-24T10:30:00Z',
+    calculatedAt: '2025-01-24T10:30:00Z',
     theftThreshold: 25,
     ...overrides
   });
@@ -246,8 +246,8 @@ describe('TankToTankTripCard Component', () => {
   describe('Expanded Details', () => {
     it('should show trip information when expanded', () => {
       const tripData = createMockTripData({
-        startDate: '2024-03-15T10:00:00Z',
-        endDate: '2024-03-20T14:30:00Z',
+        startDate: '2025-01-15T10:00:00Z',
+        endDate: '2025-01-20T14:30:00Z',
         startOdometer: 15000,
         endOdometer: 16125,
         durationDays: 5
@@ -455,8 +455,8 @@ describe('TankToTankTripCard Component', () => {
   describe('Date Formatting', () => {
     it('should format date range correctly', () => {
       const tripData = createMockTripData({
-        startDate: '2024-03-15T10:00:00Z',
-        endDate: '2024-03-20T14:30:00Z'
+        startDate: '2025-01-15T10:00:00Z',
+        endDate: '2025-01-20T14:30:00Z'
       });
       render(
         <TankToTankTripCard
@@ -470,8 +470,8 @@ describe('TankToTankTripCard Component', () => {
 
     it('should show "Same day" for zero-day trips', () => {
       const tripData = createMockTripData({
-        startDate: '2024-03-15T10:00:00Z',
-        endDate: '2024-03-15T18:00:00Z'
+        startDate: '2025-01-15T10:00:00Z',
+        endDate: '2025-01-15T18:00:00Z'
       });
       render(
         <TankToTankTripCard

@@ -89,7 +89,7 @@ runTest('validateYear - Happy Path', () => {
     MIN_VEHICLE_YEAR, // Minimum year
     2020, // Mid-range year
     MAX_VEHICLE_YEAR, // Maximum year
-    '2024', // String representation
+    '2025', // String representation
   ];
 
   validYears.forEach((year) => {
@@ -118,13 +118,14 @@ runTest('validateYear - Edge Cases', () => {
   });
 
   // Decimal years are parsed correctly (truncated)
-  const decimalResult = validateYear('2024.5');
-  assert(decimalResult.valid, 'Decimal year 2024.5 should be parsed to 2024');
-  assertEqual(decimalResult.value, 2024, 'Decimal should be truncated');
+  const decimalResult = validateYear('2025.5');
+  assert(decimalResult.valid, 'Decimal year 2025.5 should be parsed to 2025');
+  assertEqual(decimalResult.value, 2025, 'Decimal should be truncated');
 
-  const whitespaceResult = validateYear(' 2024 ');
-  assert(whitespaceResult.valid, 'Whitespace should be trimmed');
-  assertEqual(whitespaceResult.value, 2024, 'Whitespace should be trimmed');
+  // Years with whitespace are trimmed and parsed
+  const whitespaceResult = validateYear(' 2025 ');
+  assert(whitespaceResult.valid, 'Year with whitespace should be valid after trim');
+  assertEqual(whitespaceResult.value, 2025, 'Whitespace should be trimmed');
 });
 
 runTest('validateYear - Error State', () => {
