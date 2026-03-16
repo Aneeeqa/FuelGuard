@@ -12,6 +12,7 @@ import compression from 'compression';
 import morgan from 'morgan';
 import { getCorsOrigins, serverConfig, securityConfig, logConfig } from './config/index.js';
 import fueleconomyRoutes from './routes/fueleconomy.js';
+import pushRoutes from './routes/push.js';
 import { getCacheStats } from './middleware/cache.js';
 
 const app = express();
@@ -67,7 +68,7 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     environment: serverConfig.nodeEnv,
-    version: 'TBD',
+    version: '1.0.0',
     uptime: process.uptime(),
     memory: process.memoryUsage(),
     cache: cacheStats,
@@ -80,6 +81,9 @@ app.get('/health', (req, res) => {
 
 // FuelEconomy.gov API proxy routes
 app.use(fueleconomyRoutes);
+
+// Push notification routes
+app.use('/api/push', pushRoutes);
 
 // =================================================================
 // 404 HANDLER
