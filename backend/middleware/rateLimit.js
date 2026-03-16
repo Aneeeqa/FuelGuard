@@ -6,7 +6,11 @@
  */
 
 import rateLimit from 'express-rate-limit';
+import { MemoryStore } from 'express-rate-limit';
 import { rateLimitConfig, logConfig } from '../config/index.js';
+
+// Shared store instance for test reset capability
+const apiStore = new MemoryStore();
 
 /**
  * Standard rate limiter for FuelEconomy API requests
@@ -18,6 +22,7 @@ export const apiRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitConfig.message,
+  store: apiStore,
   handler: (req, res) => {
     if (logConfig.level === 'debug') {
       console.warn(`⚠️  Rate limit exceeded for IP: ${req.ip}`);
@@ -102,10 +107,18 @@ export const applyRateLimit = (routeType = 'standard') => {
   }
 };
 
+/**
+ * Reset all rate limiter stores (for testing)
+ */
+export const resetRateLimiters = () => {
+  apiStore.resetAll();
+};
+
 export default {
   apiRateLimiter,
   cacheRateLimiter,
   strictRateLimiter,
   createRateLimiter,
   applyRateLimit,
+  resetRateLimiters,
 };

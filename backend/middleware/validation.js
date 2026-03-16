@@ -34,10 +34,10 @@ const SQL_INJECTION_PATTERNS = [
  * XSS patterns to detect
  */
 const XSS_PATTERNS = [
-  /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-  /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi,
-  /javascript:/gi,
-  /on\w+\s*=/gi,
+  /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/i,
+  /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/i,
+  /javascript:/i,
+  /on\w+\s*=/i,
   /<\?php/i,
 ];
 
@@ -55,7 +55,7 @@ const PATH_TRAVERSAL_PATTERNS = [
  * @param {string} year - Year to validate
  * @returns {boolean}
  */
-const isValidYear = (year) => {
+export const isValidYear = (year) => {
   if (!year || typeof year !== 'string') return false;
   return VALID_YEARS.includes(year);
 };
@@ -65,7 +65,7 @@ const isValidYear = (year) => {
  * @param {string} make - Vehicle make to validate
  * @returns {boolean}
  */
-const isValidMake = (make) => {
+export const isValidMake = (make) => {
   if (!make || typeof make !== 'string') return false;
   // Allow letters, spaces, hyphens, apostrophes
   return /^[a-zA-Z\s\-'\.]+$/.test(make) && make.length <= 50;
@@ -76,7 +76,7 @@ const isValidMake = (make) => {
  * @param {string} model - Vehicle model to validate
  * @returns {boolean}
  */
-const isValidModel = (model) => {
+export const isValidModel = (model) => {
   if (!model || typeof model !== 'string') return false;
   // Allow letters, numbers, spaces, hyphens, apostrophes, periods
   return /^[a-zA-Z0-9\s\-'\.]+$/.test(model) && model.length <= 100;
@@ -87,7 +87,7 @@ const isValidModel = (model) => {
  * @param {string} vehicleId - Vehicle ID to validate
  * @returns {boolean}
  */
-const isValidVehicleId = (vehicleId) => {
+export const isValidVehicleId = (vehicleId) => {
   if (!vehicleId || typeof vehicleId !== 'string') return false;
   // Vehicle IDs are typically numeric, but can contain dots
   return /^[0-9\.]+$/.test(vehicleId) && vehicleId.length <= 20;
@@ -98,7 +98,7 @@ const isValidVehicleId = (vehicleId) => {
  * @param {string} input - Input to check
  * @returns {boolean}
  */
-const hasSqlInjection = (input) => {
+export const hasSqlInjection = (input) => {
   if (!input || typeof input !== 'string') return false;
   return SQL_INJECTION_PATTERNS.some(pattern => pattern.test(input));
 };
@@ -108,7 +108,7 @@ const hasSqlInjection = (input) => {
  * @param {string} input - Input to check
  * @returns {boolean}
  */
-const hasXss = (input) => {
+export const hasXss = (input) => {
   if (!input || typeof input !== 'string') return false;
   return XSS_PATTERNS.some(pattern => pattern.test(input));
 };
@@ -118,7 +118,7 @@ const hasXss = (input) => {
  * @param {string} input - Input to check
  * @returns {boolean}
  */
-const hasPathTraversal = (input) => {
+export const hasPathTraversal = (input) => {
   if (!input || typeof input !== 'string') return false;
   return PATH_TRAVERSAL_PATTERNS.some(pattern => pattern.test(input));
 };
@@ -128,7 +128,7 @@ const hasPathTraversal = (input) => {
  * @param {string} input - Input to sanitize
  * @returns {string}
  */
-const sanitizeString = (input) => {
+export const sanitizeString = (input) => {
   if (!input || typeof input !== 'string') return '';
   // Remove null bytes and trim
   return input.replace(/\0/g, '').trim();
@@ -146,10 +146,11 @@ export const validateFuelParams = (params) => {
   // Validate year
   if (params.year) {
     const sanitizedYear = sanitizeString(params.year);
-    if (!isValidYear(sanitizedYear)) {
+    // Check for security violations FIRST
+    if (hasSqlInjection(params.year) || hasXss(params.year) || hasSqlInjection(sanitizedYear) || hasXss(sanitizedYear)) {
+      errors.push('Malicious input detected');
+    } else if (!isValidYear(sanitizedYear)) {
       errors.push('Invalid year parameter');
-    } else if (hasSqlInjection(sanitizedYear) || hasXss(sanitizedYear)) {
-      errors.push('Malicious input detected in year parameter');
     } else {
       sanitized.year = sanitizedYear;
     }
@@ -158,10 +159,11 @@ export const validateFuelParams = (params) => {
   // Validate make
   if (params.make) {
     const sanitizedMake = sanitizeString(params.make);
-    if (!isValidMake(sanitizedMake)) {
+    // Check for security violations FIRST
+    if (hasSqlInjection(params.make) || hasXss(params.make) || hasSqlInjection(sanitizedMake) || hasXss(sanitizedMake)) {
+      errors.push('Malicious input detected');
+    } else if (!isValidMake(sanitizedMake)) {
       errors.push('Invalid make parameter');
-    } else if (hasSqlInjection(sanitizedMake) || hasXss(sanitizedMake)) {
-      errors.push('Malicious input detected in make parameter');
     } else {
       sanitized.make = sanitizedMake;
     }
@@ -170,10 +172,11 @@ export const validateFuelParams = (params) => {
   // Validate model
   if (params.model) {
     const sanitizedModel = sanitizeString(params.model);
-    if (!isValidModel(sanitizedModel)) {
+    // Check for security violations FIRST
+    if (hasSqlInjection(params.model) || hasXss(params.model) || hasSqlInjection(sanitizedModel) || hasXss(sanitizedModel)) {
+      errors.push('Malicious input detected');
+    } else if (!isValidModel(sanitizedModel)) {
       errors.push('Invalid model parameter');
-    } else if (hasSqlInjection(sanitizedModel) || hasXss(sanitizedModel)) {
-      errors.push('Malicious input detected in model parameter');
     } else {
       sanitized.model = sanitizedModel;
     }
@@ -220,6 +223,7 @@ export const validateEndpoint = (path) => {
   const allowedPrefixes = [
     'vehicle/menu',
     'vehicle',
+    'health',
   ];
 
   const isValidPrefix = allowedPrefixes.some(prefix => path.startsWith(prefix));

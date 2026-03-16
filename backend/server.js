@@ -16,6 +16,9 @@ import { getCacheStats } from './middleware/cache.js';
 
 const app = express();
 
+// Trust proxy for accurate IP detection (needed for rate limiting behind proxies)
+app.set('trust proxy', 1);
+
 // =================================================================
 // SECURITY MIDDLEWARE
 // =================================================================
@@ -64,7 +67,7 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     environment: serverConfig.nodeEnv,
-    version: '1.0.0',
+    version: 'TBD',
     uptime: process.uptime(),
     memory: process.memoryUsage(),
     cache: cacheStats,
@@ -110,33 +113,39 @@ app.use((error, req, res, next) => {
 });
 
 // =================================================================
-// START SERVER
+// START SERVER (only when run directly, not when imported by tests)
 // =================================================================
 
 const PORT = serverConfig.port;
 
-app.listen(PORT, () => {
-  console.log('='.repeat(60));
-  console.log('🚀 Fuel Guard Backend Proxy Server');
-  console.log('='.repeat(60));
-  console.log(`Environment: ${serverConfig.nodeEnv}`);
-  console.log(`Server running on: http://localhost:${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/health`);
-  console.log(`API proxy: http://localhost:${PORT}/api/fueleconomy/*`);
-  console.log(`CORS origins: ${getCorsOrigins().join(', ')}`);
-  console.log('='.repeat(60));
+const isMainModule = process.argv[1] &&
+  (import.meta.url === `file:///${process.argv[1].replace(/\\/g, '/')}` ||
+   import.meta.url === new URL(`file:///${process.argv[1].replace(/\\/g, '/')}`).href);
 
-  if (serverConfig.isDevelopment) {
-    console.log('⚠️  Running in DEVELOPMENT mode');
-    console.log('⚠️  Debug logging is enabled');
-    console.log('⚠️  Do not use in production!');
-  }
+if (isMainModule || process.env.START_SERVER === 'true') {
+  app.listen(PORT, () => {
+    console.log('='.repeat(60));
+    console.log('🚀 Fuel Guard Backend Proxy Server');
+    console.log('='.repeat(60));
+    console.log(`Environment: ${serverConfig.nodeEnv}`);
+    console.log(`Server running on: http://localhost:${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/health`);
+    console.log(`API proxy: http://localhost:${PORT}/api/fueleconomy/*`);
+    console.log(`CORS origins: ${getCorsOrigins().join(', ')}`);
+    console.log('='.repeat(60));
 
-  if (serverConfig.isProduction) {
-    console.log('🔒 Running in PRODUCTION mode');
-    console.log('🔒 All security measures are enforced');
-  }
-});
+    if (serverConfig.isDevelopment) {
+      console.log('⚠️  Running in DEVELOPMENT mode');
+      console.log('⚠️  Debug logging is enabled');
+      console.log('⚠️  Do not use in production!');
+    }
+
+    if (serverConfig.isProduction) {
+      console.log('🔒 Running in PRODUCTION mode');
+      console.log('🔒 All security measures are enforced');
+    }
+  });
+}
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
