@@ -114,32 +114,6 @@ const Sidebar = () => {
           <ThemeToggle />
         </div>
       </div>
-
-      {/* Footer */}
-      <div
-        className="p-4 border-t transition-colors duration-300"
-        style={{ borderColor: 'var(--border-color)' }}
-      >
-        <div
-          className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover-lift"
-          style={{
-            backgroundColor: 'var(--bg-primary)',
-            border: '1px solid var(--border-color)'
-          }}
-        >
-          <img
-            src="/logo.png"
-            alt="FuelGuard Logo"
-            className="w-8 h-8 rounded-lg object-cover"
-            style={{
-              boxShadow: 'var(--shadow-glow-fuel)'
-            }}
-          />
-          <div className="text-sm">
-            <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Fuel Guard</p>
-          </div>
-        </div>
-      </div>
     </aside>
   );
 };

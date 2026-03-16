@@ -61,33 +61,32 @@ const EmptyDashboardState = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 animate-fade-in">
       {/* Main Welcome Section */}
-      <div className="text-center mb-12">
-        <div
-          className="inline-flex items-center justify-center w-24 h-24 rounded-full mb-6 animate-bounce"
+      <div className="flex flex-col items-center mb-12">
+        <img
+          src="/logo.png"
+          alt="FuelGuard Logo"
+          className="block w-24 h-24 rounded-full mb-6 object-cover"
           style={{
-            background: 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-success) 100%)',
             boxShadow: 'var(--shadow-glow-blue)'
           }}
-        >
-          <Droplet size={48} weight="duotone" color="white" />
-        </div>
+        />
 
-        <h1 className="text-3xl lg:text-5xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+        <h1 className="text-3xl lg:text-5xl font-bold mb-4 text-center" style={{ color: 'var(--text-primary)' }}>
           Welcome to Fuel Guard
         </h1>
 
-        <p className="text-lg lg:text-xl mb-2" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-lg lg:text-xl mb-2 text-center" style={{ color: 'var(--text-secondary)' }}>
           Your Personal Fuel Tracking & Theft Detection System
         </p>
 
-        <p className="text-base max-w-2xl mx-auto" style={{ color: 'var(--text-muted)' }}>
+        <p className="text-base max-w-2xl text-center" style={{ color: 'var(--text-muted)' }}>
           Start tracking your fuel consumption to uncover efficiency insights, detect potential theft,
           and monitor your vehicle's performance over time.
         </p>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
         {/* Generate Demo Data Button */}
         <button
           onClick={handleGenerateDemo}
