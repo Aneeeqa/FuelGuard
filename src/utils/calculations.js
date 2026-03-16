@@ -20,16 +20,17 @@ export const calculateMileage = (distance, liters) => {
  * @returns {number} Distance in km
  */
 export const calculateDistance = (currentOdometer, previousOdometer) => {
-  if (!currentOdometer || !previousOdometer) return 0;
-
+  if (currentOdometer === null || currentOdometer === undefined || 
+      previousOdometer === null || previousOdometer === undefined) return 0;
+  
   const distance = currentOdometer - previousOdometer;
-
+  
   // Log warning if odometer decreased (potential data entry error)
   // This can happen if odometer was reset or entered incorrectly
   if (distance < 0) {
     console.warn(`Odometer decreased from ${previousOdometer.toLocaleString()} to ${currentOdometer.toLocaleString()} km. Please verify your data entry. This may indicate an odometer reset or incorrect values.`);
   }
-
+  
   return Math.max(0, distance);
 };
 
@@ -299,7 +300,7 @@ export const getCostStatistics = (logs, currency = '$') => {
   const costPerKm = totalDistance > 0 ? totalExpenditure / totalDistance : 0;
   const priceTrends = calculateFuelPriceTrends(logs);
   const avgCostPerUnit = calculateAverageCostPerUnit(logs);
-
+  
   return {
     totalExpenditure,
     costPerKm,

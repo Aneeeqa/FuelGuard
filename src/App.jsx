@@ -1,11 +1,15 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
-// Eager load Dashboard (landing page)
-import Dashboard from './pages/Dashboard';
+// Eager load Home (landing page) and auth pages
+import Home from './pages/Home';
+import Signup from './pages/Signup';
+import Login from './pages/Login';
 
-// Lazy load other pages for better initial bundle size
+// Lazy load protected pages
+const Dashboard = lazy(() => import('./pages/Dashboard'));
 const History = lazy(() => import('./pages/History'));
 const Settings = lazy(() => import('./pages/Settings'));
 const LogEntry = lazy(() => import('./pages/LogEntry'));
@@ -52,26 +56,31 @@ const ErrorFallback = () => (
 );
 
 const App = () => {
-  console.log('App component rendering');
   return (
     <BrowserRouter>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="add" element={<LogEntry />} />
-          <Route path="history" element={<History />} />
-          <Route path="trips" element={<TripsPage />} />
-          <Route path="fleet" element={<Fleet />} />
-          <Route path="drivers" element={<Drivers />} />
-          <Route path="vehicles" element={<Vehicles />} />
-          <Route path="contact" element={<Contact />} />
-          <Route path="privacy" element={<Privacy />} />
-          <Route path="system" element={<SystemStatus />} />
-          <Route path="settings" element={<Settings />} />
-          </Route>
-        </Routes>
-      </Suspense>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/privacy" element={<Privacy />} />
+
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Layout />}>
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="add" element={<LogEntry />} />
+                <Route path="history" element={<History />} />
+                <Route path="trips" element={<TripsPage />} />
+                <Route path="fleet" element={<Fleet />} />
+                <Route path="drivers" element={<Drivers />} />
+                <Route path="vehicles" element={<Vehicles />} />
+                <Route path="contact" element={<Contact />} />
+                <Route path="system" element={<SystemStatus />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
+            </Route>
+          </Routes>
+        </Suspense>
     </BrowserRouter>
   );
 };

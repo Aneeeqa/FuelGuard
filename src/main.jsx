@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import { FuelProvider } from './context/FuelContext.jsx';
 import { ThemeProvider } from './context/ThemeContext.jsx';
+import { AuthProvider } from './context/AuthContext.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import './index.css';
 
@@ -100,9 +101,11 @@ try {
   ReactDOM.createRoot(rootElement).render(
     <ErrorBoundary>
       <ThemeProvider>
-        <FuelProvider>
-          <App />
-        </FuelProvider>
+        <AuthProvider>
+          <FuelProvider>
+            <App />
+          </FuelProvider>
+        </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

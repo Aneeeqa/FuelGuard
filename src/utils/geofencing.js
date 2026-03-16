@@ -50,7 +50,8 @@ export const isWithinGeofence = (location, geofence) => {
     geofence.lng
   );
 
-  return distance <= geofence.radius;
+  // Use strict comparison (no tolerance) for boundaries
+  return distance < geofence.radius;
 };
 
 /**

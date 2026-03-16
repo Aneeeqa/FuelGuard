@@ -126,8 +126,8 @@ export const isFullTankFill = (logEntry, vehicleProfile) => {
  * Space Complexity: O(1)
  *
  * @example
- * findPreviousFullFill(logs, 'vehicle-1', '2024-01-24')
- * // Returns: { id: 'log-1', date: '2024-01-20', ... }
+ * findPreviousFullFill(logs, 'vehicle-1', 'TBD-01-24')
+ * // Returns: { id: 'log-1', date: 'TBD-01-20', ... }
  */
 export const findPreviousFullFill = (logs, vehicleId, currentDate) => {
   if (!logs || logs.length === 0) {
@@ -180,8 +180,16 @@ export const findPreviousFullFill = (logs, vehicleId, currentDate) => {
 export const calculateTankToTankConsumption = (
   currentLog,
   previousFullFillLog,
-  vehicleProfile
+  vehicleProfile,
+  tankCapacityParam
 ) => {
+  // Support legacy 4-arg call: (currentLog, prevLog, expectedMileage, tankCapacity)
+  if (typeof vehicleProfile === 'number') {
+    vehicleProfile = {
+      expectedMileage: vehicleProfile,
+      tankCapacity: tankCapacityParam
+    };
+  }
   // Validate inputs
   if (!currentLog) {
     return {
@@ -328,6 +336,7 @@ export const calculateTankToTankConsumption = (
 
     // Consumption data
     actualFuelConsumed,
+    fuelUsed: actualFuelConsumed,
     expectedFuelConsumed,
     fuelDifference,
 
@@ -335,6 +344,7 @@ export const calculateTankToTankConsumption = (
     theftAmount,
     theftPercentage,
     isTheftSuspected,
+    isTheft: isTheftSuspected,
 
     // Mileage data
     distance,
@@ -399,35 +409,52 @@ export const calculateTankToTankStatistics = (tankToTankTrips) => {
     return {
       count: 0,
       avgActualMileage: 0,
+      averageMileage: 0,
       avgDistance: 0,
       avgFuelConsumed: 0,
+      totalDistance: 0,
+      totalFuelUsed: 0,
       totalTheftAmount: 0,
       theftIncidents: 0,
+      theftCount: 0,
       theftPercentage: 0
     };
   }
 
-  const validTrips = tankToTankTrips.filter(t => t.isValid);
+  // Accept trips without explicit isValid (treat undefined as valid, only exclude false)
+  const validTrips = tankToTankTrips.filter(t => t.isValid !== false);
 
   if (validTrips.length === 0) {
     return {
       count: 0,
       avgActualMileage: 0,
+      averageMileage: 0,
       avgDistance: 0,
       avgFuelConsumed: 0,
+      totalDistance: 0,
+      totalFuelUsed: 0,
       totalTheftAmount: 0,
       theftIncidents: 0,
+      theftCount: 0,
       theftPercentage: 0
     };
   }
 
   const totalDistance = validTrips.reduce((sum, t) => sum + t.distance, 0);
-  const totalFuelConsumed = validTrips.reduce((sum, t) => sum + t.actualFuelConsumed, 0);
-  const totalTheftAmount = validTrips.reduce((sum, t) => sum + t.theftAmount, 0);
-  const theftIncidents = validTrips.filter(t => t.isTheftSuspected).length;
+  // Support both actualFuelConsumed (from calculateTankToTankConsumption) and fuelUsed (manual trips)
+  const totalFuelConsumed = validTrips.reduce((sum, t) => sum + (t.actualFuelConsumed ?? t.fuelUsed ?? 0), 0);
+  const totalTheftAmount = validTrips.reduce((sum, t) => sum + (t.theftAmount ?? 0), 0);
+  // Support both isTheftSuspected and isTheft property names
+  const theftIncidents = validTrips.filter(t => t.isTheftSuspected || t.isTheft).length;
 
   const avgActualMileage = totalFuelConsumed > 0
     ? totalDistance / totalFuelConsumed
+    : 0;
+
+  // Simple average of individual trip mileages
+  const avgMileageSum = validTrips.reduce((sum, t) => sum + (t.actualMileage ?? 0), 0);
+  const averageMileage = validTrips.length > 0
+    ? avgMileageSum / validTrips.length
     : 0;
 
   const avgDistance = validTrips.length > 0
@@ -445,10 +472,14 @@ export const calculateTankToTankStatistics = (tankToTankTrips) => {
   return {
     count: validTrips.length,
     avgActualMileage: Math.round(avgActualMileage * 100) / 100,
+    averageMileage: Math.round(averageMileage * 100) / 100,
     avgDistance: Math.round(avgDistance),
     avgFuelConsumed: Math.round(avgFuelConsumed * 100) / 100,
+    totalDistance,
+    totalFuelUsed: Math.round(totalFuelConsumed * 100) / 100,
     totalTheftAmount: Math.round(totalTheftAmount * 100) / 100,
     theftIncidents,
+    theftCount: theftIncidents,
     theftPercentage: Math.round(theftPercentage * 10) / 10
   };
 };
@@ -593,6 +624,7 @@ export const calculateTheftCost = (theftAmount, pricePerLiter) => {
 export const validateTankCapacity = (currentTankCapacity, fillAmount, isUserIndicatedFull) => {
   if (!currentTankCapacity || currentTankCapacity <= 0) {
     return {
+      isValid: false,
       valid: false,
       reason: 'invalid-capacity',
       message: 'Tank capacity must be greater than zero.',
@@ -600,35 +632,44 @@ export const validateTankCapacity = (currentTankCapacity, fillAmount, isUserIndi
     };
   }
 
-  if (!fillAmount || fillAmount <= 0) {
+  if (fillAmount === null || fillAmount === undefined || fillAmount <= 0) {
     return {
-      valid: true,
-      message: 'No fill amount to validate.'
-    };
-  }
-
-  // If user indicates full tank but fill amount is significantly more than capacity
-  if (isUserIndicatedFull && fillAmount > currentTankCapacity * 1.1) {
-    return {
+      isValid: false,
       valid: false,
-      reason: 'capacity-too-small',
-      message: `You filled ${fillAmount}L but tank capacity is set to ${currentTankCapacity}L. Consider updating tank capacity.`,
-      suggestedCapacity: Math.ceil(fillAmount / 10) * 10 // Round up to nearest 10L
+      reason: 'no-fill-amount',
+      message: 'Fill amount must be greater than zero.'
     };
   }
 
-  // If user indicates full tank but fill amount is much less than capacity
-  if (isUserIndicatedFull && fillAmount < currentTankCapacity * 0.7) {
+  // Fill amount exceeds tank capacity
+  if (fillAmount > currentTankCapacity) {
     return {
+      isValid: false,
+      valid: false,
+      reason: 'fill-exceeds-capacity',
+      message: `Fill amount ${fillAmount}L exceeds tank capacity of ${currentTankCapacity}L.`,
+      suggestedCapacity: Math.ceil(fillAmount / 10) * 10
+    };
+  }
+
+  // Determine if this is a full fill (user indicated or >90% of capacity)
+  const isFull = isUserIndicatedFull || (fillAmount >= currentTankCapacity * 0.9);
+
+  // If fill is much less than capacity and not indicated as full, flag as partial
+  if (!isFull && fillAmount < currentTankCapacity * 0.7) {
+    return {
+      isValid: true,
       valid: true,
-      reason: 'partial-fill-marked-full',
-      message: `You indicated full tank but only filled ${fillAmount}L out of ${currentTankCapacity}L capacity.`,
-      suggestion: 'This may have been a partial fill. Consider unchecking "Filled to full".'
+      isFull: false,
+      reason: 'partial-fill',
+      message: `Partial fill: ${fillAmount}L out of ${currentTankCapacity}L capacity.`
     };
   }
 
   return {
+    isValid: true,
     valid: true,
+    isFull,
     message: 'Tank capacity appears valid.'
   };
 };

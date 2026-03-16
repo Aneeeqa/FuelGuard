@@ -108,21 +108,27 @@ export const calculateCostPerMile = (totalCost, distanceKm) => {
  * @returns {string|null} Formatted string like "$0.15/km"
  */
 export const formatCostPerUnit = (totalCost, distanceKm, distanceUnit = 'km', currencyCode = 'USD') => {
+    // Handle zero cost case explicitly
+    if (totalCost === 0) {
+        const symbol = getCurrencySymbol(currencyCode);
+        return `${symbol}0.000/${distanceUnit}`;
+    }
+    
     let costPerUnit;
-
+    
     if (distanceUnit === 'mi') {
         costPerUnit = calculateCostPerMile(totalCost, distanceKm);
     } else {
         costPerUnit = calculateCostPerKm(totalCost, distanceKm);
     }
-
+    
     if (costPerUnit === null) {
         return null;
     }
-
+    
     // Get currency symbol
     const symbol = getCurrencySymbol(currencyCode);
-
+    
     return `${symbol}${costPerUnit.toFixed(3)}/${distanceUnit}`;
 };
 

@@ -39,6 +39,49 @@ const DANGEROUS_PATTERNS = [
 const MAX_JSON_SIZE = 10 * 1024 * 1024;
 
 /**
+ * XSS patterns to sanitize from string values
+ */
+const XSS_SANITIZE_PATTERNS = [
+  { pattern: /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, replacement: '' },
+  { pattern: /<\/script>/gi, replacement: '' },
+  { pattern: /<script[^>]*>/gi, replacement: '' },
+  { pattern: /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, replacement: '' },
+  { pattern: /<\/iframe>/gi, replacement: '' },
+  { pattern: /<iframe[^>]*>/gi, replacement: '' },
+  { pattern: /javascript:/gi, replacement: '' },
+  { pattern: /on\w+\s*=/gi, replacement: '' },
+];
+
+/**
+ * Sanitize string value to remove XSS patterns
+ */
+const sanitizeXssString = (str) => {
+  if (typeof str !== 'string') return str;
+  let result = str;
+  for (const { pattern, replacement } of XSS_SANITIZE_PATTERNS) {
+    result = result.replace(pattern, replacement);
+  }
+  return result;
+};
+
+/**
+ * Recursively sanitize all string values in an object/array
+ */
+const sanitizeXssRecursive = (data, depth = 0) => {
+  if (depth > 20) return data;
+  if (typeof data === 'string') return sanitizeXssString(data);
+  if (Array.isArray(data)) return data.map(item => sanitizeXssRecursive(item, depth + 1));
+  if (data && typeof data === 'object') {
+    const result = {};
+    for (const [key, value] of Object.entries(data)) {
+      result[key] = sanitizeXssRecursive(value, depth + 1);
+    }
+    return result;
+  }
+  return data;
+};
+
+/**
  * Check if object has dangerous properties that could lead to prototype pollution
  * @param {Object} obj - Object to check
  * @returns {boolean} Has dangerous properties
@@ -293,9 +336,12 @@ export const safeJsonParse = (jsonString, options = {}) => {
       return null;
     }
 
+    // Sanitize XSS patterns from all string values
+    const sanitized = sanitizeXssRecursive(parsed);
+
     // Validate against schema if provided
     if (schema) {
-      const validation = validateSchema(parsed, schema);
+      const validation = validateSchema(sanitized, schema);
       if (!validation.valid) {
         SecurityLogger.logValidationFailure('Schema validation failed', validation.errors, {
           schema: schema.type,
@@ -305,15 +351,11 @@ export const safeJsonParse = (jsonString, options = {}) => {
     }
 
     // Optionally freeze the object to prevent modifications
-    if (freeze && typeof parsed === 'object' && parsed !== null) {
-      if (Array.isArray(parsed)) {
-        Object.freeze(parsed);
-      } else {
-        Object.freeze(parsed);
-      }
+    if (freeze && typeof sanitized === 'object' && sanitized !== null) {
+      Object.freeze(sanitized);
     }
 
-    return parsed;
+    return sanitized;
   } catch (error) {
     SecurityLogger.logBlocked('Parse error', {
       error: error.message,
@@ -323,13 +365,54 @@ export const safeJsonParse = (jsonString, options = {}) => {
 };
 
 /**
+ * Create a callable schema validator from a schema definition.
+ * The returned function validates data and returns { valid, error, errors }.
+ * Schema properties are also copied onto the function for backward compatibility
+ * with safeJsonParse({ schema: Schemas.xxx }).
+ */
+const createSchemaValidator = (schemaDef) => {
+  const validator = (data) => {
+    const result = validateSchema(data, schemaDef);
+    return {
+      valid: result.valid,
+      error: result.errors.length > 0 ? result.errors.join('; ') : null,
+      errors: result.errors,
+    };
+  };
+  // Copy schema properties for backward compat with safeJsonParse
+  Object.assign(validator, schemaDef);
+  return validator;
+};
+
+/**
  * Common schema definitions for Fuel Guard application
+ * Each schema is callable: Schemas.fuelLog(data) => { valid, error, errors }
  */
 export const Schemas = {
   /**
+   * User profile schema
+   */
+  userProfile: createSchemaValidator({
+    type: 'object',
+    required: ['name', 'age'],
+    fields: {
+      name: 'string',
+      age: 'number',
+      email: 'string',
+    },
+    maxLengths: {
+      name: 200,
+      email: 200,
+    },
+    ranges: {
+      age: { min: 0, max: 130 },
+    },
+  }),
+
+  /**
    * Fuel log entry schema
    */
-  fuelLog: {
+  fuelLog: createSchemaValidator({
     type: 'object',
     required: ['date', 'odometer', 'liters'],
     fields: {
@@ -353,12 +436,12 @@ export const Schemas = {
       price: { min: 0, max: 100000 },
       mileage: { min: 0, max: 200 },
     },
-  },
+  }),
 
   /**
    * Array of fuel logs
    */
-  fuelLogs: {
+  fuelLogs: createSchemaValidator({
     type: 'array',
     maxLength: 10000,
     itemSchema: {
@@ -386,12 +469,12 @@ export const Schemas = {
         mileage: { min: 0, max: 200 },
       },
     },
-  },
+  }),
 
   /**
    * Exchange rates schema
    */
-  exchangeRates: {
+  exchangeRates: createSchemaValidator({
     type: 'object',
     required: ['rates', 'timestamp'],
     fields: {
@@ -400,14 +483,14 @@ export const Schemas = {
       base: 'string',
     },
     ranges: {
-      timestamp: { min: 0, max: Date.now() + 86400000 }, // Allow future within 24h
+      timestamp: { min: 0, max: Date.now() + 86400000 },
     },
-  },
+  }),
 
   /**
    * Session/user schema
    */
-  session: {
+  session: createSchemaValidator({
     type: 'object',
     required: ['userId', 'username', 'createdAt'],
     fields: {
@@ -421,16 +504,19 @@ export const Schemas = {
       username: 100,
       role: 50,
     },
-  },
+  }),
 
   /**
    * Vehicle profile schema
    */
-  vehicleProfile: {
+  vehicleProfile: createSchemaValidator({
     type: 'object',
-    required: ['name', 'expectedMileage', 'tankCapacity'],
+    required: ['tankCapacity'],
     fields: {
       name: 'string',
+      make: 'string',
+      model: 'string',
+      year: 'number',
       expectedMileage: 'number',
       tankCapacity: 'number',
       vehicleId: 'string',
@@ -438,17 +524,20 @@ export const Schemas = {
     maxLengths: {
       name: 200,
       vehicleId: 100,
+      make: 100,
+      model: 100,
     },
     ranges: {
       expectedMileage: { min: 1, max: 200 },
       tankCapacity: { min: 1, max: 1000 },
+      year: { min: 1984, max: new Date().getFullYear() + 1 },
     },
-  },
+  }),
 
   /**
    * Community MPG data schema
    */
-  communityMpg: {
+  communityMpg: createSchemaValidator({
     type: 'object',
     required: ['avgMpg', 'count'],
     fields: {
@@ -463,12 +552,12 @@ export const Schemas = {
       minMpg: { min: 1, max: 200 },
       maxMpg: { min: 1, max: 200 },
     },
-  },
+  }),
 
   /**
    * Driver reports array schema
    */
-  driverReports: {
+  driverReports: createSchemaValidator({
     type: 'array',
     maxLength: 10000,
     itemSchema: {
@@ -487,12 +576,12 @@ export const Schemas = {
         gallons: { min: 0, max: 1000 },
       },
     },
-  },
+  }),
 
   /**
    * Settings/preferences schema
    */
-  settings: {
+  settings: createSchemaValidator({
     type: 'object',
     fields: {
       theme: 'string',
@@ -506,7 +595,7 @@ export const Schemas = {
       units: 20,
       country: 10,
     },
-  },
+  }),
 };
 
 /**

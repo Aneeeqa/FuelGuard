@@ -29,7 +29,7 @@ export const MAX_COORD_PRECISION = 7;
  * Maximum length for query strings
  * Prevents DoS attacks and API abuse
  */
-export const MAX_QUERY_LENGTH = 500;
+export const MAX_QUERY_LENGTH = 200;
 
 // =============================================
 // Vehicle Validation Functions
@@ -83,9 +83,24 @@ export const validateMake = (make) => {
     return { valid: false, error: 'Make is required' };
   }
 
+  // Reject literal 'null' and 'undefined' strings
+  const lower = make.trim().toLowerCase();
+  if (lower === 'null' || lower === 'undefined') {
+    return { valid: false, error: 'Make is required' };
+  }
+  
+  const trimmed = make.trim();
   // Sanitize: remove special characters except letters, spaces, and hyphens
-  const sanitized = make.trim().replace(/[^a-zA-Z\s-]/g, '');
+  const sanitized = trimmed.replace(/[^a-zA-Z\s-]/g, '');
 
+  // Reject if too many characters were removed (indicates suspicious input)
+  if (trimmed.length - sanitized.length > 1) {
+    return {
+      valid: false,
+      error: 'Make must contain only valid characters (letters, spaces, and hyphens)',
+    };
+  }
+  
   // Length check (3-50 characters)
   if (sanitized.length < 3 || sanitized.length > 50) {
     return {
@@ -93,7 +108,7 @@ export const validateMake = (make) => {
       error: 'Make must be 3-50 characters (letters, spaces, and hyphens only)',
     };
   }
-
+  
   // Check if sanitization removed all characters
   if (sanitized.length === 0) {
     return {
@@ -101,7 +116,7 @@ export const validateMake = (make) => {
       error: 'Make must contain valid characters',
     };
   }
-
+  
   return { valid: true, value: sanitized };
 };
 
@@ -120,14 +135,29 @@ export const validateModel = (model) => {
     return { valid: false, error: 'Model is required' };
   }
 
-  // Sanitize: remove special characters except alphanumeric, spaces, and hyphens
-  const sanitized = model.trim().replace(/[^a-zA-Z0-9\s-]/g, '');
+  // Reject literal 'null' and 'undefined' strings
+  const lower = model.trim().toLowerCase();
+  if (lower === 'null' || lower === 'undefined') {
+    return { valid: false, error: 'Model is required' };
+  }
 
-  // Length check (2-40 characters)
-  if (sanitized.length < 2 || sanitized.length > 40) {
+  const trimmed = model.trim();
+  // Sanitize: remove special characters except alphanumeric, spaces, and hyphens
+  const sanitized = trimmed.replace(/[^a-zA-Z0-9\s-]/g, '');
+
+  // Reject if too many characters were removed (indicates suspicious input)
+  if (trimmed.length - sanitized.length > 1) {
     return {
       valid: false,
-      error: 'Model must be 2-40 characters (letters, numbers, spaces, and hyphens only)',
+      error: 'Model must contain only valid characters (letters, numbers, spaces, and hyphens)',
+    };
+  }
+
+  // Length check (2-48 characters)
+  if (sanitized.length < 2 || sanitized.length > 48) {
+    return {
+      valid: false,
+      error: 'Model must be 2-48 characters (letters, numbers, spaces, and hyphens only)',
     };
   }
 
@@ -297,6 +327,12 @@ export const sanitizeQuery = (query) => {
     return { valid: false, error: 'Query is required' };
   }
 
+  // Reject literal 'null' and 'undefined' strings
+  const lower = query.trim().toLowerCase();
+  if (lower === 'null' || lower === 'undefined') {
+    return { valid: false, error: 'Query is required' };
+  }
+
   const trimmed = query.trim();
 
   // Length check (1-500 characters)
@@ -417,9 +453,19 @@ export const validateVehicleId = (vehicleId) => {
  * @param {any} lon - Longitude
  * @returns {{valid: boolean, error: string|undefined, lat: number|undefined, lon: number|undefined}}
  */
-export const validateCoordinates = (lat, lon) => {
-  const latValidation = validateLatitude(lat);
-  const lonValidation = validateLongitude(lon);
+export const validateCoordinates = (latOrObj, lon) => {
+  // Support both (lat, lon) and ({lat, lng}) calling conventions
+  let latVal, lonVal;
+  if (latOrObj !== null && typeof latOrObj === 'object') {
+    latVal = latOrObj.lat;
+    lonVal = latOrObj.lng !== undefined ? latOrObj.lng : latOrObj.lon;
+  } else {
+    latVal = latOrObj;
+    lonVal = lon;
+  }
+
+  const latValidation = validateLatitude(latVal);
+  const lonValidation = validateLongitude(lonVal);
 
   if (!latValidation.valid) {
     return {
@@ -427,6 +473,8 @@ export const validateCoordinates = (lat, lon) => {
       error: latValidation.error,
       lat: undefined,
       lon: undefined,
+      latitude: undefined,
+      longitude: undefined,
     };
   }
 
@@ -436,6 +484,8 @@ export const validateCoordinates = (lat, lon) => {
       error: lonValidation.error,
       lat: undefined,
       lon: undefined,
+      latitude: undefined,
+      longitude: undefined,
     };
   }
 
@@ -443,6 +493,8 @@ export const validateCoordinates = (lat, lon) => {
     valid: true,
     lat: latValidation.value,
     lon: lonValidation.value,
+    latitude: latValidation.value,
+    longitude: lonValidation.value,
   };
 };
 

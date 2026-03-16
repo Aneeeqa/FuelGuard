@@ -44,8 +44,14 @@ const CO2_EMISSION_FACTORS = {
  */
 export const getEmissionFactor = (fuelType) => {
   if (!fuelType) return CO2_EMISSION_FACTORS.gasoline; // Default to gasoline
-
+  
   const normalizedFuelType = fuelType.toLowerCase().trim();
+  
+  // Explicitly handle electric vehicles
+  if (normalizedFuelType === 'electric') {
+    return 0;
+  }
+  
   return CO2_EMISSION_FACTORS[normalizedFuelType] || CO2_EMISSION_FACTORS.gasoline;
 };
 
@@ -98,7 +104,7 @@ export const calculateTotalCO2 = (logs, fuelType = 'gasoline') => {
  * @returns {number} CO2 per km in kg
  */
 export const calculateCO2PerKm = (totalCO2, totalDistance) => {
-  if (!totalCO2 || !totalDistance || totalDistance <= 0) return 0;
+  if (!totalCO2 || totalDistance === 0) return 0;
 
   return totalCO2 / totalDistance;
 };
@@ -107,33 +113,36 @@ export const calculateCO2PerKm = (totalCO2, totalDistance) => {
  * Calculate monthly CO2 emissions from logs
  * @param {Array} logs - Array of fuel log entries
  * @param {string} fuelType - Primary fuel type (fallback)
- * @returns {Array} Array of monthly data: [{ month: '01-2024', co2: 123.45 }]
+ * @returns {Array} Array of monthly data: [{ month: 'TBD-01', co2: 123.45 }]
  */
 export const calculateMonthlyCO2 = (logs, fuelType = 'gasoline') => {
   if (!logs || logs.length === 0) return [];
-
+  
   const monthlyData = {};
-
+  
   logs.forEach((log) => {
     const date = new Date(log.date);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     const logFuelType = log.fuelType || fuelType;
     const co2 = calculateCO2PerTrip(log.liters || 0, logFuelType);
-
+    
     if (!monthlyData[monthKey]) {
       monthlyData[monthKey] = { month: monthKey, co2: 0 };
     }
     monthlyData[monthKey].co2 += co2;
   });
-
-  return Object.values(monthlyData).sort((a, b) => a.month.localeCompare(b.month));
+  
+  // Round CO2 values to nearest integer
+  return Object.values(monthlyData)
+    .map(data => ({ ...data, co2: Math.round(data.co2) }))
+    .sort((a, b) => a.month.localeCompare(b.month));
 };
 
 /**
  * Calculate yearly CO2 emissions from logs
  * @param {Array} logs - Array of fuel log entries
  * @param {string} fuelType - Primary fuel type (fallback)
- * @returns {Array} Array of yearly data: [{ year: 'current', co2: 1234.56 }]
+ * @returns {Array} Array of yearly data: [{ year: TBD, co2: 1234.56 }]
  */
 export const calculateYearlyCO2 = (logs, fuelType = 'gasoline') => {
   if (!logs || logs.length === 0) return [];

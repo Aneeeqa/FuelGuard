@@ -47,18 +47,22 @@ export const calculateGPSRouteDistance = (route) => {
 
   let totalDistance = 0;
 
-  for (let i = 1; i < route.length; i++) {
-    const point1 = route[i - 1];
-    const point2 = route[i];
+  let lastValidPoint = null;
 
-    if (point1 && point2 && point1.lat && point1.lng && point2.lat && point2.lng) {
-      const segmentDistance = calculateHaversineDistance(
-        point1.lat,
-        point1.lng,
-        point2.lat,
-        point2.lng
-      );
-      totalDistance += segmentDistance;
+  for (let i = 0; i < route.length; i++) {
+    const currentPoint = route[i];
+
+    if (currentPoint && currentPoint.lat && currentPoint.lng) {
+      if (lastValidPoint) {
+        const segmentDistance = calculateHaversineDistance(
+          lastValidPoint.lat,
+          lastValidPoint.lng,
+          currentPoint.lat,
+          currentPoint.lng
+        );
+        totalDistance += segmentDistance;
+      }
+      lastValidPoint = currentPoint;
     }
   }
 
@@ -127,19 +131,28 @@ export const compareGPSvsOdometer = (gpsDistance, odometerDistance, tolerancePer
   }
 
   const difference = gpsDistance - odometerDistance;
-  const differencePercentage = odometerDistance > 0
-    ? (Math.abs(difference) / odometerDistance) * 100
-    : 0;
-
-  const isWithinTolerance = differencePercentage <= tolerancePercentage;
-
-  let discrepancy;
-  if (Math.abs(difference) < 0.1) { // Less than 100 meters difference
-    discrepancy = 'none';
-  } else if (difference > 0) {
-    discrepancy = 'gps-higher'; // GPS shows more distance than odometer (odometer may be rolled back)
+  
+  let differencePercentage;
+  let baseDiscrepancy;
+  
+  if (Math.abs(difference) < 0.1) {
+    differencePercentage = 0;
+    baseDiscrepancy = 'none';
+  } else if (difference < 0) {
+    differencePercentage = gpsDistance > 0 ? (Math.abs(difference) / gpsDistance) * 100 : Infinity;
+    baseDiscrepancy = 'gps-higher';
   } else {
-    discrepancy = 'odometer-higher'; // Odometer shows more distance than GPS (possible GPS signal issues)
+    differencePercentage = odometerDistance > 0 ? (Math.abs(difference) / odometerDistance) * 100 : Infinity;
+    baseDiscrepancy = 'odometer-higher';
+  }
+
+  const isWithinTolerance = differencePercentage <= tolerancePercentage && differencePercentage !== Infinity;
+  
+  let discrepancy;
+  if (baseDiscrepancy === 'none' || (baseDiscrepancy === 'gps-higher' && isWithinTolerance)) {
+    discrepancy = 'none';
+  } else {
+    discrepancy = baseDiscrepancy;
   }
 
   return {
@@ -198,8 +211,16 @@ export const detectOdometerTampering = (gpsDistance, odometerDistance, tolerance
     discrepancy
   } = comparison;
 
-  // No significant discrepancy
   if (discrepancy === 'none' || comparison.isWithinTolerance) {
+    if (discrepancy === 'odometer-higher') {
+      return {
+        isTampered: false,
+        severity: 'warning',
+        confidence: 'medium',
+        reason: 'Odometer shows slightly more distance than GPS (possible minor GPS signal issues)',
+        comparison
+      };
+    }
     return {
       isTampered: false,
       severity: 'none',

@@ -11,9 +11,51 @@ import {
   safeLocalStorageGet,
   safeLocalStorageRemove,
   validateStorageKey,
+  validateStorageValue,
 } from './secureStorage';
 
 const STORAGE_KEY = 'fuelGuardDB';
+
+/**
+ * Helper function to validate storage value
+ * Used for IndexedDB path which doesn't go through safeLocalStorageSet
+ */
+const validateBeforeStore = async (value) => {
+  if (typeof value === 'object' && value !== null) {
+    // Check for dangerous keys in the object's own enumerable properties
+    const keys = Object.keys(value);
+    const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
+    const hasDangerousKey = keys.some(key =>
+      dangerousKeys.some(dangerous => key.toLowerCase() === dangerous.toLowerCase())
+    );
+
+    if (hasDangerousKey) {
+      console.warn('Storage validation failed: Object contains dangerous properties');
+      return false;
+    }
+
+    // Check for prototype pollution using hasOwnProperty (additional safeguard for non-arrays)
+    if (!Array.isArray(value) &&
+        (Object.prototype.hasOwnProperty.call(value, '__proto__') ||
+         Object.prototype.hasOwnProperty.call(value, 'constructor') ||
+         Object.prototype.hasOwnProperty.call(value, 'prototype'))) {
+      console.warn('Storage validation failed: Object contains dangerous properties via hasOwnProperty');
+      return false;
+    }
+
+    // Detect prototype chain pollution: plain data objects should have Object.prototype
+    // as their prototype. If {__proto__: malicious} was used, the actual prototype is changed.
+    if (!Array.isArray(value) &&
+        !(value instanceof Date) &&
+        !(value instanceof Map) &&
+        !(value instanceof Set) &&
+        Object.getPrototypeOf(value) !== Object.prototype) {
+      console.warn('Storage validation failed: Object prototype has been tampered (prototype chain pollution)');
+      return false;
+    }
+  }
+  return true;
+};
 
 // Storage type detection
 let storageType = 'indexeddb';
@@ -122,12 +164,25 @@ export const storage = {
     await storageReady;
 
     if (useInMemory) {
+      // Validate even for in-memory storage to block proto pollution
+      const isValid = await validateBeforeStore(value);
+      if (!isValid) {
+        console.log('STORAGE VALIDATION: Blocked malicious data for key:', key);
+        return false;
+      }
       inMemoryStore.set(key, value);
       return true;
     }
 
     if (useLocalStorage) {
       try {
+        // Validate before storing (same security check as IndexedDB path)
+        const isValid = await validateBeforeStore(value);
+        if (!isValid) {
+          console.log('STORAGE VALIDATION: Blocked malicious data for key:', key);
+          return false;
+        }
+
         const success = safeLocalStorageSet(key, value);
 
         if (success) {
@@ -149,6 +204,12 @@ export const storage = {
 
     // IndexedDB (default)
     try {
+      // Validate the value before storing (security check)
+      const isValid = await validateBeforeStore(value);
+      if (!isValid) {
+        console.log('STORAGE VALIDATION: Blocked malicious data for key:', key);
+        return false;
+      }
       await idbSet(key, value);
       return true;
     } catch (error) {
@@ -181,6 +242,33 @@ export const storage = {
       await idbDel(key);
     } catch {
       safeLocalStorageRemove(key);
+    }
+  },
+
+  /**
+   * Clear all data from storage
+   */
+  async clearAll() {
+    await storageReady;
+
+    if (useInMemory) {
+      inMemoryStore.clear();
+      return;
+    }
+
+    if (useLocalStorage) {
+      global.localStorage.clear();
+      return;
+    }
+
+    // IndexedDB (default)
+    try {
+      const keys = await idbGet.keys ? idbGet.keys() : [];
+      for (const key of keys) {
+        await idbDel(key);
+      }
+    } catch {
+      global.localStorage.clear();
     }
   },
 

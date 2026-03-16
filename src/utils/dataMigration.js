@@ -70,41 +70,33 @@ export const needsMigration = async () => {
  */
 export const migrateToTankToTankSystem = async (storedData) => {
   console.log('🔄 Starting Tank-to-Tank migration...');
-
+  
   if (!storedData) {
     console.log('No data to migrate');
     return null;
   }
-
+  
   const { logs, vehicles, vehicleProfile } = storedData;
-
-  // If logs don't exist, return as-is
-  if (!logs || logs.length === 0) {
-    console.log('No logs to migrate');
-    return storedData;
-  }
 
   // ========================================
   // Step 1: Update Vehicle Profiles
   // ========================================
   console.log('📋 Updating vehicle profiles...');
-
-  const updatedVehicles = vehicles.map(v => ({
+  
+  const updatedVehicles = (vehicles || []).map(v => ({
     ...v,
     // NEW: Tank-to-Tank fields
     lastFullFillLogId: v.lastFullFillLogId || null,
     lastFullFillDate: v.lastFullFillDate || null,
     averageTankToTankMileage: v.averageTankToTankMileage || v.expectedMileage || 15,
     tankToTankTrips: v.tankToTankTrips || [],
-
     // NEW: Theft detection settings
-    tankToTankTheftThreshold: v.tankToTankTheftThreshold || 25,  // 25% default
-    minimumFillPercentage: v.minimumFillPercentage || 80,      // 80% default
-    useFullTankOnly: v.useFullTankOnly || false,
-
+    tankToTankTheftThreshold: v.tankToTankTheftThreshold ?? 25,
+    minimumFillPercentage: v.minimumFillPercentage ?? 80,
+    useFullTankOnly: v.useFullTankOnly ?? false,
     // NEW: GPS settings
-    enableGpsTracking: v.enableGpsTracking || false,
-    minimumTripDistance: v.minimumTripDistance || 10,
+    enableGpsTracking: v.enableGpsTracking ?? false,
+    minimumTripDistance: v.minimumTripDistance ?? 10,
   }));
 
   // Also update current vehicleProfile (for backward compatibility)
@@ -114,22 +106,22 @@ export const migrateToTankToTankSystem = async (storedData) => {
     lastFullFillDate: vehicleProfile?.lastFullFillDate || null,
     averageTankToTankMileage: vehicleProfile?.averageTankToTankMileage || vehicleProfile?.expectedMileage || 15,
     tankToTankTrips: vehicleProfile?.tankToTankTrips || [],
-    tankToTankTheftThreshold: vehicleProfile?.tankToTankTheftThreshold || 25,
-    minimumFillPercentage: vehicleProfile?.minimumFillPercentage || 80,
-    useFullTankOnly: vehicleProfile?.useFullTankOnly || false,
-    enableGpsTracking: vehicleProfile?.enableGpsTracking || false,
-    minimumTripDistance: vehicleProfile?.minimumTripDistance || 10,
+    tankToTankTheftThreshold: vehicleProfile?.tankToTankTheftThreshold ?? 25,
+    minimumFillPercentage: vehicleProfile?.minimumFillPercentage ?? 80,
+    useFullTankOnly: vehicleProfile?.useFullTankOnly ?? false,
+    enableGpsTracking: vehicleProfile?.enableGpsTracking ?? false,
+    minimumTripDistance: vehicleProfile?.minimumTripDistance ?? 10,
   };
 
   // ========================================
   // Step 2: Update Logs with Tank-to-Tank Fields
   // ========================================
   console.log('📝 Updating logs with Tank-to-Tank fields...');
-
+  
   const updatedLogs = [];
-
+  
   // Process logs in chronological order (oldest to newest)
-  const sortedLogs = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const sortedLogs = [...(logs || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
 
   let lastFullFill = null;
   const tankToTankTrips = [];

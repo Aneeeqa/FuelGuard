@@ -14,18 +14,23 @@ import { getTankToTankTheftSeverity, calculateTankToTankStatistics } from './tan
  * @param {string} currency - Currency symbol
  */
 export const exportToPDF = (logs, vehicleProfile, currency) => {
-  try {
-    if (!logs || logs.length === 0) {
-      alert('No data to export. Please add fuel entries first.');
-      return false;
-    }
+   try {
+     if (!logs || logs.length === 0) {
+       alert('No data to export. Please add fuel entries first.');
+       return false;
+     }
 
-    const distanceUnit = vehicleProfile?.distanceUnit || 'km';
-    const fuelVolumeUnit = vehicleProfile?.fuelVolumeUnit || 'L';
-    const efficiencyUnit = fuelVolumeUnit === 'gal' ? 'mpg' : 'km/L';
-    const fuelDisplayUnit = fuelVolumeUnit === 'gal' ? 'gal' : 'L';
+     const distanceUnit = vehicleProfile?.distanceUnit || 'km';
+     const fuelVolumeUnit = vehicleProfile?.fuelVolumeUnit || 'L';
+     const efficiencyUnit = fuelVolumeUnit === 'gal' ? 'mpg' : 'km/L';
+     const fuelDisplayUnit = fuelVolumeUnit === 'gal' ? 'gal' : 'L';
 
-    const doc = new jsPDF();
+     // Use landscape orientation for better table width
+     const doc = new jsPDF({
+       orientation: 'landscape',
+       unit: 'mm',
+       format: 'a4',
+     });
 
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
@@ -66,6 +71,7 @@ export const exportToPDF = (logs, vehicleProfile, currency) => {
       styles: {
         fontSize: 9,
         cellPadding: 3,
+        overflow: 'linebreak',
       },
       headStyles: {
         fillColor: [59, 130, 246],
@@ -73,7 +79,14 @@ export const exportToPDF = (logs, vehicleProfile, currency) => {
         fontStyle: 'bold',
       },
       columnStyles: {
-        7: { cellWidth: 35 },
+        0: { cellWidth: 10 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 25 },
+        4: { cellWidth: 25 },
+        5: { cellWidth: 30 },
+        6: { cellWidth: 30 },
+        7: { cellWidth: 30 },
       },
       didParseCell: function (data) {
         if (data.section === 'body' && data.column.index === 7 && data.cell.raw === 'THEFT') {
@@ -256,18 +269,23 @@ export const exportTripsToCSV = (trips, currency) => {
  * Space Complexity: O(1) - Fixed data structures
  */
 export const exportTankToTankTripToPDF = (tripData, vehicleProfile, currency = '$', pricePerLiter = 0) => {
-  try {
-    if (!tripData || !tripData.isValid) {
-      alert('No valid Tank-to-Tank data to export.');
-      return false;
-    }
+   try {
+     if (!tripData || !tripData.isValid) {
+       alert('No valid Tank-to-Tank data to export.');
+       return false;
+     }
 
-    const distanceUnit = vehicleProfile?.distanceUnit || 'km';
-    const fuelVolumeUnit = vehicleProfile?.fuelVolumeUnit || 'L';
-    const efficiencyUnit = fuelVolumeUnit === 'gal' ? 'mpg' : 'km/L';
-    const fuelDisplayUnit = fuelVolumeUnit === 'gal' ? 'gal' : 'L';
+     const distanceUnit = vehicleProfile?.distanceUnit || 'km';
+     const fuelVolumeUnit = vehicleProfile?.fuelVolumeUnit || 'L';
+     const efficiencyUnit = fuelVolumeUnit === 'gal' ? 'mpg' : 'km/L';
+     const fuelDisplayUnit = fuelVolumeUnit === 'gal' ? 'gal' : 'L';
 
-    const doc = new jsPDF();
+     // Use landscape orientation for better table width
+     const doc = new jsPDF({
+       orientation: 'landscape',
+       unit: 'mm',
+       format: 'a4',
+     });
 
     // Document title
     doc.setFontSize(20);
@@ -498,18 +516,23 @@ export const exportTankToTankTripToPDF = (tripData, vehicleProfile, currency = '
  * Space Complexity: O(1) - Fixed data structures
  */
 export const exportTankToTankTripsToPDF = (trips, vehicleProfile, currency = '$', pricePerLiter = 0) => {
-  try {
-    if (!trips || trips.length === 0) {
-      alert('No tank-to-tank trip data to export.');
-      return false;
-    }
+   try {
+     if (!trips || trips.length === 0) {
+       alert('No tank-to-tank trip data to export.');
+       return false;
+     }
 
-    const distanceUnit = vehicleProfile?.distanceUnit || 'km';
-    const fuelVolumeUnit = vehicleProfile?.fuelVolumeUnit || 'L';
-    const efficiencyUnit = fuelVolumeUnit === 'gal' ? 'mpg' : 'km/L';
-    const fuelDisplayUnit = fuelVolumeUnit === 'gal' ? 'gal' : 'L';
+     const distanceUnit = vehicleProfile?.distanceUnit || 'km';
+     const fuelVolumeUnit = vehicleProfile?.fuelVolumeUnit || 'L';
+     const efficiencyUnit = fuelVolumeUnit === 'gal' ? 'mpg' : 'km/L';
+     const fuelDisplayUnit = fuelVolumeUnit === 'gal' ? 'gal' : 'L';
 
-    const doc = new jsPDF();
+     // Use landscape orientation for better table width
+     const doc = new jsPDF({
+       orientation: 'landscape',
+       unit: 'mm',
+       format: 'a4',
+     });
 
     // Document title
     doc.setFontSize(18);
@@ -606,22 +629,28 @@ export const exportTankToTankTripsToPDF = (trips, vehicleProfile, currency = '$'
       'Status',
     ];
 
-    autoTable(doc, {
-      startY: tableY + 8,
-      head: [headers],
-      body: tripsTableData,
-      styles: {
-        fontSize: 8,
-        cellPadding: 2,
-      },
-      headStyles: {
-        fillColor: [59, 130, 246],
-        textColor: 255,
-        fontStyle: 'bold',
-      },
-      columnStyles: {
-        6: { cellWidth: 20 },
-      },
+     autoTable(doc, {
+       startY: tableY + 8,
+       head: [headers],
+       body: tripsTableData,
+       styles: {
+         fontSize: 8,
+         cellPadding: 2,
+         overflow: 'linebreak',
+       },
+       headStyles: {
+         fillColor: [59, 130, 246],
+         textColor: 255,
+         fontStyle: 'bold',
+       },
+       columnStyles: {
+         0: { cellWidth: 25 },
+         1: { cellWidth: 35 },
+         2: { cellWidth: 25 },
+         3: { cellWidth: 25 },
+         4: { cellWidth: 20 },
+         5: { cellWidth: 30 },
+       },
       didParseCell: function (data) {
         if (data.section === 'body' && data.column.index === 6) {
           if (data.cell.raw === '⚠️ THEFT') {
@@ -697,6 +726,11 @@ export const exportTankToTankToExcel = (trips, vehicleProfile, currency = '$', p
 
     // Create Trips Sheet
     const tripsData = trips.map((trip, index) => {
+      // Skip invalid trips
+      if (!trip || !trip.isValid) {
+        return null;
+      }
+
       const obj = {
         '#': index + 1,
         'Start Date': new Date(trip.startDate).toLocaleDateString(),
@@ -704,20 +738,20 @@ export const exportTankToTankToExcel = (trips, vehicleProfile, currency = '$', p
         'Duration (days)': trip.durationDays,
       };
       obj[`Distance (${distanceUnit})`] = Math.round(trip.distance);
-      obj[`Fuel Added (${fuelDisplayUnit})`] = trip.actualFuelConsumed.toFixed(2);
-      obj[`Expected Consumption (${fuelDisplayUnit})`] = trip.expectedFuelConsumed.toFixed(2);
-      obj[`Fuel Difference (${fuelDisplayUnit})`] = trip.fuelDifference.toFixed(2);
-      obj[`Actual Mileage (${efficiencyUnit})`] = trip.actualMileage.toFixed(2);
-      obj[`Expected Mileage (${efficiencyUnit})`] = trip.expectedMileage.toFixed(2);
-      obj['Mileage Efficiency (%)'] = trip.mileageEfficiency.toFixed(0);
-      obj[`Theft Amount (${fuelDisplayUnit})`] = trip.theftAmount.toFixed(2);
-      obj['Theft Percentage (%)'] = trip.theftPercentage.toFixed(1);
-      obj['Severity'] = getTankToTankTheftSeverity(trip.theftPercentage).toUpperCase();
-      obj['Start Odometer'] = trip.startOdometer;
-      obj['End Odometer'] = trip.endOdometer;
-      obj[`Tank Capacity (${fuelDisplayUnit})`] = trip.tankCapacity;
-      obj[`Fuel Before Fill (${fuelDisplayUnit})`] = trip.remainingFuelBeforeFill.toFixed(1);
-      obj['Fill Percentage (%)'] = trip.fillPercentage.toFixed(0);
+      obj[`Fuel Added (${fuelDisplayUnit})`] = (trip.actualFuelConsumed || 0).toFixed(2);
+      obj[`Expected Consumption (${fuelDisplayUnit})`] = (trip.expectedFuelConsumed || 0).toFixed(2);
+      obj[`Fuel Difference (${fuelDisplayUnit})`] = (trip.fuelDifference || 0).toFixed(2);
+      obj[`Actual Mileage (${efficiencyUnit})`] = (trip.actualMileage || 0).toFixed(2);
+      obj[`Expected Mileage (${efficiencyUnit})`] = (trip.expectedMileage || 0).toFixed(2);
+      obj['Mileage Efficiency (%)'] = (trip.mileageEfficiency || 0).toFixed(0);
+      obj[`Theft Amount (${fuelDisplayUnit})`] = (trip.theftAmount || 0).toFixed(2);
+      obj['Theft Percentage (%)'] = (trip.theftPercentage || 0).toFixed(1);
+      obj['Severity'] = getTankToTankTheftSeverity(trip.theftPercentage || 0).toUpperCase();
+      obj['Start Odometer'] = trip.startOdometer || 0;
+      obj['End Odometer'] = trip.endOdometer || 0;
+      obj[`Tank Capacity (${fuelDisplayUnit})`] = trip.tankCapacity || 0;
+      obj[`Fuel Before Fill (${fuelDisplayUnit})`] = (trip.remainingFuelBeforeFill || 0).toFixed(1);
+      obj['Fill Percentage (%)'] = (trip.fillPercentage || 0).toFixed(0);
       obj['Is Theft Suspected'] = trip.isTheftSuspected ? 'Yes' : 'No';
 
       if (pricePerLiter > 0 && trip.theftAmount > 0) {
@@ -725,7 +759,7 @@ export const exportTankToTankToExcel = (trips, vehicleProfile, currency = '$', p
       }
 
       return obj;
-    });
+    }).filter(trip => trip !== null); // Remove invalid trips
 
     // Create Theft Incidents Sheet
     const theftTrips = trips.filter(t => t.isTheftSuspected);

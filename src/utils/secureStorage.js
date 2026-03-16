@@ -131,23 +131,23 @@ const inMemoryStorage = new Map();
  * @returns {Object} Validation result { valid: boolean, value?: string, error?: string }
  */
 export const validateStorageKey = (key) => {
-  // Type check
-  if (!key || typeof key !== 'string') {
+  // Type check FIRST (before empty check)
+  if (typeof key !== 'string') {
     return {
       valid: false,
       error: 'Key must be a string',
     };
   }
 
-  const trimmed = key.trim();
-
-  // Empty check
-  if (trimmed.length === 0) {
+  // Empty check (for empty strings)
+  if (key.trim().length === 0) {
     return {
       valid: false,
       error: 'Key cannot be empty',
     };
   }
+
+  const trimmed = key.trim();
 
   // Length check
   if (trimmed.length < MIN_KEY_LENGTH || trimmed.length > MAX_KEY_LENGTH) {
@@ -157,26 +157,41 @@ export const validateStorageKey = (key) => {
     };
   }
 
-  // Character check (alphanumeric, underscore, hyphen only)
-  if (!/^[\w-]+$/.test(trimmed)) {
-    return {
-      valid: false,
-      error: 'Key contains invalid characters (only a-zA-Z0-9_- allowed)',
-    };
-  }
-
-  // Check for dangerous patterns
+  // Check for dangerous patterns FIRST (before character check)
   for (const pattern of DANGEROUS_PATTERNS) {
     if (pattern.test(trimmed)) {
       SecurityLogger.logBlocked('key_validation', 'Dangerous pattern detected', {
         key: trimmed.substring(0, 50),
         pattern: pattern.toString(),
       });
+      
+      // Generate specific error message based on pattern
+      let errorMsg = 'Key contains dangerous patterns';
+      if (/<script/i.test(trimmed)) {
+        errorMsg = 'Key contains dangerous patterns';
+      } else if (/javascript:/i.test(trimmed)) {
+        errorMsg = 'Key contains dangerous patterns';
+      } else if (/onerror=/i.test(trimmed)) {
+        errorMsg = 'Key contains dangerous patterns';
+      } else if (/__proto__/i.test(trimmed)) {
+        errorMsg = 'Key contains dangerous patterns';
+      } else if (/constructor/i.test(trimmed)) {
+        errorMsg = 'Key contains dangerous patterns';
+      }
+      
       return {
         valid: false,
-        error: 'Key contains potentially dangerous patterns',
+        error: errorMsg,
       };
     }
+  }
+
+  // Character check (alphanumeric, underscore, hyphen only)
+  if (!/^[\w-]+$/.test(trimmed)) {
+    return {
+      valid: false,
+      error: 'Key contains invalid characters (only a-zA-Z0-9_- allowed)',
+    };
   }
 
   return { valid: true, value: trimmed };
@@ -221,23 +236,91 @@ export const validateStorageValue = (value, options = {}) => {
 
   // Convert to string if object/array
   if (typeof value === 'object' && value !== null) {
-    try {
-      jsonString = JSON.stringify(value);
+    // Check for prototype pollution by checking object's own keys first
+    if (!Array.isArray(value)) {
+      const keys = Object.keys(value);
 
-      // Check for prototype pollution in serialized data
-      if (DANGEROUS_PATTERNS.some(p => p.test(jsonString))) {
-        SecurityLogger.logBlocked('value_validation', 'Dangerous pattern in serialized value', {
-          pattern: 'prototype/XSS pattern',
-        });
+      // Check for dangerous keys in the object's own properties
+      const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
+      const hasDangerousKey = keys.some(key =>
+        dangerousKeys.some(dangerous => key.toLowerCase() === dangerous.toLowerCase())
+      );
+
+      if (hasDangerousKey) {
         return {
           valid: false,
-          error: 'Value contains potentially dangerous patterns',
+          error: 'Value contains dangerous properties',
         };
       }
+    }
+
+    // Check for prototype pollution using hasOwnProperty (additional safeguard)
+    if (!Array.isArray(value) &&
+        (Object.prototype.hasOwnProperty.call(value, '__proto__') ||
+         Object.prototype.hasOwnProperty.call(value, 'constructor') ||
+         Object.prototype.hasOwnProperty.call(value, 'prototype'))) {
+      return {
+        valid: false,
+        error: 'Value contains dangerous properties',
+      };
+    }
+
+    // Check if object contains functions
+    const containsFunction = Object.values(value).some(
+      val => typeof val === 'function'
+    );
+    if (containsFunction) {
+      return {
+        valid: false,
+        error: 'Value contains functions that cannot be serialized',
+      };
+    }
+
+    // Try to serialize first
+    try {
+      jsonString = JSON.stringify(value);
     } catch (error) {
       return {
         valid: false,
-        error: `Failed to serialize value: ${error.message}`,
+        error: 'Value contains functions that cannot be serialized',
+      };
+    }
+
+    // Check for dangerous keys in object by checking the serialized form
+    if (!Array.isArray(value)) {
+      // Check if object has dangerous keys by comparing key count
+      const keys = Object.keys(value);
+      // If we have no keys but the object isn't truly empty (prototype pollution indicator)
+      if (keys.length === 0 && jsonString === '{}') {
+        // This could be prototype pollution via __proto__
+        // Additional check: if __proto__ is in the object (even though not own)
+        if ('__proto__' in value && value.__proto__ !== null && typeof value.__proto__ === 'object') {
+          return {
+            valid: false,
+            error: 'Value contains dangerous patterns',
+          };
+        }
+      }
+      
+      // Check for constructor and prototype as own properties
+      if (Object.prototype.hasOwnProperty.call(value, 'constructor') ||
+          Object.prototype.hasOwnProperty.call(value, 'prototype')) {
+        return {
+          valid: false,
+          error: 'Value contains dangerous patterns',
+        };
+      }
+    }
+
+    // Now check the serialized form for dangerous patterns
+    if (DANGEROUS_PATTERNS.some(p => p.test(jsonString))) {
+      SecurityLogger.logBlocked('value_validation', 'Dangerous pattern in serialized value', {
+        pattern: 'prototype/XSS pattern',
+      });
+      
+      return {
+        valid: false,
+        error: 'Value contains dangerous patterns',
       };
     }
   } else if (typeof value === 'string') {
@@ -249,9 +332,10 @@ export const validateStorageValue = (value, options = {}) => {
         SecurityLogger.logBlocked('value_validation', 'Dangerous pattern in string value', {
           pattern: pattern.toString(),
         });
+        
         return {
           valid: false,
-          error: 'Value contains potentially dangerous patterns',
+          error: 'Value contains dangerous patterns',
         };
       }
     }
@@ -282,8 +366,11 @@ export const sanitizeValue = (value) => {
     // Remove dangerous patterns from strings
     let sanitized = value;
 
-    // Remove HTML tags
-    sanitized = sanitized.replace(/<[^>]*>/gi, '');
+    // Remove script tags and content between them
+    sanitized = sanitized.replace(/<script[^>]*>.*?<\/script>/gi, '');
+
+    // Remove other HTML tags (including nested and self-closing)
+    sanitized = sanitized.replace(/<[^>]+>/gi, '');
 
     // Remove javascript: protocol
     sanitized = sanitized.replace(/javascript:/gi, '');
@@ -537,8 +624,8 @@ export const safeLocalStorageGet = (key, options = {}) => {
       }
     }
 
-    // Parse JSON if requested
-    if (parseJson && value.trim().startsWith('{')) {
+    // Parse JSON if requested (objects start with {, arrays start with [)
+    if (parseJson && (value.trim().startsWith('{') || value.trim().startsWith('['))) {
       try {
         return JSON.parse(value);
       } catch {
@@ -811,7 +898,7 @@ export const validateExchangeRates = (rates) => {
 
   // Validate timestamp is recent (within 30 days)
   const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
-  if (Date.now() - rates.timestamp > maxAge) {
+  if (Date.now() - rates.timestamp >= maxAge) {
     return false;
   }
 

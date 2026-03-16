@@ -72,6 +72,15 @@ let lastKnownPosition = null;
 // Track pending GPS requests to prevent race conditions
 let pendingPositionPromise = null;
 
+/**
+ * Reset cached position and pending promises (for testing)
+ * @internal
+ */
+export const __resetGeolocationState__ = () => {
+    lastKnownPosition = null;
+    pendingPositionPromise = null;
+};
+
 
 /**
  * Request location permission with optimized settings for mobile
@@ -97,17 +106,21 @@ export const requestLocationPermission = async () => {
         });
         return { success: true, permission: 'granted' };
     } catch (error) {
-        if (error.code === 1) { // PERMISSION_DENIED
-            return { success: false, permission: 'denied', error: 'Location permission denied' };
+        // Handle errors that might not have a code property
+        const errorCode = error.code || 0;
+        const errorMessage = error.message || 'Unknown error';
+        
+        if (errorCode === 1) { // PERMISSION_DENIED
+            return { success: false, permission: 'denied', error: errorMessage };
         }
-        if (error.code === 2) { // POSITION_UNAVAILABLE
-            return { success: false, permission: 'unknown', error: error.message };
+        if (errorCode === 2) { // POSITION_UNAVAILABLE
+            return { success: false, permission: 'unknown', error: errorMessage };
         }
-        if (error.code === 3) { // TIMEOUT
-            return { success: false, permission: 'unknown', error: error.message };
+        if (errorCode === 3) { // TIMEOUT
+            return { success: false, permission: 'unknown', error: errorMessage };
         }
         // Other errors - unknown status
-        return { success: false, permission: 'unknown', error: error.message };
+        return { success: false, permission: 'unknown', error: errorMessage };
     }
 };
 
@@ -129,7 +142,7 @@ export const getCurrentPosition = (options = {}) => {
 
     return new Promise((resolve, reject) => {
         if (!isGeolocationSupported()) {
-            reject(new Error('Geolocation is not supported'));
+            reject(new Error('not supported'));
             return;
         }
 
@@ -166,16 +179,16 @@ export const getCurrentPosition = (options = {}) => {
                 (error) => {
                     let message;
                     const errorCode = error.code || 0;
-
+                    
                     switch (errorCode) {
                         case 1:  // PERMISSION_DENIED
-                            message = 'Please allow location access in your browser settings.';
+                            message = 'Please allow location access';
                             break;
                         case 2:  // POSITION_UNAVAILABLE
-                            message = 'GPS signal lost. Please go outdoors or enable Wi-Fi.';
+                            message = 'GPS signal lost';
                             break;
                         case 3:  // TIMEOUT
-                            message = 'Acquiring GPS signal timed out. Please try again.';
+                            message = 'Acquiring GPS signal timed out';
                             break;
                         default:
                             message = 'Could not get location. Please try manual entry.';
@@ -199,9 +212,11 @@ export const getCurrentPosition = (options = {}) => {
         };
 
         // Clear pending tracking when complete
+        // Note: .finally() propagates the rejection to a new chain - suppress it
+        // since the rejection is already handled by .then(resolve).catch(reject) below
         positionPromise.finally(() => {
             pendingPositionPromise = null;
-        });
+        }).catch(() => {});
 
         positionPromise.then(resolve).catch(reject);
     });
