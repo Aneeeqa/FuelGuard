@@ -1117,7 +1117,6 @@ const Settings = () => {
           <Info className="w-4 h-4" />
           <span>Fuel Guard</span>
         </div>
-
         <div className="mt-3 flex items-center justify-center gap-2">
           <a
             href="/privacy"

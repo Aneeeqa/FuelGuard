@@ -56,7 +56,7 @@ const Toast = ({
     if (duration > 0) {
       const timer = setTimeout(() => {
         setVisible(false);
-        setTimeout(() => onDismiss?.(), 300);
+        onDismiss?.();
       }, duration);
       return () => clearTimeout(timer);
     }
@@ -64,7 +64,7 @@ const Toast = ({
 
   const handleDismiss = () => {
     setVisible(false);
-    setTimeout(() => onDismiss?.(), 300);
+    onDismiss?.();
   };
 
   if (!visible) return null;

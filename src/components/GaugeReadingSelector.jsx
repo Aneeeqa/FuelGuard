@@ -66,13 +66,17 @@ const GaugeReadingSelector = ({
   ];
 
   const handleGaugeSelect = (percentage) => {
-    onChange(percentage);
+    if (typeof onChange === 'function') {
+      onChange(percentage);
+    }
   };
 
   const handleManualChange = (e) => {
     const newValue = parseFloat(e.target.value);
     if (!isNaN(newValue) && newValue >= 0 && newValue <= 100) {
-      onChange(newValue);
+      if (typeof onChange === 'function') {
+        onChange(newValue);
+      }
     }
   };
 

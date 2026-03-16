@@ -160,8 +160,8 @@ const ValidationFormDemo = () => {
           <div className="space-y-4">
             <ValidatedInput
               label="Vehicle Year"
-              placeholder="e.g., 2024"
-              helperText="Enter a year between 1984 and 2027"
+              placeholder="e.g., TBD"
+              helperText="Enter a year between TBD and TBD"
               {...yearField.inputProps}
               error={yearField.error}
               isValid={yearField.isValid}

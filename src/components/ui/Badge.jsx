@@ -2,9 +2,11 @@ import { clsx } from 'clsx';
 
 /**
  * Badge component for status indicators
- * - Multiple variants: success, warning, danger, info, default
+ * - Multiple variants: success, warning, danger, info, default, primary, error, dot
  * - Different sizes: sm, md, lg
  * - With or without icon
+ * - Count display support
+ * - Visibility control
  */
 const Badge = ({
   children,
@@ -12,8 +14,33 @@ const Badge = ({
   size = 'md',
   icon: Icon,
   className,
+  count,
+  hideZero = false,
+  visible = true,
+  position,
   ...props
 }) => {
+  // Map variant aliases
+  const variantMap = { primary: 'default', error: 'danger' };
+  const resolvedVariant = variantMap[variant] || variant;
+
+  // Handle dot variant
+  if (resolvedVariant === 'dot') {
+    if (visible === false) return null;
+    const dotSizes = { sm: 'w-1.5 h-1.5', md: 'w-2 h-2', lg: 'w-3 h-3' };
+    return (
+      <span
+        className={clsx('badge inline-block rounded-full animate-pulse bg-[var(--text-muted)]', dotSizes[size] || dotSizes.md, className)}
+        {...props}
+      />
+    );
+  }
+
+  // Handle hideZero
+  if (hideZero && count === 0) return null;
+  // Handle visibility
+  if (visible === false) return null;
+
   const variants = {
     default: {
       base: 'border border-[var(--border-color)]',
@@ -48,22 +75,26 @@ const Badge = ({
     lg: 'px-3 py-1.5 text-base',
   };
 
-  const config = variants[variant];
+  const config = variants[resolvedVariant] || variants.default;
 
   return (
     <span
       className={clsx(
-        'inline-flex items-center gap-1.5 font-medium rounded-full transition-all duration-200',
+        'badge inline-flex items-center gap-1.5 font-medium rounded-full transition-all duration-200',
         config.base,
         config.bg,
         config.text,
         sizes[size],
+        position === 'absolute' && 'absolute',
+        position === 'relative' && 'relative',
         className
       )}
+      aria-label={count !== undefined ? `${count} items` : undefined}
       {...props}
     >
       {Icon && <Icon className="w-3.5 h-3.5" />}
       {children}
+      {count !== undefined && <span>{count}</span>}
     </span>
   );
 };

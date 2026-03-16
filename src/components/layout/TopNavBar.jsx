@@ -1,18 +1,34 @@
 import { useState, useEffect, useContext } from 'react';
-import { Bell, List, Phone, X } from '@phosphor-icons/react';
+import { Bell, List, Phone, X, SignOut } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import EmergencyContact from '../EmergencyContact';
 import { FuelContext } from '../../context/FuelContext';
+import { useAuth } from '../../context/AuthContext';
+import { signOut, auth } from '../../services/firebase';
 import { analyzeFuelDrain, generateDrainAlertMessage } from '../../utils/fuelDrainCalculator';
 import { getFuelStatus } from '../../utils/fuelLevelAlerts';
 import { checkBudgetAlert } from '../../utils/calculations';
 import { getCurrencySymbol } from '../../utils/currency';
 
 const TopNavigationBar = () => {
+  const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showEmergency, setShowEmergency] = useState(false);
   const navigate = useNavigate();
   const { data } = useContext(FuelContext);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  if (!user) {
+    return null;
+  }
 
   const [notifications, setNotifications] = useState([]);
 
@@ -37,7 +53,11 @@ const TopNavigationBar = () => {
     }
 
     // Fuel drain alert
-    const drainAnalysis = analyzeFuelDrain(logs || [], vehicleProfile?.tankCapacity);
+    const drainAnalysis = analyzeFuelDrain(
+      logs || [],
+      vehicleProfile?.tankCapacity || 50,
+      vehicleProfile?.expectedMileage || stats?.avgMileage || 15
+    );
     if (drainAnalysis.hasAlert) {
       newNotifications.push({
         id: 'fuel-drain-alert',
@@ -268,6 +288,22 @@ const TopNavigationBar = () => {
             aria-label="Settings"
           >
             <List
+              size={20}
+              weight="regular"
+              style={{ color: 'var(--text-primary)' }}
+            />
+          </button>
+
+          <button
+            onClick={handleSignOut}
+            className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg transition-transform hover:scale-105 active:scale-95 focus:outline-none"
+            style={{
+              border: 'none',
+              backgroundColor: 'transparent',
+            }}
+            aria-label="Sign Out"
+          >
+            <SignOut
               size={20}
               weight="regular"
               style={{ color: 'var(--text-primary)' }}

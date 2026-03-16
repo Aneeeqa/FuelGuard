@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Grid2x2, PlusCircle, History, Settings, Truck, Droplet, Shield, AlertCircle, Zap } from 'lucide-react';
 import { clsx } from 'clsx';
 import ThemeToggle from '../ui/ThemeToggle';
+import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
-  { to: '/', icon: Grid2x2, label: 'Dashboard' },
+  { to: '/dashboard', icon: Grid2x2, label: 'Dashboard' },
   { to: '/add', icon: PlusCircle, label: 'Add Entry' },
   { to: '/history', icon: History, label: 'History' },
   { to: '/fleet', icon: Truck, label: 'Fleet' },
@@ -12,6 +14,13 @@ const navItems = [
 ];
 
 const Sidebar = () => {
+  const { user } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <aside
       className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 border-r transition-all duration-300"
@@ -46,7 +55,7 @@ const Sidebar = () => {
           <NavLink
             key={to}
             to={to}
-            end={to === '/'}
+            end={to === '/dashboard'}
             className={({ isActive }) =>
               clsx(
                 'flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200',

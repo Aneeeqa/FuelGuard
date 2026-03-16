@@ -39,7 +39,7 @@ import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
  *
  * <ValidatedInput
  *   label="Year"
- *   placeholder="e.g., 2024"
+ *   placeholder="e.g., TBD"
  *   {...yearField.inputProps}
  *   error={yearField.error}
  *   isValid={yearField.isValid}

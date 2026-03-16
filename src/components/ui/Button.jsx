@@ -84,6 +84,12 @@ const Button = ({
         className
       )}
       disabled={disabled || loading}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          props.onClick?.(e);
+        }
+        props.onKeyDown?.(e);
+      }}
       {...props}
     >
       {/* Ripple effect overlay */}
@@ -97,7 +103,7 @@ const Button = ({
         <Icon size={20} className="mr-2" />
       )}
 
-      {children}
+      {!loading ? children : null}
 
       {!loading && Icon && iconPosition === 'right' && (
         <Icon size={20} className="ml-2" />

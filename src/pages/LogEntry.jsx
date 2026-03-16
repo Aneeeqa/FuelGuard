@@ -25,8 +25,9 @@ import TankCapacityDisplay from '../components/TankCapacityDisplay';
 
 const LogEntry = () => {
   const navigate = useNavigate();
-  const { addLog, data, updateVehicleProfile } = useFuelData();
+  const { addLog, data, updateVehicleProfile, loading } = useFuelData();
   const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
   // GPS state
@@ -369,7 +370,7 @@ const LogEntry = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
@@ -401,7 +402,7 @@ const LogEntry = () => {
       costPerKm,
       costPerMile,
       driverId: formData.driverId || null,
-      vehicleId: data.currentVehicleId || data.vehicleProfile?.vehicleId,
+      vehicleId: data.currentVehicleId,
       note: formData.note || null,
       pumpName: formData.pumpName || null,
 
@@ -416,13 +417,21 @@ const LogEntry = () => {
       gaugeReading: fuelAmountLiters > 0 ? gaugeReading : null,
     };
 
-    addLog(newLog);
-    setSuccess(true);
-
-    setTimeout(() => {
-      navigate('/');
-    }, 1500);
-    };
+    try {
+      setSubmitting(true);
+      setErrors(prev => ({ ...prev, submit: null }));
+      await addLog(newLog);
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/history');
+      }, 1500);
+    } catch (error) {
+      console.error('Failed to save entry:', error);
+      setErrors(prev => ({ ...prev, submit: 'Failed to save entry. Please check your connection and try again.' }));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -470,7 +479,36 @@ const LogEntry = () => {
           <CheckCircle className="w-10 h-10" style={{ color: 'var(--accent-success)' }} />
         </div>
         <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Entry Added!</h1>
-        <p style={{ color: 'var(--text-muted)' }}>Redirecting to dashboard...</p>
+        <p style={{ color: 'var(--text-muted)' }}>Redirecting to history...</p>
+      </div>
+    );
+  }
+
+  if (!loading && !data.currentVehicleId) {
+    const hasVehicles = data.vehicles && data.vehicles.length > 0;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
+        <div
+          className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+          style={{ backgroundColor: 'color-mix(in srgb, var(--accent-blue) 15%, transparent)' }}
+        >
+          <Fuel className="w-10 h-10" style={{ color: 'var(--accent-blue)' }} />
+        </div>
+        <h1 className="text-2xl font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
+          {hasVehicles ? 'No Vehicle Selected' : 'No Vehicle Added Yet'}
+        </h1>
+        <p className="text-base mb-8 max-w-sm" style={{ color: 'var(--text-muted)' }}>
+          {hasVehicles
+            ? 'Please go to your Fleet and select a vehicle before logging a fuel entry.'
+            : 'You need to add a vehicle before you can log a fuel entry. Head over to the Fleet page to add your first vehicle.'}
+        </p>
+        <button
+          onClick={() => navigate('/fleet')}
+          className="px-8 py-3 rounded-xl font-semibold text-white transition-all hover-lift active-scale"
+          style={{ backgroundColor: 'var(--accent-blue)' }}
+        >
+          {hasVehicles ? 'Go to Fleet' : 'Add a Vehicle'}
+        </button>
       </div>
     );
   }
@@ -1197,15 +1235,32 @@ const LogEntry = () => {
           )}
         </div>
 
+        {/* Submit Error */}
+        {errors.submit && (
+          <div className="p-3 rounded-xl text-sm font-medium" style={{ backgroundColor: 'color-mix(in srgb, var(--accent-alert) 15%, transparent)', color: 'var(--accent-alert)', border: '1px solid color-mix(in srgb, var(--accent-alert) 30%, transparent)' }}>
+            {errors.submit}
+          </div>
+        )}
+
         {/* Submit Button */}
         <div className="pt-4">
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 px-6 py-4 text-white font-semibold rounded-xl transition-colors min-h-[56px] shadow-lg"
+            disabled={submitting}
+            className="w-full flex items-center justify-center gap-2 px-6 py-4 text-white font-semibold rounded-xl transition-colors min-h-[56px] shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ backgroundColor: 'var(--accent-blue)' }}
           >
-            <Fuel className="w-5 h-5" />
-            Save Entry
+            {submitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Fuel className="w-5 h-5" />
+                Save Entry
+              </>
+            )}
           </button>
         </div>
       </form>

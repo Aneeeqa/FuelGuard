@@ -156,7 +156,7 @@ const StatCard = ({
                 color: trend.direction === 'up' ? '#86efac' : '#fca5a5',
               }}
             >
-              {trend.direction === 'up' ? '↑' : '↓'} {trend.value}
+              {`${trend.direction === 'up' ? '↑' : '↓'} ${trend.value}`}
             </div>
           )}
         </div>

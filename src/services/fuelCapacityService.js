@@ -8,7 +8,33 @@
  * 4. Comprehensive estimation based on vehicle class, make, model
  */
 
-import { estimateFuelTankCapacity as nhtsaEstimate } from './nhtsaApiService';
+// NHTSA API service not implemented yet, using local estimation
+// import { estimateFuelTankCapacity as nhtsaEstimate } from './nhtsaApiService';
+
+// Placeholder for NHTSA estimate function
+const nhtsaEstimate = async (vehicle) => {
+  // Simple estimation based on vehicle class if NHTSA API is not available
+  const VEHICLE_CLASS_CAPACITY = {
+    'Two Seaters': 50,
+    'Minicompact Cars': 35,
+    'Subcompact Cars': 40,
+    'Compact Cars': 45,
+    'Midsize Cars': 55,
+    'Large Cars': 65,
+    'Two Seaters': 50,
+    'Minivans': 60,
+    'Small Pickup Trucks': 65,
+    'Standard Pickup Trucks': 75,
+    'Standard Sport Utility Vehicle': 70,
+    'Small Sport Utility Vehicle': 55,
+  };
+
+  if (vehicle.vehicleClass && VEHICLE_CLASS_CAPACITY[vehicle.vehicleClass]) {
+    return VEHICLE_CLASS_CAPACITY[vehicle.vehicleClass];
+  }
+
+  return 50; // Default fallback
+};
 
 // Cache for API responses
 const fuelCache = new Map();

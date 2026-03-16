@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Grid2x2, PlusCircle, History, Settings, Truck } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
-  { to: '/', icon: Grid2x2, label: 'Dashboard' },
+  { to: '/dashboard', icon: Grid2x2, label: 'Dashboard' },
   { to: '/add', icon: PlusCircle, label: 'Add' },
   { to: '/history', icon: History, label: 'History' },
   { to: '/fleet', icon: Truck, label: 'Fleet' },
@@ -11,6 +13,12 @@ const navItems = [
 ];
 
 const BottomNav = () => {
+  const { user } = useAuth();
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <nav 
       className="fixed bottom-0 left-0 right-0 border-t z-50 glass animate-fade-in-up"

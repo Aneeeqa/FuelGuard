@@ -1,118 +1,36 @@
-import React, { memo, lazy, Suspense } from 'react';
-import Skeleton from '../ui/Skeleton';
+import React, { memo } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Cell,
+  Legend,
+} from 'recharts';
 import { getCO2LevelColor } from '../../config/carbonConfig';
 
-// Lazy load recharts components
-const LazyChart = lazy(() =>
-  import('recharts').then(module => ({
-    default: ({ data, fuelType }) => {
-      const {
-        BarChart,
-        Bar,
-        XAxis,
-        YAxis,
-        Tooltip,
-        ResponsiveContainer,
-        CartesianGrid,
-        Cell
-      } = module;
-
-      // Format month for display
-      const formatMonth = (monthStr) => {
-        const [year, month] = monthStr.split('-');
-        const date = new Date(year, month - 1);
-        return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-      };
-
-      // Prepare chart data (limit to last 12 months)
-      const chartData = [...data].slice(-12).map(d => ({
-        ...d,
-        monthFormatted: formatMonth(d.month),
-      }));
-
-      // Calculate average for reference
-      const avgCO2 = chartData.length > 0
-        ? chartData.reduce((sum, d) => sum + d.co2, 0) / chartData.length
-        : 0;
-
-      // Color scale based on CO2 levels (green to red) - use config
-      const getBarColor = (co2) => {
-        return getCO2LevelColor(co2);
-      };
-
-      // Custom tooltip for touch-friendly display
-      const CustomTooltip = ({ active, payload }) => {
-        if (active && payload && payload.length) {
-          const data = payload[0].payload;
-          const co2Color = getCO2LevelColor(data.co2);
-
-          return (
-            <div className="bg-[var(--bg-secondary)] p-3 rounded-lg shadow-lg border border-[var(--border-color)] min-w-[140px]">
-              <p className="text-xs text-[var(--text-muted)] mb-1">{data.monthFormatted}</p>
-              <p
-                className={`text-lg font-bold ${
-                  data.co2 < 100
-                    ? 'text-success-500'
-                    : data.co2 < 200
-                    ? 'text-warning-500'
-                    : 'text-danger-500'
-                }`}
-              >
-                {data.co2.toFixed(1)} kg CO₂
-              </p>
-              {data.co2 > avgCO2 * 1.2 && (
-                <p className="text-xs text-danger-500 mt-1">⚠️ High emissions</p>
-              )}
-            </div>
-          );
-        }
-        return null;
-      };
-
-      return (
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart
-            data={chartData}
-            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-            <XAxis
-              dataKey="monthFormatted"
-              tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
-              tickLine={false}
-              axisLine={{ stroke: 'var(--border-color-strong)' }}
-            />
-            <YAxis
-              domain={['auto', 'auto']}
-              tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
-              tickLine={false}
-              axisLine={{ stroke: 'var(--border-color-strong)' }}
-              tickFormatter={(value) => `${value}kg`}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar
-              dataKey="co2"
-              radius={[4, 4, 0, 0]}
-              fill="var(--accent-blue)"
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={getBarColor(entry.co2)} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      );
-    }
-  }))
-);
+// Format month for display - supports "YYYY-MM" and short month names like "Jan"
+const formatMonth = (monthStr) => {
+  if (!monthStr) return '';
+  if (monthStr.includes('-')) {
+    const [year, month] = monthStr.split('-');
+    const date = new Date(year, month - 1);
+    return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+  }
+  return monthStr;
+};
 
 // Custom comparison function for memo
 const chartPropsAreEqual = (prevProps, nextProps) => {
-  if (prevProps.data.length !== nextProps.data.length) return false;
-  if (prevProps.data.length === 0) return true;
-  // Compare last month to detect new entries
-  return prevProps.data[prevProps.data.length - 1]?.month ===
-    nextProps.data[nextProps.data.length - 1]?.month;
+  const prevLen = prevProps.data?.length || 0;
+  const nextLen = nextProps.data?.length || 0;
+  if (prevLen !== nextLen) return false;
+  if (prevLen === 0) return true;
+  return prevProps.data[prevLen - 1]?.month ===
+    nextProps.data[nextLen - 1]?.month;
 };
 
 /**
@@ -121,24 +39,84 @@ const chartPropsAreEqual = (prevProps, nextProps) => {
  * - Wrapped in React.memo with custom comparator
  * - Touch-friendly tooltip
  * - Color-coded bars based on emission levels
- * - Lazy loaded for performance
  */
-const CarbonChart = memo(({ data, fuelType = 'gasoline', className }) => {
-  if (!data || data.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-[250px] rounded-xl border border-[var(--border-color)] bg-[var(--bg-input)]">
-        <p className="text-sm text-[var(--text-muted)]">
-          No carbon data to display
-        </p>
-      </div>
-    );
-  }
+const CarbonChart = memo(({ data, fuelType = 'gasoline', className, loading, period }) => {
+  const chartData = (data && data.length > 0)
+    ? [...data].slice(-12).map(d => ({
+        ...d,
+        monthFormatted: formatMonth(d.month),
+        co2: d.co2 || 0,
+      }))
+    : [];
+
+  // Calculate average for reference
+  const avgCO2 = chartData.length > 0
+    ? chartData.reduce((sum, d) => sum + (d.co2 || 0), 0) / chartData.length
+    : 0;
+
+  const getBarColor = (co2) => co2 ? getCO2LevelColor(co2) : 'var(--accent-blue)';
+
+  // Custom tooltip for touch-friendly display
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const item = payload[0].payload;
+      return (
+        <div className="bg-[var(--bg-secondary)] p-3 rounded-lg shadow-lg border border-[var(--border-color)] min-w-[140px]">
+          <p className="text-xs text-[var(--text-muted)] mb-1">{item.monthFormatted}</p>
+          <p
+            className={`text-lg font-bold ${
+              (item.co2 || 0) < 100
+                ? 'text-success-500'
+                : (item.co2 || 0) < 200
+                ? 'text-warning-500'
+                : 'text-danger-500'
+            }`}
+          >
+            {(item.co2 || 0).toFixed(1)} kg CO₂
+          </p>
+          {(item.co2 || 0) > avgCO2 * 1.2 && (
+            <p className="text-xs text-danger-500 mt-1">⚠️ High emissions</p>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
-    <div className={className}>
-      <Suspense fallback={<Skeleton className="h-[250px] w-full" />}>
-        <LazyChart data={data} fuelType={fuelType} />
-      </Suspense>
+    <div data-testid="carbon-chart" className={className}>
+      <ResponsiveContainer width="100%" height={250}>
+        <BarChart
+          data={chartData}
+          margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+          <XAxis
+            dataKey="monthFormatted"
+            tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
+            tickLine={false}
+            axisLine={{ stroke: 'var(--border-color-strong)' }}
+          />
+          <YAxis
+            domain={['auto', 'auto']}
+            tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
+            tickLine={false}
+            axisLine={{ stroke: 'var(--border-color-strong)' }}
+            tickFormatter={(value) => `${value}kg`}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend />
+          <Bar
+            dataKey="co2"
+            radius={[4, 4, 0, 0]}
+            fill="var(--accent-blue)"
+          >
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={getBarColor(entry.co2)} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }, chartPropsAreEqual);

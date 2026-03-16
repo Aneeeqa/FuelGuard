@@ -11,6 +11,7 @@ const MileageComparison = ({
     epaRating,
     vehicleId,
     vehicleName,
+    efficiencyUnit = 'km/L',
     className = ''
 }) => {
     const [communityData, setCommunityData] = useState(null);
@@ -138,7 +139,7 @@ const MileageComparison = ({
                     <div className="flex justify-between text-sm mb-1">
                         <span style={{ color: 'var(--text-secondary)' }}>Your Average</span>
                         <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                            {userAverage ? `${userAverage.toFixed(1)} km/L` : '—'}
+                            {userAverage ? `${userAverage.toFixed(1)} ${efficiencyUnit}` : '—'}
                         </span>
                     </div>
                     <div
@@ -166,7 +167,7 @@ const MileageComparison = ({
                                 EPA Combined
                             </span>
                             <span className="font-semibold" style={{ color: 'var(--accent-blue)' }}>
-                                {epaRating.toFixed(1)} km/L
+                                {epaRating.toFixed(1)} {efficiencyUnit}
                             </span>
                         </div>
                         <div
@@ -198,7 +199,7 @@ const MileageComparison = ({
                                 Community Avg ({communityData.count} users)
                             </span>
                             <span className="font-semibold" style={{ color: 'var(--text-muted)' }}>
-                                {communityData.avgKmL?.toFixed(1)} km/L
+                                {communityData.avgKmL?.toFixed(1)} {efficiencyUnit}
                             </span>
                         </div>
                         <div

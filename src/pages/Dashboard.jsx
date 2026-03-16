@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   CheckCircle,
   Route,
-  Zap,
   Leaf,
   DollarSign,
   Wallet,
@@ -55,8 +54,13 @@ const Dashboard = () => {
   const { logs, stats } = data;
   const flaggedCount = logs.filter((log) => log.isFlagged).length;
 
-  // Analyze fuel drain
-  const drainAnalysis = analyzeFuelDrain(logs || [], data.vehicleProfile?.tankCapacity);
+  // Analyze fuel drain – pass tank capacity and expected mileage so both
+  // gauge-based and mileage-based strategies have the data they need.
+  const drainAnalysis = analyzeFuelDrain(
+    logs || [],
+    data.vehicleProfile?.tankCapacity || 50,
+    data.vehicleProfile?.expectedMileage || stats?.avgMileage || 15
+  );
 
   // Calculate trips (trip-wise mileage analysis) - MUST be before loading check
   const trips = useMemo(() => {
@@ -283,11 +287,16 @@ const Dashboard = () => {
 
             <div className="animate-fade-in-up delay-400 snap-center flex-shrink-0 min-w-[160px] sm:min-w-0 w-[160px] sm:w-auto">
               <StatCard
-                icon={Zap}
-                label="Fuel Drain"
-                value={(drainAnalysis?.latestDrain?.litersPerDay || 0).toFixed(2)}
-                unit={`${fuelDisplayUnit}/day`}
+                icon={Flame}
+                label="Excess Fuel"
+                value={drainAnalysis?.totalLostFuel > 0
+                  ? drainAnalysis.totalLostFuel.toFixed(1)
+                  : '0.0'}
+                unit={drainAnalysis?.totalLostFuel > 0 ? fuelDisplayUnit : 'Normal'}
                 gradientId={5}
+                trend={drainAnalysis?.hasAlert
+                  ? { direction: 'up', value: `⚠ ${drainAnalysis.abnormalDrains}` }
+                  : undefined}
               />
             </div>
 
@@ -490,7 +499,7 @@ const Dashboard = () => {
                    <Card.Subtitle>Track your fuel efficiency over time</Card.Subtitle>
                  </Card.Header>
                  <div className="pt-4">
-                   <MileageChart data={logs} />
+                   <MileageChart data={logs} efficiencyUnit={efficiencyUnit} />
                  </div>
                </Card>
              </div>
@@ -576,6 +585,7 @@ const Dashboard = () => {
             epaRating={data.vehicleProfile?.epaCombined}
             vehicleId={data.vehicleProfile?.vehicleId}
             vehicleName={data.vehicleProfile?.name}
+            efficiencyUnit={efficiencyUnit}
           />
         </div>
 
@@ -608,7 +618,7 @@ const Dashboard = () => {
                 >
                   <div>
                       <p className="font-bold text-lg tabular-nums" style={{ color: 'var(--text-primary)', fontWeight: '700' }}>
-                        {fuelDisplayUnit === 'gal' ? (log.liters * 0.264172).toFixed(1) : log.liters}{fuelDisplayUnit} @ {log.odometer.toLocaleString()} {distanceUnit}
+                        {fuelDisplayUnit === 'gal' ? ((log.liters || 0) * 0.264172).toFixed(1) : (log.liters || 0)}{fuelDisplayUnit} @ {(log.odometer || 0).toLocaleString()} {distanceUnit}
                       </p>
                      <p className="text-xs" style={{ color: '#64748B', fontWeight: '400' }}>
                        {new Date(log.date).toLocaleDateString('en-US', {
@@ -628,7 +638,7 @@ const Dashboard = () => {
                           : 'var(--accent-blue)'
                       }}
                     >
-                      {log.mileage.toFixed(1)}
+                      {(log.mileage || 0).toFixed(1)}
                      </p>
                      <span className="text-xs font-medium" style={{ color: '#64748B' }}>
                        {efficiencyUnit}

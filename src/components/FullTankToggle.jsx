@@ -27,7 +27,9 @@ const FullTankToggle = ({ checked, onChange, tankCapacity, showLearnMore = true 
   const [showLearnMoreModal, setShowLearnMoreModal] = useState(false);
 
   const handleToggleChange = (e) => {
-    onChange(e.target.checked);
+    if (typeof onChange === 'function') {
+      onChange(e.target.checked);
+    }
   };
 
   const handleLearnMore = (e) => {

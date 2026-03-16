@@ -1,8 +1,9 @@
 /**
- * Vehicle API Service - FuelEconomy.gov Integration
+ * Vehicle API Service - Local EPA Data Integration
  *
- * Uses the free EPA FuelEconomy.gov API to fetch vehicle data
- * API Docs: https://www.fueleconomy.gov/feg/ws/index.shtml
+ * Uses locally bundled EPA FuelEconomy.gov data (vehicles-epa.json) instead of
+ * the remote API, ensuring the app works offline and without API dependency.
+ * Source data: EPA FuelEconomy.gov vehicles.csv (publicly available dataset)
  */
 
 import { getFuelTankCapacity, estimateEnhancedTankCapacity } from './fuelCapacityService';
@@ -16,245 +17,199 @@ import {
 // Re-export for backward compatibility
 export const estimateFuelTankCapacity = estimateEnhancedTankCapacity;
 
-// API Configuration
-// In production: use backend proxy server
-// In development: can use direct API or proxy depending on VITE_API_BASE_URL
-const USE_PROXY = import.meta.env.VITE_USE_PROXY === 'true';
-const PROXY_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/fueleconomy';
-const EPA_BASE_URL = 'https://www.fueleconomy.gov/ws/rest';
+// ============================================
+// Local EPA Data Loader
+// ============================================
 
-// Determine which base URL to use
-const BASE_URL = USE_PROXY ? PROXY_BASE_URL : EPA_BASE_URL;
-
-// Cache for API responses to minimize calls
-const apiCache = new Map();
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+let epaDataCache = null;
+let epaDataLoadPromise = null;
+/** Lazy reverse-lookup: vehicleId (string) -> "year|make|model" key */
+let epaIdKeyMap = null;
 
 /**
- * Make an API request with caching
- * @param {string} endpoint
- * @returns {Promise<any>}
+ * Load the local EPA vehicle database (vehicles-epa.json).
+ * The file is fetched once and cached for the session.
+ * @returns {Promise<Object>}
  */
-const fetchWithProxy = async (endpoint) => {
-    const cacheKey = endpoint;
-    const cached = apiCache.get(cacheKey);
+const loadEpaData = () => {
+    if (epaDataCache) return Promise.resolve(epaDataCache);
+    if (epaDataLoadPromise) return epaDataLoadPromise;
 
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-        return cached.data;
-    }
-
-    try {
-        // Construct URL based on proxy mode
-        let url;
-        if (USE_PROXY) {
-            // Using backend proxy: prepend proxy base URL
-            url = `${BASE_URL}/${endpoint}`;
-        } else {
-            // Direct API call (development mode with Vite proxy)
-            url = `${BASE_URL}/${endpoint}`;
-        }
-
-        const response = await fetch(url, {
-            headers: {
-                'Accept': 'application/json',
-            },
+    epaDataLoadPromise = fetch('/data/vehicles-epa.json')
+        .then(res => {
+            if (!res.ok) throw new Error(`Failed to load EPA data: ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            epaDataCache = data;
+            epaDataLoadPromise = null;
+            return data;
+        })
+        .catch(err => {
+            epaDataLoadPromise = null;
+            console.error('[VehicleAPI] Could not load vehicles-epa.json:', err);
+            return { years: [], makesByYear: {}, modelsByYearMake: {}, variantsByYearMakeModel: {}, vehicleDetails: {} };
         });
 
-        if (!response.ok) {
-            throw new Error(`API request failed: ${response.status}`);
-        }
-
-        const data = await response.json();
-        apiCache.set(cacheKey, { data, timestamp: Date.now() });
-        return data;
-    } catch (error) {
-        console.error('Vehicle API error:', error);
-        throw error;
-    }
+    return epaDataLoadPromise;
 };
 
 /**
- * Fetch available model years (1984 - present)
+ * Build (once) a map from vehicle ID (string) to the "year|make|model" key.
+ * Used for fast year/make/model resolution in fetchVehicleDetails.
+ */
+const getIdKeyMap = async () => {
+    if (epaIdKeyMap) return epaIdKeyMap;
+    const data = await loadEpaData();
+    epaIdKeyMap = {};
+    for (const [key, variants] of Object.entries(data.variantsByYearMakeModel || {})) {
+        for (const v of variants) {
+            epaIdKeyMap[String(v.value)] = key;
+        }
+    }
+    return epaIdKeyMap;
+};
+
+/**
+ * Fetch available model years from local EPA data
  * @returns {Promise<Array<{text: string, value: string}>>}
  */
 export const fetchYears = async () => {
-    try {
-        const data = await fetchWithProxy('/vehicle/menu/year');
-        return data.menuItem || [];
-    } catch {
-        // Fallback: generate years from 1984 to current year
-        const currentYear = new Date().getFullYear();
-        const years = [];
-        for (let year = currentYear + 1; year >= 1984; year--) {
-            years.push({ text: String(year), value: String(year) });
-        }
-        return years;
-    }
+    const data = await loadEpaData();
+    return (data.years || []).map(y => ({ text: String(y), value: String(y) }));
 };
 
 /**
- * Fetch makes for a given year
+ * Fetch makes for a given year from local EPA data
  * @param {string|number} year
  * @returns {Promise<Array<{text: string, value: string}>>}
  */
 export const fetchMakes = async (year) => {
-    // Validate year before API call
     const yearValidation = validateYear(year);
-
     if (!yearValidation.valid) {
-        console.error('Invalid year parameter:', yearValidation.error);
-        // Security log: potential API abuse attempt
-        console.warn('Security: Invalid year input detected:', { input: year, error: yearValidation.error });
+        console.warn('[VehicleAPI] Invalid year input:', yearValidation.error);
         return [];
     }
 
-    try {
-        const data = await fetchWithProxy(`/vehicle/menu/make?year=${yearValidation.value}`);
-        return data.menuItem || [];
-    } catch (error) {
-        console.error('Error fetching makes:', error);
-        return [];
-    }
+    const data = await loadEpaData();
+    const makes = data.makesByYear?.[String(yearValidation.value)] || [];
+    return makes.map(m => ({ text: m, value: m }));
 };
 
 /**
- * Fetch models for a given year and make
+ * Fetch models for a given year and make from local EPA data
  * @param {string|number} year
  * @param {string} make
  * @returns {Promise<Array<{text: string, value: string}>>}
  */
 export const fetchModels = async (year, make) => {
-    // Validate inputs
     const yearValidation = validateYear(year);
     const makeValidation = validateMake(make);
 
     if (!yearValidation.valid) {
-        console.error('Invalid year parameter:', yearValidation.error);
-        console.warn('Security: Invalid year input detected:', { input: year, error: yearValidation.error });
+        console.warn('[VehicleAPI] Invalid year input:', yearValidation.error);
         return [];
     }
-
     if (!makeValidation.valid) {
-        console.error('Invalid make parameter:', makeValidation.error);
-        console.warn('Security: Invalid make input detected:', { input: make, error: makeValidation.error });
+        console.warn('[VehicleAPI] Invalid make input:', makeValidation.error);
         return [];
     }
 
-    try {
-        const data = await fetchWithProxy(
-            `/vehicle/menu/model?year=${yearValidation.value}&make=${encodeURIComponent(makeValidation.value)}`
-        );
-        return data.menuItem || [];
-    } catch (error) {
-        console.error('Error fetching models:', error);
-        return [];
-    }
+    const data = await loadEpaData();
+    const key = `${yearValidation.value}|${makeValidation.value}`;
+    const models = data.modelsByYearMake?.[key] || [];
+    return models.map(m => ({ text: m, value: m }));
 };
 
 /**
- * Fetch vehicle options/variants for a given year, make, and model
- * Returns vehicle IDs that can be used to fetch full details
+ * Fetch vehicle variants for a given year, make, and model from local EPA data.
+ * Returns [{text, value}] where value is the EPA vehicle ID (integer).
  * @param {string|number} year
  * @param {string} make
  * @param {string} model
- * @returns {Promise<Array<{text: string, value: string}>>}
+ * @returns {Promise<Array<{text: string, value: number}>>}
  */
 export const fetchOptions = async (year, make, model) => {
-    // Validate all inputs
     const yearValidation = validateYear(year);
     const makeValidation = validateMake(make);
     const modelValidation = validateModel(model);
 
     if (!yearValidation.valid) {
-        console.error('Invalid year parameter:', yearValidation.error);
-        console.warn('Security: Invalid year input detected:', { input: year, error: yearValidation.error });
+        console.warn('[VehicleAPI] Invalid year input:', yearValidation.error);
         return [];
     }
-
     if (!makeValidation.valid) {
-        console.error('Invalid make parameter:', makeValidation.error);
-        console.warn('Security: Invalid make input detected:', { input: make, error: makeValidation.error });
+        console.warn('[VehicleAPI] Invalid make input:', makeValidation.error);
         return [];
     }
-
     if (!modelValidation.valid) {
-        console.error('Invalid model parameter:', modelValidation.error);
-        console.warn('Security: Invalid model input detected:', { input: model, error: modelValidation.error });
+        console.warn('[VehicleAPI] Invalid model input:', modelValidation.error);
         return [];
     }
 
-    try {
-        const data = await fetchWithProxy(
-            `/vehicle/menu/options?year=${yearValidation.value}&make=${encodeURIComponent(makeValidation.value)}&model=${encodeURIComponent(modelValidation.value)}`
-        );
-        // Normalize - API may return single object or array
-        const items = data.menuItem;
-        if (!items) return [];
-        return Array.isArray(items) ? items : [items];
-    } catch (error) {
-        console.error('Error fetching options:', error);
-        return [];
-    }
+    const data = await loadEpaData();
+    const key = `${yearValidation.value}|${makeValidation.value}|${modelValidation.value}`;
+    return data.variantsByYearMakeModel?.[key] || [];
 };
 
 /**
- * Fetch full vehicle details by vehicle ID
+ * Fetch full vehicle details by EPA vehicle ID from local data.
  * @param {string|number} vehicleId
  * @returns {Promise<Object|null>}
  */
 export const fetchVehicleDetails = async (vehicleId) => {
-    // Validate vehicle ID
     const idValidation = validateVehicleId(vehicleId);
-
     if (!idValidation.valid) {
-        console.error('Invalid vehicle ID parameter:', idValidation.error);
-        console.warn('Security: Invalid vehicle ID input detected:', { input: vehicleId, error: idValidation.error });
+        console.warn('[VehicleAPI] Invalid vehicle ID:', idValidation.error);
         return null;
     }
 
-    try {
-        const data = await fetchWithProxy(`/vehicle/${idValidation.value}`);
-
-        // Create vehicle object with EPA data
-        const vehicle = {
-            id: data.id,
-            year: parseInt(data.year, 10),
-            make: data.make,
-            model: data.model,
-            variant: data.trany || data.VClass || '',
-
-            // MPG data (convert to km/L if needed, but keeping MPG for EPA comparison)
-            cityMpg: parseFloat(data.city08) || null,
-            highwayMpg: parseFloat(data.highway08) || null,
-            combinedMpg: parseFloat(data.comb08) || null,
-
-            // Additional info
-            fuelType: data.fuelType || data.fuelType1 || 'Regular Gasoline',
-            cylinders: parseInt(data.cylinders, 10) || null,
-            displacement: parseFloat(data.displ) || null,
-            transmission: data.trany || '',
-            driveType: data.drive || '',
-            vehicleClass: data.VClass || '',
-
-            // CO2 emissions
-            co2: parseFloat(data.co2TailpipeGpm) || null,
-        };
-
-        // Fetch enhanced fuel tank capacity with metadata
-        const capacityResult = await getFuelTankCapacity(vehicle);
-
-        if (capacityResult && capacityResult.capacity) {
-            vehicle.tankCapacity = capacityResult.capacity;
-            vehicle.tankCapacitySource = capacityResult.source;
-            vehicle.tankCapacityConfidence = capacityResult.confidence;
-            vehicle.tankCapacityDescription = capacityResult.description;
-        }
-
-        return vehicle;
-    } catch (error) {
-        console.error('Error fetching vehicle details:', error);
+    const data = await loadEpaData();
+    const raw = data.vehicleDetails?.[String(idValidation.value)];
+    if (!raw) {
+        console.warn('[VehicleAPI] Vehicle not found in local data:', idValidation.value);
         return null;
     }
+
+    const vehicle = {
+        id: idValidation.value,
+        cityMpg: raw.c || null,
+        highwayMpg: raw.h || null,
+        combinedMpg: raw.m || null,
+        fuelType: raw.f || 'Regular Gasoline',
+        cylinders: raw.y || null,
+        displacement: raw.d || null,
+        transmission: raw.t || '',
+        driveType: raw.dr || '',
+        vehicleClass: raw.vc || '',
+        co2: raw.co2 || null,
+        dataSource: 'local-epa',
+    };
+
+    // Resolve year/make/model from the reverse-lookup map (O(1))
+    const idKeyMap = await getIdKeyMap();
+    const keyEntry = idKeyMap[String(idValidation.value)];
+    if (keyEntry) {
+        const [yearStr, make, model] = keyEntry.split('|');
+        vehicle.year = parseInt(yearStr, 10);
+        vehicle.make = make;
+        vehicle.model = model;
+        // Find variant text from the variants array
+        const variants = data.variantsByYearMakeModel?.[keyEntry] || [];
+        const match = variants.find(v => String(v.value) === String(idValidation.value));
+        vehicle.variant = match?.text || '';
+    }
+
+    // Estimate tank capacity from vehicle class / make / model
+    const capacityResult = await getFuelTankCapacity(vehicle);
+    if (capacityResult?.capacity) {
+        vehicle.tankCapacity = capacityResult.capacity;
+        vehicle.tankCapacitySource = capacityResult.source;
+        vehicle.tankCapacityConfidence = capacityResult.confidence;
+        vehicle.tankCapacityDescription = capacityResult.description;
+    }
+
+    return vehicle;
 };
 
 /**
@@ -265,7 +220,7 @@ export const fetchVehicleDetails = async (vehicleId) => {
 export const mpgToKmPerLiter = (mpg) => {
     if (!mpg || isNaN(mpg)) return null;
     // 1 MPG = 0.425144 km/L
-    return Math.round(mpg * 0.425144 * 10) / 10;
+    return parseFloat((mpg * 0.425144).toFixed(2));
 };
 
 /**
@@ -275,7 +230,8 @@ export const mpgToKmPerLiter = (mpg) => {
  */
 export const kmPerLiterToMpg = (kmPerLiter) => {
     if (!kmPerLiter || isNaN(kmPerLiter)) return null;
-    return Math.round(kmPerLiter / 0.425144 * 10) / 10;
+    // 1 km/L = 2.35215 MPG
+    return parseFloat((kmPerLiter * 2.35215).toFixed(2));
 };
 
 /**
@@ -299,10 +255,12 @@ export const searchVehicle = async (year, make, model) => {
 };
 
 /**
- * Clear the API cache
+ * Clear the local EPA data cache (forces reload on next request)
  */
 export const clearCache = () => {
-    apiCache.clear();
+    epaDataCache = null;
+    epaDataLoadPromise = null;
+    epaIdKeyMap = null;
 };
 
 // ============================================

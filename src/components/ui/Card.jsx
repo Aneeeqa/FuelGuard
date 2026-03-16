@@ -15,10 +15,13 @@ const Card = ({
   variant = 'default',
   interactive = false,
   gradient = false,
+  title,
+  onClick,
   ...props
 }) => {
   const paddingSizes = {
     none: '',
+    false: '',
     sm: 'p-3',
     default: 'p-4',
     lg: 'p-5',
@@ -40,15 +43,20 @@ const Card = ({
     fuel: 'bg-gradient-fuel',
   };
 
+  // Resolve padding - support boolean false
+  const resolvedPadding = padding === false ? 'none' : padding;
+  // Auto-detect interactive from onClick
+  const isInteractive = interactive || !!onClick;
+
   return (
     <div
       className={clsx(
         'rounded-xl transition-all duration-300',
         variants[variant],
-        paddingSizes[padding],
-        interactive && 'cursor-pointer hover-lift active-scale',
+        paddingSizes[resolvedPadding] ?? paddingSizes.default,
+        isInteractive && 'cursor-pointer hover-lift active-scale',
         !gradient && 'shadow-sm',
-        interactive && !gradient && 'shadow-md hover:shadow-lg',
+        isInteractive && !gradient && 'shadow-md hover:shadow-lg',
         className
       )}
       style={{
@@ -60,8 +68,12 @@ const Card = ({
         borderColor: 'var(--border-color)',
         color: gradient ? '#fff' : undefined,
       }}
+      onClick={onClick}
+      tabIndex={isInteractive ? 0 : undefined}
+      role="article"
       {...props}
     >
+      {title && <Card.Title>{title}</Card.Title>}
       {children}
     </div>
   );

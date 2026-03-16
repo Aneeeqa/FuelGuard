@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react';
+import { forwardRef, useState, useId } from 'react';
 import { clsx } from 'clsx';
 import { Eye, EyeSlash, MagnifyingGlass, MapPin, Drop, Calendar } from '@phosphor-icons/react';
 
@@ -26,6 +26,8 @@ const Input = forwardRef(({
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [hasValue, setHasValue] = useState(false);
+  const reactId = useId();
+  const inputId = props.id || (label ? `input-${label.toLowerCase().replace(/\s+/g, '-')}-${reactId}` : undefined);
 
   const inputType = type === 'password' && showPassword ? 'text' : type;
 
@@ -59,8 +61,10 @@ const Input = forwardRef(({
       <div className={clsx('relative w-full', className)}>
         <input
           ref={ref}
+          id={inputId}
           type={inputType}
           inputMode={inputMode}
+          aria-invalid={!!error || undefined}
           className={clsx(
             'w-full min-h-[52px] px-4 pt-6 pb-2 text-base rounded-xl border',
             'transition-all duration-200 bg-transparent',
@@ -86,6 +90,7 @@ const Input = forwardRef(({
           {...props}
         />
         <label
+          htmlFor={inputId}
           className={clsx(
             'absolute left-4 transition-all duration-200 pointer-events-none text-sm',
             isFocused || hasValue
@@ -109,7 +114,7 @@ const Input = forwardRef(({
              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 transition-colors"
              style={{ color: 'var(--text-muted)' }}
            >
-             {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+             {showPassword ? <Eye size={20} /> : <EyeSlash size={20} />}
            </button>
          )}
         {error && (
@@ -125,7 +130,7 @@ const Input = forwardRef(({
   return (
     <div className={clsx('w-full', className)}>
       {label && (
-        <label className="block text-sm font-medium mb-2 transition-colors duration-200" style={{ color: 'var(--text-secondary)' }}>
+        <label htmlFor={inputId} className="block text-sm font-medium mb-2 transition-colors duration-200" style={{ color: 'var(--text-secondary)' }}>
           {label}
         </label>
       )}
@@ -139,8 +144,10 @@ const Input = forwardRef(({
          )}
         <input
           ref={ref}
+          id={inputId}
           type={inputType}
           inputMode={inputMode}
+          aria-invalid={!!error || undefined}
           className={clsx(
             'w-full min-h-[48px] px-4 py-3 text-base rounded-xl border',
             'transition-all duration-200',
@@ -168,7 +175,7 @@ const Input = forwardRef(({
              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 transition-colors rounded-lg hover:bg-black/5 active:bg-black/10"
              style={{ color: 'var(--text-muted)' }}
            >
-             {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+             {showPassword ? <Eye size={20} /> : <EyeSlash size={20} />}
            </button>
          )}
       </div>

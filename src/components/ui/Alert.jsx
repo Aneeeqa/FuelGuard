@@ -1,24 +1,47 @@
 import { clsx } from 'clsx';
 import { CheckCircle, Warning, WarningCircle, Info, XCircle, X } from '@phosphor-icons/react';
+import { useEffect, useRef } from 'react';
 
 /**
  * Alert component for status banners
- * - Color-coded: success (green), warning (yellow), danger (red), info (blue)
- * - Optional dismiss button
+ * - Color-coded: success (green), warning (yellow), danger/error (red), info (blue)
+ * - Optional dismiss button (dismissible or showDismiss)
  * - Icon support
+ * - Auto-dismiss with configurable duration
  * - Fade-in animation
  * - Glow effects for danger variant
  */
 const Alert = ({
   children,
+  message,
   variant = 'info',
   title,
   icon: CustomIcon,
   dismissible = false,
+  showDismiss,
   onDismiss,
+  autoDismiss = false,
+  duration = 3000,
   className,
   ...props
 }) => {
+  // Map variant aliases
+  const resolvedVariant = variant === 'error' ? 'danger' : variant;
+
+  // showDismiss is an alias for dismissible
+  const isDismissible = showDismiss !== undefined ? showDismiss : dismissible;
+
+  // Auto-dismiss timer
+  const timerRef = useRef(null);
+  useEffect(() => {
+    if (autoDismiss && onDismiss && duration > 0) {
+      timerRef.current = setTimeout(() => {
+        onDismiss();
+      }, duration);
+      return () => clearTimeout(timerRef.current);
+    }
+  }, [autoDismiss, onDismiss, duration]);
+
   const variants = {
     success: {
       container: 'glass border-l-4 animate-fade-in',
@@ -58,8 +81,9 @@ const Alert = ({
     },
   };
 
-  const config = variants[variant];
+  const config = variants[resolvedVariant] || variants.info;
   const Icon = CustomIcon || config.icon;
+  const content = children || message;
 
   return (
     <div
@@ -67,23 +91,23 @@ const Alert = ({
         'rounded-xl border p-4 flex items-start gap-3 transition-all duration-200',
         config.container,
         config.borderClass,
-        dismissible && 'pr-10',
+        isDismissible && 'pr-10',
         className
       )}
       style={{
-        borderColor: `var(--accent-${variant === 'info' ? 'blue' : variant})`,
-        backgroundColor: `color-mix(in srgb, var(--accent-${variant === 'info' ? 'blue' : variant}) 5%, var(--bg-secondary))`,
+        borderColor: `var(--accent-${resolvedVariant === 'info' ? 'blue' : resolvedVariant})`,
+        backgroundColor: `color-mix(in srgb, var(--accent-${resolvedVariant === 'info' ? 'blue' : resolvedVariant}) 5%, var(--bg-secondary))`,
       }}
       role="alert"
       {...props}
     >
       <div
-        className={clsx('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5', config.iconBg)}
+        className={clsx('icon-wrapper w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5', config.iconBg)}
       >
         <Icon
           size={20}
-          weight={variant === 'danger' || variant === 'warning' ? 'fill' : 'regular'}
-          className={clsx(config.iconColor)}
+          weight={resolvedVariant === 'danger' || resolvedVariant === 'warning' ? 'fill' : 'regular'}
+          className={clsx('icon', config.iconColor)}
         />
       </div>
 
@@ -91,12 +115,12 @@ const Alert = ({
         {title && (
           <h4 className={clsx('font-semibold mb-1', config.titleColor)} style={{ fontWeight: '600' }}>{title}</h4>
         )}
-        <div className={clsx('text-sm leading-relaxed', config.textColor)}>{children}</div>
+        <div className={clsx('text-sm leading-relaxed', config.textColor)}>{content}</div>
       </div>
 
-      {dismissible && onDismiss && (
+      {isDismissible && (
         <button
-          onClick={onDismiss}
+          onClick={() => onDismiss?.()}
           className={clsx(
             'flex-shrink-0 p-2 rounded-xl transition-colors absolute top-4 right-4',
             'hover:bg-black/5 active:bg-black/10',
