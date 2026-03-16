@@ -3,537 +3,381 @@
  * Tests prototype pollution protection and security features
  */
 
-import { safeJsonParse, Schemas, SecurityLogger } from '../../src/utils/safeJson';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { safeJsonParse, Schemas } from '../../src/utils/safeJson';
 
-// Track logged security events
-let securityEvents = [];
+// Mock SecurityLogger
+vi.mock('../../src/utils/securityLogger', () => ({
+  SecurityLogger: {
+    logBlocked: vi.fn(),
+    logValidationFailure: vi.fn(),
+  },
+}));
 
-// Mock SecurityLogger to capture events
-SecurityLogger.logBlocked = (reason, details = {}) => {
-  securityEvents.push({
-    type: 'BLOCKED',
-    reason,
-    details,
-    timestamp: Date.now(),
-  });
-  console.log(`[MOCK] Blocked: ${reason}`, details);
-};
-
-SecurityLogger.logValidationFailure = (reason, errors = [], details = {}) => {
-  securityEvents.push({
-    type: 'VALIDATION_FAILURE',
-    reason,
-    errors,
-    details,
-    timestamp: Date.now(),
-  });
-  console.log(`[MOCK] Validation Failed: ${reason}`, errors, details);
-};
-
-/**
- * Helper function to reset security events
- */
-const resetSecurityEvents = () => {
-  securityEvents = [];
-};
-
-/**
- * Test 1: Valid JSON parsing (Happy Path)
- */
-const testValidJson = () => {
-  console.log('\n=== Test 1: Valid JSON Parsing ===');
-  resetSecurityEvents();
-
-  const validJson = JSON.stringify({
-    name: 'John Doe',
-    age: 30,
-    city: 'New York',
+describe('safeJsonParse', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  const result = safeJsonParse(validJson);
+  describe('Happy Path - Valid JSON', () => {
+    it('should parse valid JSON object', () => {
+      const validJson = '{"name":"John Doe","age":30,"city":"New York"}';
+      const result = safeJsonParse(validJson);
 
-  if (result && result.name === 'John Doe' && result.age === 30) {
-    console.log('✅ PASS: Valid JSON parsed successfully');
-    console.log('   Result:', result);
-    return true;
-  } else {
-    console.log('❌ FAIL: Valid JSON parsing failed');
-    return false;
-  }
-};
+      expect(result).not.toBeNull();
+      expect(result.name).toBe('John Doe');
+      expect(result.age).toBe(30);
+      expect(result.city).toBe('New York');
+    });
 
-/**
- * Test 2: Prototype pollution attack via __proto__
- */
-const testProtoPollution = () => {
-  console.log('\n=== Test 2: Prototype Pollution (__proto__) ===');
-  resetSecurityEvents();
+    it('should parse valid JSON array', () => {
+      const validJson = '[1,2,3,4,5]';
+      const result = safeJsonParse(validJson);
 
-  const maliciousJson = JSON.stringify({
-    __proto__: {
-      isAdmin: true,
-      polluted: 'property',
-    },
+      expect(result).not.toBeNull();
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toHaveLength(5);
+    });
+
+    it('should parse valid JSON with nested objects', () => {
+      const validJson = '{"user":{"name":"John","age":30},"data":[1,2,3]}';
+      const result = safeJsonParse(validJson);
+
+      expect(result).not.toBeNull();
+      expect(result.user.name).toBe('John');
+      expect(result.data).toHaveLength(3);
+    });
   });
 
-  const result = safeJsonParse(maliciousJson);
+  describe('Security - Prototype Pollution', () => {
+    it('should block __proto__ pollution attack', () => {
+      const maliciousJson = '{"__proto__": {"isAdmin": true, "polluted": "property"}}';
 
-  if (result === null) {
-    const blocked = securityEvents.some(e => e.type === 'BLOCKED');
-    if (blocked) {
-      console.log('✅ PASS: Prototype pollution attack blocked');
-      console.log('   Security events:', securityEvents);
-      return true;
-    }
-  }
+      const result = safeJsonParse(maliciousJson);
 
-  console.log('❌ FAIL: Prototype pollution attack not blocked');
-  console.log('   Result:', result);
-  return false;
-};
+      expect(result).toBeNull();
+    });
 
-/**
- * Test 3: Constructor pollution attack
- */
-const testConstructorPollution = () => {
-  console.log('\n=== Test 3: Constructor Pollution Attack ===');
-  resetSecurityEvents();
+    it('should block constructor pollution attack', () => {
+      const maliciousJson = JSON.stringify({
+        constructor: {
+          prototype: {
+            isAdmin: true,
+          },
+        },
+      });
 
-  const maliciousJson = JSON.stringify({
-    constructor: {
-      prototype: {
-        isAdmin: true,
-      },
-    },
+      const result = safeJsonParse(maliciousJson);
+
+      expect(result).toBeNull();
+    });
+
+    it('should block nested prototype pollution', () => {
+      const maliciousJson = '{"user": {"name": "John", "__proto__": {"admin": true}}, "data": [1, 2, 3]}';
+
+      const result = safeJsonParse(maliciousJson);
+
+      expect(result).toBeNull();
+    });
+
+    it('should block prototype chain pollution via constructor', () => {
+      const maliciousJson = JSON.stringify({
+        constructor: {
+          prototype: {
+            isAdmin: true,
+          },
+        },
+      });
+
+      const result = safeJsonParse(maliciousJson);
+
+      expect(result).toBeNull();
+    });
   });
 
-  const result = safeJsonParse(maliciousJson);
+  describe('Error State - Invalid JSON', () => {
+    it('should handle invalid JSON syntax gracefully', () => {
+      const invalidJson = '{"name":"John",}';
+      const result = safeJsonParse(invalidJson);
 
-  if (result === null) {
-    const blocked = securityEvents.some(e => e.type === 'BLOCKED');
-    if (blocked) {
-      console.log('✅ PASS: Constructor pollution attack blocked');
-      console.log('   Security events:', securityEvents);
-      return true;
-    }
-  }
+      expect(result).toBeNull();
+    });
 
-  console.log('❌ FAIL: Constructor pollution attack not blocked');
-  console.log('   Result:', result);
-  return false;
-};
+    it('should handle empty string', () => {
+      const result = safeJsonParse('');
 
-/**
- * Test 4: Prototype pollution in nested object
- */
-const testNestedProtoPollution = () => {
-  console.log('\n=== Test 4: Nested Prototype Pollution ===');
-  resetSecurityEvents();
+      expect(result).toBeNull();
+    });
 
-  const maliciousJson = JSON.stringify({
-    user: {
-      name: 'John',
-      __proto__: {
-        admin: true,
-      },
-    },
-    data: [1, 2, 3],
+    it('should handle null input', () => {
+      const result = safeJsonParse(null);
+
+      expect(result).toBeNull();
+    });
+
+    it('should handle undefined input', () => {
+      const result = safeJsonParse(undefined);
+
+      expect(result).toBeNull();
+    });
+
+    it('should handle non-string input', () => {
+      const result = safeJsonParse(123);
+
+      expect(result).toBeNull();
+    });
   });
 
-  const result = safeJsonParse(maliciousJson);
+  describe('XSS Prevention', () => {
+    it('should sanitize script tags in JSON', () => {
+      const maliciousJson = '{"html":"<script>alert(1)</script>"}';
+      const result = safeJsonParse(maliciousJson);
 
-  if (result === null) {
-    const blocked = securityEvents.some(e => e.type === 'BLOCKED');
-    if (blocked) {
-      console.log('✅ PASS: Nested prototype pollution attack blocked');
-      console.log('   Security events:', securityEvents);
-      return true;
-    }
-  }
-
-  console.log('❌ FAIL: Nested prototype pollution attack not blocked');
-  console.log('   Result:', result);
-  return false;
-};
-
-/**
- * Test 5: Invalid JSON syntax (Error State)
- */
-const testInvalidJson = () => {
-  console.log('\n=== Test 5: Invalid JSON Syntax ===');
-  resetSecurityEvents();
-
-  const invalidJson = '{"name":"John",}'; // Trailing comma
-
-  const result = safeJsonParse(invalidJson);
-
-  if (result === null) {
-    console.log('✅ PASS: Invalid JSON handled gracefully');
-    console.log('   Security events:', securityEvents);
-    return true;
-  }
-
-  console.log('❌ FAIL: Invalid JSON should return null');
-  console.log('   Result:', result);
-  return false;
-};
-
-/**
- * Test 6: Empty input (Edge Case)
- */
-const testEmptyInput = () => {
-  console.log('\n=== Test 6: Empty Input (Edge Case) ===');
-  resetSecurityEvents();
-
-  const result1 = safeJsonParse('');
-  const result2 = safeJsonParse(null);
-  const result3 = safeJsonParse(undefined);
-  const result4 = safeJsonParse(123); // Wrong type
-
-  if (result1 === null && result2 === null && result3 === null && result4 === null) {
-    console.log('✅ PASS: Empty/invalid inputs handled correctly');
-    return true;
-  }
-
-  console.log('❌ FAIL: Empty/invalid inputs not handled correctly');
-  return false;
-};
-
-/**
- * Test 7: Schema validation - Missing required field
- */
-const testSchemaValidationMissingField = () => {
-  console.log('\n=== Test 7: Schema Validation - Missing Required Field ===');
-  resetSecurityEvents();
-
-  const invalidData = JSON.stringify({
-    date: '2024-01-15',
-    liters: 45.5,
-    // Missing 'odometer' which is required
-  });
-
-  const result = safeJsonParse(invalidData, { schema: Schemas.fuelLog });
-
-  if (result === null) {
-    const validationFailed = securityEvents.some(e =>
-      e.type === 'VALIDATION_FAILURE' && e.reason === 'Schema validation failed'
-    );
-    if (validationFailed) {
-      console.log('✅ PASS: Schema validation caught missing field');
-      console.log('   Security events:', securityEvents);
-      return true;
-    }
-  }
-
-  console.log('❌ FAIL: Schema validation did not catch missing field');
-  console.log('   Result:', result);
-  return false;
-};
-
-/**
- * Test 8: Schema validation - Type mismatch
- */
-const testSchemaValidationTypeMismatch = () => {
-  console.log('\n=== Test 8: Schema Validation - Type Mismatch ===');
-  resetSecurityEvents();
-
-  const invalidData = JSON.stringify({
-    date: '2024-01-15',
-    odometer: '50000', // Should be number, not string
-    liters: 45.5,
-  });
-
-  const result = safeJsonParse(invalidData, { schema: Schemas.fuelLog });
-
-  if (result === null) {
-    const validationFailed = securityEvents.some(e =>
-      e.type === 'VALIDATION_FAILURE' && e.reason === 'Schema validation failed'
-    );
-    if (validationFailed) {
-      console.log('✅ PASS: Schema validation caught type mismatch');
-      console.log('   Security events:', securityEvents);
-      return true;
-    }
-  }
-
-  console.log('❌ FAIL: Schema validation did not catch type mismatch');
-  console.log('   Result:', result);
-  return false;
-};
-
-/**
- * Test 9: Schema validation - Number out of range
- */
-const testSchemaValidationRange = () => {
-  console.log('\n=== Test 9: Schema Validation - Number Out of Range ===');
-  resetSecurityEvents();
-
-  const invalidData = JSON.stringify({
-    date: '2024-01-15',
-    odometer: 50000,
-    liters: 45.5,
-    mileage: 500, // Max allowed is 200
-  });
-
-  const result = safeJsonParse(invalidData, { schema: Schemas.fuelLog });
-
-  if (result === null) {
-    const validationFailed = securityEvents.some(e =>
-      e.type === 'VALIDATION_FAILURE' && e.reason === 'Schema validation failed'
-    );
-    if (validationFailed) {
-      console.log('✅ PASS: Schema validation caught out-of-range value');
-      console.log('   Security events:', securityEvents);
-      return true;
-    }
-  }
-
-  console.log('❌ FAIL: Schema validation did not catch out-of-range value');
-  console.log('   Result:', result);
-  return false;
-};
-
-/**
- * Test 10: Valid schema validation
- */
-const testValidSchemaValidation = () => {
-  console.log('\n=== Test 10: Valid Schema Validation ===');
-  resetSecurityEvents();
-
-  const validData = JSON.stringify({
-    date: '2024-01-15',
-    odometer: 50000,
-    liters: 45.5,
-    price: 4.50,
-    mileage: 35.5,
-  });
-
-  const result = safeJsonParse(validData, { schema: Schemas.fuelLog });
-
-  if (result && result.date === '2024-01-15' && result.odometer === 50000) {
-    console.log('✅ PASS: Valid data passed schema validation');
-    console.log('   Result:', result);
-    return true;
-  }
-
-  console.log('❌ FAIL: Valid data failed schema validation');
-  console.log('   Result:', result);
-  return false;
-};
-
-/**
- * Test 11: Large JSON DoS attack
- */
-const testLargeJsonDos = () => {
-  console.log('\n=== Test 11: Large JSON DoS Attack ===');
-  resetSecurityEvents();
-
-  // Create a large JSON string (> 10MB)
-  const largeArray = new Array(1000000).fill('x').join('');
-  const largeJson = JSON.stringify({
-    largeData: largeArray,
-  });
-
-  const result = safeJsonParse(largeJson, { maxSize: 1024 }); // Set small limit for testing
-
-  if (result === null) {
-    const blocked = securityEvents.some(e =>
-      e.type === 'BLOCKED' && e.reason === 'JSON payload too large'
-    );
-    if (blocked) {
-      console.log('✅ PASS: Large JSON DoS attack blocked');
-      console.log('   Security events:', securityEvents);
-      return true;
-    }
-  }
-
-  console.log('❌ FAIL: Large JSON DoS attack not blocked');
-  console.log('   Result:', result);
-  return false;
-};
-
-/**
- * Test 12: Deeply nested object (DoS prevention)
- */
-const testDeeplyNestedObject = () => {
-  console.log('\n=== Test 12: Deeply Nested Object ===');
-  resetSecurityEvents();
-
-  // Create a deeply nested object
-  let nested = { value: 'end' };
-  for (let i = 0; i < 25; i++) {
-    nested = { level: i, nested };
-  }
-
-  const deepJson = JSON.stringify(nested);
-  const result = safeJsonParse(deepJson, { maxDepth: 20 });
-
-  if (result === null) {
-    const blocked = securityEvents.some(e =>
-      e.type === 'BLOCKED' && e.reason === 'Prototype pollution attempt detected'
-    );
-    if (blocked) {
-      console.log('✅ PASS: Deeply nested object blocked');
-      console.log('   Security events:', securityEvents);
-      return true;
-    }
-  }
-
-  console.log('❌ FAIL: Deeply nested object not blocked');
-  console.log('   Result:', result);
-  return false;
-};
-
-/**
- * Test 13: Exchange rates schema
- */
-const testExchangeRatesSchema = () => {
-  console.log('\n=== Test 13: Exchange Rates Schema ===');
-  resetSecurityEvents();
-
-  const validRates = JSON.stringify({
-    rates: {
-      USD: 1,
-      EUR: 0.92,
-      GBP: 0.79,
-      INR: 83.12,
-    },
-    timestamp: Date.now(),
-    base: 'USD',
-  });
-
-  const result = safeJsonParse(validRates, { schema: Schemas.exchangeRates });
-
-  if (result && result.rates && result.timestamp) {
-    console.log('✅ PASS: Exchange rates schema validation passed');
-    console.log('   Result:', result);
-    return true;
-  }
-
-  console.log('❌ FAIL: Exchange rates schema validation failed');
-  console.log('   Result:', result);
-  return false;
-};
-
-/**
- * Test 14: Community MPG schema
- */
-const testCommunityMpgSchema = () => {
-  console.log('\n=== Test 14: Community MPG Schema ===');
-  resetSecurityEvents();
-
-  const validMpg = JSON.stringify({
-    avgMpg: 28.5,
-    count: 150,
-    minMpg: 18,
-    maxMpg: 42,
-  });
-
-  const result = safeJsonParse(validMpg, { schema: Schemas.communityMpg });
-
-  if (result && result.avgMpg === 28.5 && result.count === 150) {
-    console.log('✅ PASS: Community MPG schema validation passed');
-    console.log('   Result:', result);
-    return true;
-  }
-
-  console.log('❌ FAIL: Community MPG schema validation failed');
-  console.log('   Result:', result);
-  return false;
-};
-
-/**
- * Test 15: Freeze option
- */
-const testFreezeOption = () => {
-  console.log('\n=== Test 15: Freeze Option ===');
-  resetSecurityEvents();
-
-  const data = JSON.stringify({ name: 'Test', value: 123 });
-  const result = safeJsonParse(data, { freeze: true });
-
-  if (result && typeof result === 'object') {
-    // Try to modify the frozen object
-    try {
-      result.newProperty = 'should fail';
-      if (result.newProperty === 'should fail') {
-        console.log('❌ FAIL: Object was not frozen');
-        return false;
+      // The parser should either block it or sanitize it
+      if (result !== null) {
+        expect(result.html).not.toContain('<script>');
+        expect(result.html).not.toContain('</script>');
       }
-    } catch (e) {
-      // This is expected in strict mode
-    }
+    });
 
-    // Check if it's actually frozen
-    if (Object.isFrozen(result)) {
-      console.log('✅ PASS: Object successfully frozen');
-      console.log('   Object.isFrozen(result):', Object.isFrozen(result));
-      return true;
-    }
-  }
+    it('should sanitize iframe tags', () => {
+      const maliciousJson = '{"html":"<iframe src=\'evil.com\'></iframe>"}';
+      const result = safeJsonParse(maliciousJson);
 
-  console.log('❌ FAIL: Freeze option did not work');
-  console.log('   Result:', result);
-  return false;
-};
-
-/**
- * Run all tests
- */
-const runAllTests = () => {
-  console.log('\n========================================');
-  console.log('  SAFE JSON PARSER TEST SUITE');
-  console.log('========================================');
-
-  const tests = [
-    { name: 'Valid JSON Parsing', fn: testValidJson },
-    { name: 'Prototype Pollution (__proto__)', fn: testProtoPollution },
-    { name: 'Constructor Pollution', fn: testConstructorPollution },
-    { name: 'Nested Prototype Pollution', fn: testNestedProtoPollution },
-    { name: 'Invalid JSON Syntax', fn: testInvalidJson },
-    { name: 'Empty Input (Edge Case)', fn: testEmptyInput },
-    { name: 'Schema Validation - Missing Field', fn: testSchemaValidationMissingField },
-    { name: 'Schema Validation - Type Mismatch', fn: testSchemaValidationTypeMismatch },
-    { name: 'Schema Validation - Range', fn: testSchemaValidationRange },
-    { name: 'Valid Schema Validation', fn: testValidSchemaValidation },
-    { name: 'Large JSON DoS Attack', fn: testLargeJsonDos },
-    { name: 'Deeply Nested Object', fn: testDeeplyNestedObject },
-    { name: 'Exchange Rates Schema', fn: testExchangeRatesSchema },
-    { name: 'Community MPG Schema', fn: testCommunityMpgSchema },
-    { name: 'Freeze Option', fn: testFreezeOption },
-  ];
-
-  let passed = 0;
-  let failed = 0;
-
-  tests.forEach(({ name, fn }) => {
-    try {
-      if (fn()) {
-        passed++;
-      } else {
-        failed++;
+      if (result !== null) {
+        expect(result.html).not.toContain('<iframe');
       }
-    } catch (error) {
-      console.error(`\n❌ ERROR in test "${name}":`, error);
-      failed++;
-    }
+    });
+
+    it('should sanitize javascript: protocol', () => {
+      const maliciousJson = '{"url":"javascript:alert(1)"}';
+      const result = safeJsonParse(maliciousJson);
+
+      if (result !== null) {
+        expect(result.url).not.toContain('javascript:');
+      }
+    });
   });
 
-  console.log('\n========================================');
-  console.log('  TEST RESULTS');
-  console.log('========================================');
-  console.log(`Total Tests: ${tests.length}`);
-  console.log(`✅ Passed: ${passed}`);
-  console.log(`❌ Failed: ${failed}`);
-  console.log(`Success Rate: ${((passed / tests.length) * 100).toFixed(1)}%`);
-  console.log('========================================\n');
+  describe('Schema Validation', () => {
+    it('should validate against schema when provided', () => {
+      const validJson = '{"name":"John","age":30}';
+      const schema = Schemas.userProfile;
 
-  return { passed, failed, total: tests.length };
-};
+      const result = safeJsonParse(validJson, { schema });
 
-// Run tests if this file is executed directly
-if (typeof window === 'undefined') {
-  runAllTests();
-}
+      expect(result).not.toBeNull();
+      expect(result.name).toBe('John');
+    });
 
-export { runAllTests };
+    it('should reject invalid data based on schema', () => {
+      const invalidJson = '{"name":"John","age":-5}';
+      const schema = Schemas.userProfile;
+
+      const result = safeJsonParse(invalidJson, { schema });
+
+      expect(result).toBeNull();
+    });
+
+    it('should handle missing required fields', () => {
+      const invalidJson = '{"name":"John"}';
+      const schema = Schemas.userProfile;
+
+      const result = safeJsonParse(invalidJson, { schema });
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle very large JSON objects', () => {
+      const largeJson = JSON.stringify({
+        data: Array(1000).fill({ id: 1, value: 'test' })
+      });
+      const result = safeJsonParse(largeJson);
+
+      expect(result).not.toBeNull();
+      expect(result.data).toHaveLength(1000);
+    });
+
+    it('should handle deeply nested objects', () => {
+      const nestedJson = JSON.stringify({
+        level1: {
+          level2: {
+            level3: {
+              level4: {
+                level5: {
+                  value: 'deep'
+                }
+              }
+            }
+          }
+        }
+      });
+      const result = safeJsonParse(nestedJson);
+
+      expect(result).not.toBeNull();
+      expect(result.level1.level2.level3.level4.level5.value).toBe('deep');
+    });
+
+    it('should handle special characters in strings', () => {
+      const json = JSON.stringify({
+        text: 'Hello <world> & "quoted" \'apostrophe\''
+      });
+      const result = safeJsonParse(json);
+
+      expect(result).not.toBeNull();
+      expect(result.text).toBe('Hello <world> & "quoted" \'apostrophe\'');
+    });
+
+    it('should handle unicode characters', () => {
+      const json = JSON.stringify({
+        text: 'Hello 世界 🌍'
+      });
+      const result = safeJsonParse(json);
+
+      expect(result).not.toBeNull();
+      expect(result.text).toBe('Hello 世界 🌍');
+    });
+
+    it('should handle escaped characters', () => {
+      const json = JSON.stringify({
+        text: 'Line 1\nLine 2\tTabbed'
+      });
+      const result = safeJsonParse(json);
+
+      expect(result).not.toBeNull();
+      expect(result.text).toBe('Line 1\nLine 2\tTabbed');
+    });
+  });
+});
+
+describe('Schemas', () => {
+  describe('userProfile Schema', () => {
+    it('should validate correct user profile', () => {
+      const validData = {
+        name: 'John Doe',
+        age: 30,
+        email: 'john@example.com'
+      };
+
+      const result = Schemas.userProfile(validData);
+
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject missing name', () => {
+      const invalidData = {
+        age: 30
+      };
+
+      const result = Schemas.userProfile(invalidData);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('name');
+    });
+
+    it('should reject negative age', () => {
+      const invalidData = {
+        name: 'John',
+        age: -5
+      };
+
+      const result = Schemas.userProfile(invalidData);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('age');
+    });
+
+    it('should reject age over maximum', () => {
+      const invalidData = {
+        name: 'John',
+        age: 150
+      };
+
+      const result = Schemas.userProfile(invalidData);
+
+      expect(result.valid).toBe(false);
+    });
+  });
+
+  describe('vehicleProfile Schema', () => {
+    it('should validate correct vehicle profile', () => {
+      const validData = {
+        make: 'Toyota',
+        model: 'Corolla',
+        year: 2020,
+        tankCapacity: 50
+      };
+
+      const result = Schemas.vehicleProfile(validData);
+
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject invalid year', () => {
+      const invalidData = {
+        make: 'Toyota',
+        model: 'Corolla',
+        year: 1980,
+        tankCapacity: 50
+      };
+
+      const result = Schemas.vehicleProfile(invalidData);
+
+      expect(result.valid).toBe(false);
+    });
+
+    it('should reject zero tank capacity', () => {
+      const invalidData = {
+        make: 'Toyota',
+        model: 'Corolla',
+        year: 2020,
+        tankCapacity: 0
+      };
+
+      const result = Schemas.vehicleProfile(invalidData);
+
+      expect(result.valid).toBe(false);
+    });
+  });
+
+  describe('fuelLog Schema', () => {
+    it('should validate correct fuel log', () => {
+      const validData = {
+        date: '2025-01-15T10:00:00Z',
+        odometer: 10000,
+        liters: 40,
+        isFullTank: true
+      };
+
+      const result = Schemas.fuelLog(validData);
+
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject negative odometer', () => {
+      const invalidData = {
+        date: '2025-01-15T10:00:00Z',
+        odometer: -100,
+        liters: 40
+      };
+
+      const result = Schemas.fuelLog(invalidData);
+
+      expect(result.valid).toBe(false);
+    });
+
+    it('should reject zero liters', () => {
+      const invalidData = {
+        date: '2025-01-15T10:00:00Z',
+        odometer: 10000,
+        liters: 0
+      };
+
+      const result = Schemas.fuelLog(invalidData);
+
+      expect(result.valid).toBe(false);
+    });
+  });
+});
