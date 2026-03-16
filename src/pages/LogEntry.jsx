@@ -73,7 +73,7 @@ const LogEntry = () => {
   const [userHasTyped, setUserHasTyped] = useState(false);
 
   // ========================================
-  // NEW: Tank-to-Tank Form State (Task 5)
+  // Tank-to-Tank Form State
   // ========================================
   const [isFullTank, setIsFullTank] = useState(false);
   const [fuelLevelBeforeFill, setFuelLevelBeforeFill] = useState(0);
@@ -150,7 +150,7 @@ const LogEntry = () => {
   }, [formData.liters, formData.pricePerLiter, formData.price, fuelUnit]);
 
   // ========================================
-  // NEW: Tank-to-Tank Auto-calculation (Task 5)
+  // Tank-to-Tank Auto-calculation
   // ========================================
   // Auto-calculate estimated fuel level before fill based on tank capacity and fuel amount
   useEffect(() => {
@@ -370,6 +370,8 @@ const LogEntry = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const [offlineSaved, setOfflineSaved] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -407,7 +409,7 @@ const LogEntry = () => {
       pumpName: formData.pumpName || null,
 
       // ========================================
-      // NEW: Tank-to-Tank Fields (Task 5)
+      // Tank-to-Tank Fields
       // ========================================
       // For 0 fuel entries, these should be null
       isFullTank: fuelAmountLiters > 0 ? isFullTank : false,
@@ -426,6 +428,14 @@ const LogEntry = () => {
         navigate('/history');
       }, 1500);
     } catch (error) {
+      // Entry was saved locally while offline — treat it as a success
+      if (error?.offlineSaved) {
+        setOfflineSaved(true);
+        setTimeout(() => {
+          navigate('/history');
+        }, 2000);
+        return;
+      }
       console.error('Failed to save entry:', error);
       setErrors(prev => ({ ...prev, submit: 'Failed to save entry. Please check your connection and try again.' }));
     } finally {
@@ -455,7 +465,7 @@ const LogEntry = () => {
   };
 
   // ========================================
-  // NEW: Handle Tank Capacity Edit (Task 5)
+  // Handle Tank Capacity Edit
   // ========================================
   const handleSaveTankCapacity = () => {
     const newCapacity = parseFloat(manualTankCapacity);
@@ -468,6 +478,26 @@ const LogEntry = () => {
     setManualTankCapacity('');
     setErrors(prev => ({ ...prev, tankCapacity: null }));
   };
+
+  if (offlineSaved) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
+        <div
+          className="w-20 h-20 rounded-full flex items-center justify-center mb-4 animate-bounce"
+          style={{ backgroundColor: 'color-mix(in srgb, #f59e0b 20%, transparent)' }}
+        >
+          <CheckCircle className="w-10 h-10" style={{ color: '#f59e0b' }} />
+        </div>
+        <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Saved Offline</h1>
+        <p className="mb-1" style={{ color: 'var(--text-muted)' }}>
+          Entry saved to your device.
+        </p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+          It will sync to the cloud automatically when you&apos;re back online.
+        </p>
+      </div>
+    );
+  }
 
   if (success) {
     return (
@@ -522,7 +552,7 @@ const LogEntry = () => {
       />
 
       {/* ======================================== */}
-      {/* NEW: Tank Capacity Edit Modal (Task 5) */}
+      {/* Tank Capacity Edit Modal */}
       {/* ======================================== */}
       {showTankCapacityEdit && (
         <div
@@ -1015,7 +1045,7 @@ const LogEntry = () => {
         </div>
 
         {/* ======================================== */}
-        {/* NEW: Tank Fill Information (Task 5) */}
+        {/* Tank Fill Information */}
         {/* ======================================== */}
         <div className="space-y-4">
           {/* Full Tank Toggle */}

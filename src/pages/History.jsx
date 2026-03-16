@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useFuelData } from '../hooks/useFuelData';
-import { Trash2, AlertTriangle, Filter, Download, Search, FileText, FileSpreadsheet, Calendar, Car, Droplet, Route, MapPin, TrendingUp, Activity, Clock, Flame } from 'lucide-react';
+import { Trash2, AlertTriangle, Filter, Download, Search, FileText, FileSpreadsheet, Calendar, Car, Droplet, Route, MapPin, TrendingUp, Activity, Clock, Flame, CloudOff } from 'lucide-react';
 import Skeleton from '../components/ui/Skeleton';
 import { formatCostPerUnit, getCurrencySymbol } from '../utils/units';
 import { exportToPDF, exportToExcel } from '../utils/export';
 import Badge, { PillBadge } from '../components/ui/Badge';
 import Card from '../components/ui/Card';
-// import TankToTankTripCard from '../components/TankToTankTripCard'; // TODO: Create in Task 6
+// import TankToTankTripCard from '../components/TankToTankTripCard';
 import { calculateTrips, formatTripDateRange, getTripStatusColor } from '../utils/tripCalculations';
 import { calculateTankToTankStatistics } from '../utils/tankToTankCalculations';
 
@@ -110,7 +110,7 @@ const History = () => {
   }, [trips, tripFilter]);
 
   // ========================================
-  // NEW: Tank-to-Tank Trips (Task 7)
+  // Tank-to-Tank Trips
   // ========================================
   const tankToTankTrips = useMemo(() => {
     return data.vehicleProfile?.tankToTankTrips || [];
@@ -965,8 +965,7 @@ const History = () => {
                         // Use last log's price or average price
                         const pricePerLiter = data.logs?.[0]?.price / data.logs?.[0]?.liters || 0;
                         
-                        // TODO: Implement TankToTankTripCard component in Task 6
-                        // For now, showing simplified card
+                        // Display simplified card
                         return (
                           <Card
                             key={trip.currentLogId}
@@ -1099,6 +1098,11 @@ const History = () => {
                      {log.isFlagged && (
                        <Badge variant="danger" icon={AlertTriangle} size="sm">
                          Theft Alert
+                       </Badge>
+                     )}
+                     {log.pendingSync && (
+                       <Badge variant="warning" icon={CloudOff} size="sm">
+                         Pending sync
                        </Badge>
                      )}
                    </div>

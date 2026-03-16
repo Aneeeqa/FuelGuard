@@ -20,7 +20,7 @@ import {
  * Migration version
  * Each schema change should increment this version
  */
-export const SCHEMA_VERSION = '2.0.0'; // Tank-to-Tank support
+export const SCHEMA_VERSION = '1.0.0'; // Tank-to-Tank support
 export const CURRENT_VERSION_KEY = 'fuelGuardDB_version';
 
 /**

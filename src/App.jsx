@@ -7,6 +7,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import Home from './pages/Home';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
+import ShareTarget from './pages/ShareTarget';
 
 // Lazy load protected pages
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -20,6 +21,7 @@ const Vehicles = lazy(() => import('./pages/Vehicles'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const SystemStatus = lazy(() => import('./pages/SystemStatus'));
+const About = lazy(() => import('./pages/About'));
 
 // Mobile-friendly loading skeleton
 const PageLoader = () => (
@@ -64,6 +66,8 @@ const App = () => {
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/share-target" element={<ShareTarget />} />
 
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Layout />}>

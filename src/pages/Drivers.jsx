@@ -185,7 +185,7 @@ const Drivers = () => {
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., John Smith"
+                placeholder="e.g., Sample User"
                 className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-input)',

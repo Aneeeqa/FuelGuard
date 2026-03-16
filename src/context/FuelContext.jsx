@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { storage } from '../utils/storage';
+import { enqueue, flushQueue, hasPendingItems } from '../utils/offlineQueue';
 import {
   calculateTotalCO2,
   calculateCO2PerKm,
@@ -173,7 +174,7 @@ export const FuelProvider = ({ children }) => {
           : null;
 
         const vehicleProfile = currentVehicle
-          ? { ...currentVehicle, id: undefined, createdAt: undefined }
+          ? { ...defaultState.vehicleProfile, ...currentVehicle, id: undefined, createdAt: undefined }
           : defaultState.vehicleProfile;
 
         const stats = calculateStats(allLogs);
@@ -187,6 +188,19 @@ export const FuelProvider = ({ children }) => {
           vehicleProfile: vehicleProfile,
           stats: stats,
         });
+
+        // Cache Firestore data to IndexedDB so offline reads work
+        try {
+          await storage.set(STORAGE_KEY, {
+            logs: allLogs,
+            drivers,
+            vehicles,
+            currentVehicleId,
+            vehicleProfile,
+          });
+        } catch (cacheErr) {
+          console.warn('Failed to cache Firestore data to IndexedDB:', cacheErr);
+        }
 
         setStorageType('firestore');
         console.log('FuelProvider: Data loaded successfully');
@@ -242,7 +256,7 @@ export const FuelProvider = ({ children }) => {
             ...prev,
             vehicles,
             currentVehicleId: first.id,
-            vehicleProfile: { ...first, id: undefined, createdAt: undefined },
+            vehicleProfile: { ...defaultState.vehicleProfile, ...first, id: undefined, createdAt: undefined },
           };
         }
         return { ...prev, vehicles };
@@ -344,6 +358,181 @@ export const FuelProvider = ({ children }) => {
     calculateStatsRef.current = calculateStats;
   }, [calculateStats]);
 
+  // Debounced IndexedDB cache sync — keeps offline backup up to date whenever
+  // data changes while Firestore is the primary (or after real-time updates).
+  useEffect(() => {
+    if (loading || isDemoMode.current || !user) return;
+    const timer = setTimeout(async () => {
+      try {
+        await storage.set(STORAGE_KEY, {
+          logs: data.logs,
+          drivers: data.drivers,
+          vehicles: data.vehicles,
+          currentVehicleId: data.currentVehicleId,
+          vehicleProfile: data.vehicleProfile,
+        });
+      } catch (err) {
+        console.warn('IndexedDB cache update failed:', err);
+      }
+    }, 2000); // debounce 2 s so rapid updates don't thrash the DB
+    return () => clearTimeout(timer);
+  }, [data, loading, user]);
+
+  // ── Offline queue flush ────────────────────────────────────────────────────
+  // When connectivity is restored, attempt to sync any entries that were saved
+  // locally while offline. On success:
+  //   - The Firestore real-time subscription will push the new log back in.
+  //   - We remove the optimistic (temp-ID) copy from local state to avoid
+  //     showing a duplicate.
+  useEffect(() => {
+    if (!user) return;
+
+    const flush = async () => {
+      const hasPending = await hasPendingItems();
+      if (!hasPending) return;
+
+      console.log('[OfflineQueue] Back online — flushing pending entries…');
+
+      const synced = await flushQueue(async ({ userId, vehicleId, logEntry }) => {
+        return createFuelLog(userId, vehicleId, logEntry);
+      });
+
+      if (synced.length === 0) return;
+
+      // Remove the optimistic temp-ID copies; Firestore's real-time listener
+      // will add the definitive records automatically.
+      setData((prev) => {
+        const tempIds = new Set(synced.map((s) => s.tempId));
+        const updatedLogs = prev.logs.filter((l) => !tempIds.has(l.id));
+        const newStats = calculateStats(updatedLogs);
+        return { ...prev, logs: updatedLogs, stats: newStats };
+      });
+
+      console.log(`[OfflineQueue] Synced ${synced.length} queued entry/entries.`);
+    };
+
+    // Try to flush on mount in case the app was reopened with pending items.
+    if (navigator.onLine) {
+      flush();
+    }
+
+    // Also flush every time connectivity is restored.
+    window.addEventListener('app:online', flush);
+    return () => window.removeEventListener('app:online', flush);
+  }, [user, calculateStats]);
+
+  /**
+   * Build the enriched log entry object (mileage, flags, tank-to-tank data, etc.)
+   * from a raw form submission. Extracted so it can be shared between the online
+   * and offline paths.
+   */
+  const buildLogEntry = useCallback((newLog, currentData) => {
+    const vehicleId = newLog.vehicleId || currentData.currentVehicleId;
+
+    const sortedLogs = [...currentData.logs].sort((a, b) => {
+      const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
+      const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
+      return dateB - dateA;
+    });
+    const lastLog = sortedLogs.find((log) => {
+      const logDate = log.date?.toDate ? log.date.toDate() : new Date(log.date);
+      const newDate = new Date(newLog.date);
+      return logDate < newDate;
+    });
+
+    let mileage = 0;
+    let isFlagged = false;
+
+    if (lastLog && newLog.liters > 0) {
+      const distance = newLog.odometer - lastLog.odometer;
+      if (distance > 1) {
+        mileage = distance / newLog.liters;
+        const theftThreshold = currentData.vehicleProfile.theftThreshold ?? 0.75;
+        if (mileage < currentData.stats.avgMileage * theftThreshold && mileage > 0) {
+          isFlagged = true;
+        }
+      }
+    }
+
+    let tankToTankData = null;
+    const updatedVehicleProfile = { ...currentData.vehicleProfile };
+
+    const fullTankCheck = isFullTankFill(
+      {
+        liters: newLog.liters,
+        tankCapacity: newLog.tankCapacity || currentData.vehicleProfile.tankCapacity,
+        isFullTank: newLog.isFullTank,
+      },
+      currentData.vehicleProfile
+    );
+
+    if (fullTankCheck.isFullTank) {
+      const previousFullFill = findPreviousFullFill(
+        currentData.logs,
+        vehicleId,
+        newLog.date
+      );
+
+      if (previousFullFill) {
+        try {
+          tankToTankData = calculateTankToTankConsumption(
+            {
+              ...newLog,
+              isFullTank: fullTankCheck.isFullTank,
+              tankCapacity: newLog.tankCapacity || currentData.vehicleProfile.tankCapacity,
+            },
+            previousFullFill,
+            currentData.vehicleProfile
+          );
+
+          updatedVehicleProfile.lastFullFillLogId = Date.now().toString();
+          updatedVehicleProfile.lastFullFillDate = newLog.date;
+
+          const existingTrips = updatedVehicleProfile.tankToTankTrips || [];
+          if (tankToTankData.isValid) {
+            updatedVehicleProfile.tankToTankTrips = [tankToTankData, ...existingTrips].slice(0, 50);
+            const allTrips = [tankToTankData, ...existingTrips];
+            const validTrips = allTrips.filter((t) => t.isValid);
+            if (validTrips.length > 0) {
+              const avgMileage = validTrips.reduce((sum, t) => sum + t.actualMileage, 0) / validTrips.length;
+              updatedVehicleProfile.averageTankToTankMileage = Math.round(avgMileage * 100) / 100;
+            }
+          }
+        } catch (error) {
+          console.warn('Tank-to-Tank calculation failed:', error);
+          tankToTankData = null;
+        }
+      } else {
+        updatedVehicleProfile.lastFullFillLogId = Date.now().toString();
+        updatedVehicleProfile.lastFullFillDate = newLog.date;
+      }
+    }
+
+    const logEntry = {
+      ...newLog,
+      mileage: Math.round(mileage * 100) / 100,
+      isFlagged,
+      fuelType: newLog.fuelType || currentData.vehicleProfile.fuelType || 'gasoline',
+      currency: currentData.vehicleProfile.currency || 'USD',
+      originalCurrency: currentData.vehicleProfile.currency || 'USD',
+      originalPrice: newLog.price,
+      isFullTank: fullTankCheck.isFullTank,
+      fuelLevelBeforeFill: newLog.fuelLevelBeforeFill || null,
+      fuelLevelAfterFill: newLog.fuelLevelAfterFill || null,
+      tankCapacity: newLog.tankCapacity || currentData.vehicleProfile.tankCapacity,
+      fillPercentage: fullTankCheck.isFullTank
+        ? ((newLog.liters / (newLog.tankCapacity || currentData.vehicleProfile.tankCapacity)) * 100).toFixed(1)
+        : null,
+      gaugeReading: newLog.gaugeReading || null,
+      lastFullFillLogId: updatedVehicleProfile.lastFullFillLogId ?? null,
+      tankToTankData: tankToTankData,
+      gpsDistance: newLog.gpsDistance || null,
+      gpsRoute: newLog.gpsRoute || null,
+    };
+
+    return { logEntry, updatedVehicleProfile };
+  }, []);
+
   const addLog = useCallback(async (newLog) => {
     // Exit demo mode when the user adds a real log entry
     isDemoMode.current = false;
@@ -360,126 +549,38 @@ export const FuelProvider = ({ children }) => {
       return;
     }
 
-    const sortedLogs = [...data.logs].sort(
-      (a, b) => {
-        const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
-        const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
-        return dateB - dateA;
-      }
-    );
-    const lastLog = sortedLogs.find(
-      (log) => {
-        const logDate = log.date?.toDate ? log.date.toDate() : new Date(log.date);
-        const newDate = new Date(newLog.date);
-        return logDate < newDate;
-      }
-    );
+    const { logEntry, updatedVehicleProfile } = buildLogEntry(newLog, data);
 
-    let mileage = 0;
-    let isFlagged = false;
-
-    if (lastLog && newLog.liters > 0) {
-      const distance = newLog.odometer - lastLog.odometer;
-
-      if (distance > 1) {
-        mileage = distance / newLog.liters;
-
-        const theftThreshold = data.vehicleProfile.theftThreshold ?? 0.75;
-        if (mileage < data.stats.avgMileage * theftThreshold && mileage > 0) {
-          isFlagged = true;
-        }
-      } else {
-        mileage = 0;
-      }
+    // ── Offline path ──────────────────────────────────────────────────────────
+    // If the browser reports no connectivity, skip the Firestore call entirely.
+    // Enqueue the entry and add it optimistically to local state so history
+    // updates immediately without any spinner.
+    if (!navigator.onLine) {
+      const queuedEntry = await enqueue({ userId, vehicleId, logEntry });
+      setData((prev) => {
+        const updatedLogs = [queuedEntry, ...prev.logs];
+        const newStats = calculateStats(updatedLogs);
+        return {
+          ...prev,
+          logs: updatedLogs,
+          stats: newStats,
+          vehicleProfile: updatedVehicleProfile,
+        };
+      });
+      // Resolve normally — LogEntry will check the `pendingSync` flag on the
+      // returned entry via the `offlineSaved` flag we add to the thrown value.
+      const offlineError = new Error('offline');
+      offlineError.offlineSaved = true;
+      throw offlineError;
     }
 
-    let tankToTankData = null;
-    let updatedVehicleProfile = { ...data.vehicleProfile };
-
-    const fullTankCheck = isFullTankFill(
-      {
-        liters: newLog.liters,
-        tankCapacity: newLog.tankCapacity || data.vehicleProfile.tankCapacity,
-        isFullTank: newLog.isFullTank
-      },
-      data.vehicleProfile
-    );
-
-    if (fullTankCheck.isFullTank) {
-      const previousFullFill = findPreviousFullFill(
-        data.logs,
-        data.currentVehicleId || newLog.vehicleId,
-        newLog.date
-      );
-
-      if (previousFullFill) {
-        try {
-          tankToTankData = calculateTankToTankConsumption(
-            {
-              ...newLog,
-              isFullTank: fullTankCheck.isFullTank,
-              tankCapacity: newLog.tankCapacity || data.vehicleProfile.tankCapacity
-            },
-            previousFullFill,
-            data.vehicleProfile
-          );
-
-          updatedVehicleProfile.lastFullFillLogId = Date.now().toString();
-          updatedVehicleProfile.lastFullFillDate = newLog.date;
-
-          const existingTrips = updatedVehicleProfile.tankToTankTrips || [];
-          if (tankToTankData.isValid) {
-            updatedVehicleProfile.tankToTankTrips = [
-              tankToTankData,
-              ...existingTrips
-            ].slice(0, 50);
-
-            const allTrips = [tankToTankData, ...existingTrips];
-            const validTrips = allTrips.filter(t => t.isValid);
-            if (validTrips.length > 0) {
-              const avgMileage = validTrips.reduce((sum, t) => sum + t.actualMileage, 0) / validTrips.length;
-              updatedVehicleProfile.averageTankToTankMileage = Math.round(avgMileage * 100) / 100;
-            }
-          }
-        } catch (error) {
-          console.warn('Tank-to-Tank calculation failed:', error);
-          tankToTankData = null;
-        }
-      } else {
-        updatedVehicleProfile.lastFullFillLogId = Date.now().toString();
-        updatedVehicleProfile.lastFullFillDate = newLog.date;
-        console.log('First full tank fill recorded - no Tank-to-Tank data calculated yet');
-      }
-    }
-
-    const logEntry = {
-      ...newLog,
-      mileage: Math.round(mileage * 100) / 100,
-      isFlagged,
-      fuelType: newLog.fuelType || data.vehicleProfile.fuelType || 'gasoline',
-      currency: data.vehicleProfile.currency || 'USD',
-      originalCurrency: data.vehicleProfile.currency || 'USD',
-      originalPrice: newLog.price,
-      isFullTank: fullTankCheck.isFullTank,
-      fuelLevelBeforeFill: newLog.fuelLevelBeforeFill || null,
-      fuelLevelAfterFill: newLog.fuelLevelAfterFill || null,
-      tankCapacity: newLog.tankCapacity || data.vehicleProfile.tankCapacity,
-      fillPercentage: fullTankCheck.isFullTank
-        ? ((newLog.liters / (newLog.tankCapacity || data.vehicleProfile.tankCapacity)) * 100).toFixed(1)
-        : null,
-      gaugeReading: newLog.gaugeReading || null,
-      lastFullFillLogId: updatedVehicleProfile.lastFullFillLogId,
-      tankToTankData: tankToTankData,
-      gpsDistance: newLog.gpsDistance || null,
-      gpsRoute: newLog.gpsRoute || null,
-    };
-
+    // ── Online path ───────────────────────────────────────────────────────────
     try {
       const createdLog = await createFuelLog(userId, vehicleId, logEntry);
 
       setData((prev) => {
         // If the real-time subscription already added this log, don't duplicate it
-        if (prev.logs.some(l => l.id === createdLog.id)) {
+        if (prev.logs.some((l) => l.id === createdLog.id)) {
           return { ...prev, vehicleProfile: updatedVehicleProfile };
         }
         const updatedLogs = [createdLog, ...prev.logs];
@@ -488,14 +589,33 @@ export const FuelProvider = ({ children }) => {
           ...prev,
           logs: updatedLogs,
           stats: newStats,
-          vehicleProfile: updatedVehicleProfile
+          vehicleProfile: updatedVehicleProfile,
         };
       });
     } catch (error) {
-      console.error('Failed to add log to Firestore:', error);
+      // Firestore failed even though navigator.onLine was true (e.g. flaky
+      // connection). Queue the entry so it is not lost.
+      if (!error.offlineSaved) {
+        console.warn('Firestore write failed — queuing entry for later sync:', error);
+        const queuedEntry = await enqueue({ userId, vehicleId, logEntry });
+        setData((prev) => {
+          if (prev.logs.some((l) => l.id === queuedEntry.id)) return prev;
+          const updatedLogs = [queuedEntry, ...prev.logs];
+          const newStats = calculateStats(updatedLogs);
+          return {
+            ...prev,
+            logs: updatedLogs,
+            stats: newStats,
+            vehicleProfile: updatedVehicleProfile,
+          };
+        });
+        const offlineError = new Error('offline');
+        offlineError.offlineSaved = true;
+        throw offlineError;
+      }
       throw error;
     }
-  }, [calculateStats, user, data]);
+  }, [calculateStats, buildLogEntry, user, data]);
 
   const deleteLog = useCallback(async (logId) => {
     const userId = user?.uid;
@@ -587,7 +707,16 @@ export const FuelProvider = ({ children }) => {
       ...prev,
       vehicleProfile: { ...prev.vehicleProfile, ...profile },
     }));
-  }, []);
+
+    // Persist to Firestore when a user and vehicle are available
+    const userId = user?.uid;
+    const vehicleId = data.currentVehicleId;
+    if (userId && vehicleId) {
+      updateVehicleFirestore(userId, vehicleId, profile).catch((err) => {
+        console.error('Failed to persist vehicle profile to Firestore:', err);
+      });
+    }
+  }, [user, data.currentVehicleId]);
 
   const updateVehicleProfileWithCurrencyConversion = useCallback(async (profile) => {
     const currentData = { ...data };
@@ -734,7 +863,7 @@ export const FuelProvider = ({ children }) => {
         // If we were in demo mode, start fresh (clear demo vehicles and logs)
         const baseState = wasDemo ? defaultState : prev;
         const updatedVehicles = [...(wasDemo ? [] : prev.vehicles), newVehicle];
-        const updatedProfile = { ...newVehicle, id: undefined, createdAt: undefined };
+        const updatedProfile = { ...defaultState.vehicleProfile, ...newVehicle, id: undefined, createdAt: undefined };
         return {
           ...baseState,
           vehicles: updatedVehicles,
@@ -762,7 +891,7 @@ export const FuelProvider = ({ children }) => {
           vehicle.id === vehicleId ? { ...vehicle, ...updates } : vehicle
         );
         const updatedProfile = prev.currentVehicleId === vehicleId
-          ? { ...prev.vehicleProfile, ...updates, id: undefined, createdAt: undefined }
+          ? { ...defaultState.vehicleProfile, ...prev.vehicleProfile, ...updates, id: undefined, createdAt: undefined }
           : prev.vehicleProfile;
         return {
           ...prev,
@@ -791,7 +920,7 @@ export const FuelProvider = ({ children }) => {
           ? (updatedVehicles.length > 0 ? updatedVehicles[0].id : null)
           : prev.currentVehicleId;
         const updatedProfile = newCurrentVehicleId
-          ? { ...updatedVehicles.find(v => v.id === newCurrentVehicleId), id: undefined, createdAt: undefined }
+          ? { ...defaultState.vehicleProfile, ...updatedVehicles.find(v => v.id === newCurrentVehicleId), id: undefined, createdAt: undefined }
           : prev.vehicleProfile;
         return {
           ...prev,
@@ -824,7 +953,7 @@ export const FuelProvider = ({ children }) => {
         ...prev,
         _allLogs: allLogs,
         currentVehicleId: vehicleId,
-        vehicleProfile: { ...selectedVehicle, id: undefined, createdAt: undefined },
+        vehicleProfile: { ...defaultState.vehicleProfile, ...selectedVehicle, id: undefined, createdAt: undefined },
         logs: vehicleLogs,
       };
     });
@@ -992,37 +1121,60 @@ export const FuelProvider = ({ children }) => {
       gpsRoutes: [],
     };
 
-    // Generate 10 realistic fuel logs over the past 2 months
+    // Deterministic log templates: 10 entries with exactly 3 theft alerts.
+    // Theft logs (indices 3, 6, 9): vehicle travelled a normal distance but a large
+    // amount of fuel was stolen/siphoned, so the driver must refill almost the full
+    // tank — resulting in suspiciously low mileage (well below the 11.25 km/L threshold).
+    const logTemplates = [
+      // i=0: Initial reference fill (mileage not calculated)
+      { dayOffset:  0, distance:   0, liters: 42.0, pricePerLiter: 1.35, isFullTank: true  },
+      // i=1: Normal commute week
+      { dayOffset:  7, distance: 285, liters: 19.0, pricePerLiter: 1.38, isFullTank: false },
+      // i=2: Normal highway trip
+      { dayOffset: 14, distance: 255, liters: 17.0, pricePerLiter: 1.40, isFullTank: false },
+      // i=3: THEFT — ~25 L siphoned overnight; driver drove 270 km but needed 43.5 L (≈6.2 km/L)
+      { dayOffset: 21, distance: 270, liters: 43.5, pricePerLiter: 1.42, isFullTank: true  },
+      // i=4: Normal fill after theft
+      { dayOffset: 29, distance: 295, liters: 19.7, pricePerLiter: 1.38, isFullTank: false },
+      // i=5: Normal longer trip
+      { dayOffset: 37, distance: 310, liters: 20.7, pricePerLiter: 1.35, isFullTank: true  },
+      // i=6: THEFT — ~22 L stolen at weekend parking; 240 km driven, 41 L needed (≈5.9 km/L)
+      { dayOffset: 44, distance: 240, liters: 41.0, pricePerLiter: 1.45, isFullTank: true  },
+      // i=7: Normal commute
+      { dayOffset: 51, distance: 280, liters: 18.7, pricePerLiter: 1.42, isFullTank: false },
+      // i=8: Normal short trip
+      { dayOffset: 58, distance: 265, liters: 17.7, pricePerLiter: 1.40, isFullTank: false },
+      // i=9: THEFT — ~28 L missing after fleet parking; 220 km, 42.7 L needed (≈5.2 km/L)
+      { dayOffset: 62, distance: 220, liters: 42.7, pricePerLiter: 1.48, isFullTank: true  },
+    ];
+
     const demoLogs = [];
     let odometer = 45000;
-    const baseDate = new Date(now);
-    baseDate.setMonth(baseDate.getMonth() - 2);
+    const startDate = new Date(now);
+    startDate.setDate(startDate.getDate() - 62); // begin ~2 months ago
 
-    for (let i = 0; i < 10; i++) {
-      const dayOffset = Math.floor(5 + Math.random() * 5);
-      baseDate.setDate(baseDate.getDate() + dayOffset);
-      const distance = Math.floor(200 + Math.random() * 300);
-      odometer += distance;
-      const liters = parseFloat((distance / (12 + Math.random() * 6)).toFixed(1));
-      const pricePerLiter = parseFloat((1.2 + Math.random() * 0.5).toFixed(2));
-      const price = parseFloat((liters * pricePerLiter).toFixed(2));
-      const mileage = i > 0 ? parseFloat((distance / liters).toFixed(2)) : 0;
-      const isFlagged = mileage > 0 && mileage < 15 * 0.75;
+    logTemplates.forEach((tpl, i) => {
+      const logDate = new Date(startDate);
+      logDate.setDate(logDate.getDate() + tpl.dayOffset);
+      odometer += tpl.distance;
+      const price = parseFloat((tpl.liters * tpl.pricePerLiter).toFixed(2));
+      const mileage = i > 0 ? parseFloat((tpl.distance / tpl.liters).toFixed(2)) : 0;
+      const isFlagged = mileage > 0 && mileage < 15 * 0.75; // threshold: 11.25 km/L
 
       demoLogs.push({
         id: `demo-log-${i}-${Date.now()}`,
         vehicleId: demoVehicleId,
-        date: new Date(baseDate).toISOString(),
+        date: logDate.toISOString(),
         odometer,
-        liters,
+        liters: tpl.liters,
         price,
         mileage,
         isFlagged,
         fuelType: 'gasoline',
         currency: 'USD',
-        isFullTank: i % 3 === 0,
+        isFullTank: tpl.isFullTank,
       });
-    }
+    });
 
     // Sort newest first
     demoLogs.sort((a, b) => new Date(b.date) - new Date(a.date));

@@ -10,7 +10,7 @@
  * - Distance traveled provides expected consumption
  * - Difference indicates potential theft or inefficiency
  *
- * GPS Integration (Task 10):
+ * GPS Integration:
  * - GPS route distance tracking for accurate distance measurement
  * - GPS vs odometer comparison for odometer tampering detection
  * - Enhanced theft detection with GPS-based verification
@@ -126,8 +126,8 @@ export const isFullTankFill = (logEntry, vehicleProfile) => {
  * Space Complexity: O(1)
  *
  * @example
- * findPreviousFullFill(logs, 'vehicle-1', 'TBD-01-24')
- * // Returns: { id: 'log-1', date: 'TBD-01-20', ... }
+ * findPreviousFullFill(logs, 'vehicle-1', '2025-01-24')
+ * // Returns: { id: 'log-1', date: '2025-01-20', ... }
  */
 export const findPreviousFullFill = (logs, vehicleId, currentDate) => {
   if (!logs || logs.length === 0) {
@@ -280,7 +280,7 @@ export const calculateTankToTankConsumption = (
   const duration = endDate - startDate;
 
   // ========================================
-  // GPS Integration (Task 10)
+  // GPS Integration
   // ========================================
   // Calculate GPS distance if GPS data is available
   let gpsDistance = null;
@@ -353,7 +353,7 @@ export const calculateTankToTankConsumption = (
     mileageEfficiency: (actualMileage / expectedMileage) * 100,
 
     // ========================================
-    // GPS Data (Task 10)
+    // GPS Data
     // ========================================
     gpsDistance,
     gpsRouteQuality,
@@ -558,7 +558,7 @@ export const formatTankToTankData = (tankToTankData, units = {}) => {
   };
 
   // ========================================
-  // GPS Data Formatting (Task 10)
+  // GPS Data Formatting
   // ========================================
   if (tankToTankData.gpsDistance !== null && tankToTankData.gpsDistance !== undefined) {
     formatted.gpsDistance = `${tankToTankData.gpsDistance.toFixed(2)} ${distanceUnit}`;

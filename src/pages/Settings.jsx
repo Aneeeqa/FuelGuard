@@ -1,18 +1,73 @@
 import { useState, useEffect } from 'react';
 import { useFuelData } from '../hooks/useFuelData';
-import { Database, Trash2, Sparkles, Car, Info, Sun, Moon, Coins, ChevronDown, Globe, MapPin, Plus, X, Fuel, Phone, User, Shield, Cpu, HardDrive, HelpCircle } from 'lucide-react';
+import { Database, Trash2, Sparkles, Car, Info, Sun, Moon, Coins, ChevronDown, Globe, MapPin, Plus, X, Fuel, Phone, User, Shield, Cpu, HardDrive, HelpCircle, LogOut, KeyRound, Pencil, Check, Cloud, Bell } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import VehicleSelector from '../components/VehicleSelector';
 import { SUPPORTED_CURRENCIES, SUPPORTED_COUNTRIES, getDefaultCurrencyForCountry } from '../utils/currency';
 import { createGeofence, isValidGeofence, getGeofenceAlert } from '../utils/geofencing';
+import { useAuth } from '../context/AuthContext';
+import { auth } from '../services/firebase';
+import { updateProfile, sendPasswordResetEmail, signOut } from 'firebase/auth';
+import { useNotifications } from '../hooks/useNotifications';
 
 const Settings = () => {
   const { data, storageType, updateVehicleProfile, updateVehicleProfileWithCurrencyConversion, injectDemoData, clearAllData, selectVehicle } = useFuelData();
   const { isDark } = useTheme();
+  const { user } = useAuth();
+  const { permission: notifPermission, requestPermission, supported: notifSupported } = useNotifications();
   const [confirmClear, setConfirmClear] = useState(false);
   const [demoInjected, setDemoInjected] = useState(false);
   const [showVehicleSelector, setShowVehicleSelector] = useState(false);
+
+  // Account section state
+  const [editingName, setEditingName] = useState(false);
+  const [newDisplayName, setNewDisplayName] = useState('');
+  const [accountLoading, setAccountLoading] = useState(false);
+  const [accountMessage, setAccountMessage] = useState(null);
+
+  const handleSaveDisplayName = async () => {
+    if (!newDisplayName.trim()) return;
+    setAccountLoading(true);
+    setAccountMessage(null);
+    try {
+      await updateProfile(auth.currentUser, { displayName: newDisplayName.trim() });
+      setEditingName(false);
+      setAccountMessage({ type: 'success', text: 'Name updated successfully.' });
+    } catch (err) {
+      setAccountMessage({ type: 'error', text: 'Failed to update name.' });
+    } finally {
+      setAccountLoading(false);
+      setTimeout(() => setAccountMessage(null), 3000);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!user?.email) return;
+    setAccountLoading(true);
+    setAccountMessage(null);
+    try {
+      await sendPasswordResetEmail(auth, user.email);
+      setAccountMessage({ type: 'success', text: `Password reset email sent to ${user.email}` });
+    } catch (err) {
+      setAccountMessage({ type: 'error', text: 'Failed to send reset email.' });
+    } finally {
+      setAccountLoading(false);
+      setTimeout(() => setAccountMessage(null), 5000);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+  };
+
+  const isGoogleUser = user?.providerData?.some(p => p.providerId === 'google.com');
+  const userInitials = (user?.displayName || user?.email || 'U')
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   // Geofencing state
   const [showGeofenceForm, setShowGeofenceForm] = useState(false);
@@ -230,8 +285,10 @@ const Settings = () => {
 
   const getStorageLabel = () => {
     switch (storageType) {
+      case 'firestore':
+        return { label: 'Firebase Firestore', color: 'var(--accent-blue)', bg: 'color-mix(in srgb, var(--accent-blue) 20%, transparent)' };
       case 'indexeddb':
-        return { label: 'IndexedDB', color: 'var(--accent-success)', bg: 'color-mix(in srgb, var(--accent-success) 20%, transparent)' };
+        return { label: 'IndexedDB (Offline Cache)', color: 'var(--accent-success)', bg: 'color-mix(in srgb, var(--accent-success) 20%, transparent)' };
       case 'localstorage':
         return { label: 'LocalStorage', color: 'var(--accent-fuel)', bg: 'color-mix(in srgb, var(--accent-fuel) 20%, transparent)' };
       case 'memory':
@@ -253,6 +310,161 @@ const Settings = () => {
         <h1 className="text-2xl lg:text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Settings</h1>
         <p style={{ color: 'var(--text-muted)' }}>Configure your vehicle and app</p>
       </div>
+
+      {/* Account Section */}
+      {user && (
+        <div
+          className="rounded-xl shadow-sm border p-5 animate-fade-in-up"
+          style={{
+            backgroundColor: 'var(--bg-secondary)',
+            borderColor: 'var(--border-color)',
+            boxShadow: 'var(--card-shadow)'
+          }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <User className="w-5 h-5" style={{ color: 'var(--accent-blue)' }} />
+            <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Account</h2>
+          </div>
+
+          {/* Avatar + info row */}
+          <div className="flex items-center gap-4 mb-4">
+            {user.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt="Profile"
+                className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0"
+                style={{ backgroundColor: 'var(--accent-blue)', color: '#fff' }}
+              >
+                {userInitials}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              {/* Display name row */}
+              {editingName ? (
+                <div className="flex items-center gap-2 mb-1">
+                  <input
+                    type="text"
+                    value={newDisplayName}
+                    onChange={(e) => setNewDisplayName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveDisplayName()}
+                    autoFocus
+                    className="flex-1 px-3 py-1.5 rounded-lg border text-sm focus:outline-none focus:ring-2"
+                    style={{
+                      backgroundColor: 'var(--bg-input)',
+                      borderColor: 'var(--border-color)',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                  <button
+                    onClick={handleSaveDisplayName}
+                    disabled={accountLoading}
+                    className="p-1.5 rounded-lg transition-colors"
+                    style={{ color: 'var(--accent-success)' }}
+                    aria-label="Save name"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setEditingName(false)}
+                    className="p-1.5 rounded-lg transition-colors"
+                    style={{ color: 'var(--text-muted)' }}
+                    aria-label="Cancel"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                    {user.displayName || 'No name set'}
+                  </p>
+                  <button
+                    onClick={() => { setNewDisplayName(user.displayName || ''); setEditingName(true); }}
+                    className="p-1 rounded transition-colors flex-shrink-0"
+                    style={{ color: 'var(--accent-blue)' }}
+                    aria-label="Edit name"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+              <p className="text-sm truncate" style={{ color: 'var(--text-muted)' }}>{user.email}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                {isGoogleUser ? '🔵 Signed in with Google' : '✉️ Email & Password'}
+              </p>
+            </div>
+          </div>
+
+          {/* Feedback message */}
+          {accountMessage && (
+            <div
+              className="mb-3 px-3 py-2 rounded-lg text-sm"
+              style={{
+                backgroundColor: accountMessage.type === 'success'
+                  ? 'color-mix(in srgb, var(--accent-success) 15%, transparent)'
+                  : 'color-mix(in srgb, var(--accent-alert) 15%, transparent)',
+                color: accountMessage.type === 'success' ? 'var(--accent-success)' : 'var(--accent-alert)'
+              }}
+            >
+              {accountMessage.text}
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex flex-col gap-2">
+            {!isGoogleUser && (
+              <button
+                onClick={handlePasswordReset}
+                disabled={accountLoading}
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border font-medium min-h-[48px] transition-colors text-left"
+                style={{
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-primary)',
+                  backgroundColor: 'var(--bg-input)'
+                }}
+              >
+                <KeyRound className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent-blue)' }} />
+                <div>
+                  <p className="text-sm font-medium">Change Password</p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Send a password reset link to {user.email}</p>
+                </div>
+              </button>
+            )}
+            {isGoogleUser && (
+              <div
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border"
+                style={{
+                  borderColor: 'var(--border-color)',
+                  backgroundColor: 'var(--bg-input)'
+                }}
+              >
+                <Shield className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+                <div>
+                  <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Password managed by Google</p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Manage your password at myaccount.google.com</p>
+                </div>
+              </div>
+            )}
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border font-medium min-h-[48px] transition-colors text-left"
+              style={{
+                borderColor: 'color-mix(in srgb, var(--accent-alert) 40%, transparent)',
+                color: 'var(--accent-alert)',
+                backgroundColor: 'color-mix(in srgb, var(--accent-alert) 8%, transparent)'
+              }}
+            >
+              <LogOut className="w-4 h-4 flex-shrink-0" />
+              <span className="text-sm font-medium">Sign Out</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Vehicle Selector */}
       {data.vehicles && data.vehicles.length > 1 && (
@@ -869,7 +1081,7 @@ const Settings = () => {
                 type="text"
                 value={emergencyContact.name}
                 onChange={(e) => setEmergencyContact({ ...emergencyContact, name: e.target.value })}
-                placeholder="e.g., John Doe"
+                placeholder="e.g., Sample User"
                 className="w-full px-4 py-3 rounded-xl border min-h-[48px] focus:outline-none focus:ring-2 transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-secondary)',
@@ -987,6 +1199,64 @@ const Settings = () => {
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Stored Entries</p>
           <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{data.logs?.length || 0} records</p>
         </div>
+
+        {storageType === 'indexeddb' && (
+          <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
+            <p className="text-xs" style={{ color: 'var(--accent-fuel)' }}>
+              ⚠️ Running from offline cache. Data will sync to Firebase when connection is restored.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Notifications & Background Sync */}
+      <div
+        className="rounded-xl shadow-sm border p-5 transition-colors duration-300"
+        style={{
+          backgroundColor: 'var(--bg-secondary)',
+          borderColor: 'var(--border-color)',
+          boxShadow: 'var(--card-shadow)'
+        }}
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Bell className="w-5 h-5" style={{ color: 'var(--accent-blue)' }} />
+          <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>Notifications</h2>
+        </div>
+
+        {!notifSupported ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Push notifications are not supported in this browser.
+          </p>
+        ) : notifPermission === 'granted' ? (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-input)' }}>
+            <Bell className="w-4 h-4" style={{ color: 'var(--accent-success)' }} />
+            <div>
+              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Notifications enabled</p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>You'll receive alerts even when the app is closed. Background sync is active.</p>
+            </div>
+          </div>
+        ) : notifPermission === 'denied' ? (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-input)' }}>
+            <Bell className="w-4 h-4" style={{ color: 'var(--accent-alert)' }} />
+            <div>
+              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Notifications blocked</p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Enable notifications in your browser or OS settings to receive alerts.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              Allow Fuel Guard to send you alerts for anomalies, sync status, and fuel reminders — even when the app isn't open.
+            </p>
+            <button
+              onClick={requestPermission}
+              className="w-full px-4 py-3 rounded-xl font-medium min-h-[48px] transition-colors"
+              style={{ backgroundColor: 'var(--accent-blue)', color: '#fff' }}
+            >
+              Enable Notifications
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Clear Data */}
@@ -1117,6 +1387,7 @@ const Settings = () => {
           <Info className="w-4 h-4" />
           <span>Fuel Guard</span>
         </div>
+        <p>Built with passion</p>
         <div className="mt-3 flex items-center justify-center gap-2">
           <a
             href="/privacy"

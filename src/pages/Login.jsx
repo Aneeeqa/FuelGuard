@@ -4,6 +4,7 @@ import { auth, db } from '../services/firebase';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useTheme } from '../context/ThemeContext';
+import PublicNavBar from '../components/layout/PublicNavBar';
 
 
 export default function Login() {
@@ -58,13 +59,14 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <div className="w-full max-w-md animate-fade-in-up">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'transparent' }}>
+      <PublicNavBar />
+      <div className="w-full max-w-md animate-fade-in-up relative z-10" style={{ paddingTop: '60px' }}>
         <div className="text-center mb-8">
           <img
             src="/logo.png"
             alt="FuelGuard Logo"
-            className="w-16 h-16 rounded-2xl object-cover shadow-glow-fuel mx-auto mb-4"
+            className="w-16 h-16 rounded-2xl object-cover mx-auto mb-4"
           />
           <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Fuel Guard</h1>
           <p className="text-lg" style={{ color: 'var(--text-muted)' }}>Welcome back</p>

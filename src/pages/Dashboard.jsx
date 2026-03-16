@@ -76,7 +76,7 @@ const Dashboard = () => {
   }, [trips]);
 
   // ========================================
-  // NEW: Tank-to-Tank Analysis (Task 8)
+  // Tank-to-Tank Analysis
   // ========================================
   const tankToTankTrips = useMemo(() => {
     return data.vehicleProfile?.tankToTankTrips || [];
@@ -340,7 +340,7 @@ const Dashboard = () => {
             )}
 
             {/* ========================================
-                NEW: Tank-to-Tank Analysis Section (Task 8)
+                Tank-to-Tank Analysis Section
                 ======================================== */}
             {tankToTankTrips.length > 0 && (
               <div className="animate-fade-in-up delay-500 space-y-6">
