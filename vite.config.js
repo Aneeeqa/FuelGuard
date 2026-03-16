@@ -125,82 +125,141 @@ export default defineConfig(({ mode }) => {
   plugins: [
     react(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icon-192.svg', 'icon-512.svg', 'logo.png'],
+      includeAssets: ['favicon.svg', 'favicon.png', 'icon-192.svg', 'icon-512.svg', 'icon-192.png', 'icon-512.png', 'logo.png'],
       manifest: {
+        id: 'fuel-guard',
         name: 'Fuel Guard',
         short_name: 'FuelGuard',
         description: 'Fuel Theft Detection System - Track mileage efficiency and detect anomalies',
+        lang: 'en',
+        dir: 'ltr',
         theme_color: '#3b82f6',
         background_color: '#ffffff',
         display: 'standalone',
+        display_override: ['standalone', 'minimal-ui'],
         orientation: 'portrait',
         scope: '/',
         start_url: '/',
+        prefer_related_applications: false,
+        categories: ['business', 'navigation', 'productivity', 'utilities'],
         icons: [
+          {
+            src: 'icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
+          {
+            src: 'icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
           {
             src: 'icon-192.svg',
             sizes: '192x192',
             type: 'image/svg+xml',
-            purpose: 'any maskable'
+            purpose: 'any'
           },
           {
             src: 'icon-512.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
-            purpose: 'any maskable'
+            purpose: 'any'
+          }
+        ],
+        launch_handler: {
+          client_mode: 'focus-existing'
+        },
+        edge_side_panel: {
+          preferred_width: 400
+        },
+        share_target: {
+          action: '/share-target',
+          method: 'GET',
+          params: {
+            title: 'title',
+            text: 'text',
+            url: 'url'
+          }
+        },
+        shortcuts: [
+          {
+            name: 'Dashboard',
+            short_name: 'Dashboard',
+            description: 'View your fuel tracking dashboard',
+            url: '/dashboard',
+            icons: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' }]
+          },
+          {
+            name: 'Add Fuel Log',
+            short_name: 'Add Log',
+            description: 'Log a new fuel entry',
+            url: '/add',
+            icons: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' }]
+          },
+          {
+            name: 'History',
+            short_name: 'History',
+            description: 'View fuel history and analytics',
+            url: '/history',
+            icons: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' }]
+          },
+          {
+            name: 'Fleet',
+            short_name: 'Fleet',
+            description: 'Manage your fleet vehicles',
+            url: '/fleet',
+            icons: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' }]
           }
         ]
       },
-      workbox: {
+      injectManifest: {
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /\.(?:svg|png|jpg|webp|gif)$/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'image-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
       }
     }),
     viteCompression({
       algorithm: 'brotliCompress',
       ext: '.br',
+      compressionOptions: {
+        level: 11
+      }
+    }),
+    viteCompression({
+      algorithm: 'gzip',
+      ext: '.gz',
     }),
   ],
   build: {
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // React core + charts (keep together - used on Dashboard which is the landing page)
+          // React core only (separate from charts for smaller initial bundle)
           if (id.includes('react/') ||
-              id.includes('react-dom/') ||
-              id.includes('recharts')) {
+              id.includes('react-dom/')) {
             return 'vendor-react';
+          }
+
+          // Charts library (lazy load on dashboard)
+          if (id.includes('recharts')) {
+            return 'vendor-charts';
           }
 
           // React Router (essential for routing)
@@ -272,6 +331,16 @@ export default defineConfig(({ mode }) => {
     chunkSizeWarningLimit: 700,
     minify: 'terser',
     sourcemap: false,
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log'],
+      },
+      format: {
+        comments: false,
+      }
+    },
   },
   server: {
     hmr: {
