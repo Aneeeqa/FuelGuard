@@ -376,7 +376,7 @@ describe('Monthly Calculations', () => {
 });
 
 // ============================================
-// PHASE 1 SECURITY TESTS - Calculations
+// SECURITY TESTS - Calculations
 // ============================================
 
 describe('Security: Odometer Manipulation Detection', () => {
