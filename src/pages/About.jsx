@@ -91,19 +91,19 @@ const About = () => {
   const teamMembers = [
     {
       id: 1,
-      name: 'Team Member 1',
+      name: 'Hussam',
     },
     {
       id: 2,
-      name: 'Team Member 2',
+      name: 'Aneeqa',
     },
     {
       id: 3,
-      name: 'Team Member 3',
+      name: 'Ahmed',
     },
     {
       id: 4,
-      name: 'Team Member 4',
+      name: 'Sumit',
     },
   ];
 

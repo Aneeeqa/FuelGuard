@@ -270,11 +270,11 @@ export default function Home() {
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { id: 1, name: 'Team Member 1', glowColor: 'rgba(234,88,12,0.4)' },
-              { id: 2, name: 'Team Member 2', glowColor: 'rgba(245,158,11,0.4)' },
-              { id: 3, name: 'Team Member 3', glowColor: 'rgba(34,197,94,0.4)' },
-              { id: 4, name: 'Team Member 4', glowColor: 'rgba(220,38,38,0.4)' },
-            ].map((member, index) => (
+               { id: 1, name: 'Hussam', glowColor: 'rgba(234,88,12,0.4)' },
+               { id: 2, name: 'Aneeqa', glowColor: 'rgba(245,158,11,0.4)' },
+               { id: 3, name: 'Ahmed', glowColor: 'rgba(34,197,94,0.4)' },
+               { id: 4, name: 'Sumit', glowColor: 'rgba(220,38,38,0.4)' },
+             ].map((member, index) => (
               <GlassCard key={member.id} hoverColor="rgba(234,88,12,0.1)" delay={index * 0.1}>
                 <div className="h-full flex flex-col items-center justify-center text-center">
                   <motion.div
