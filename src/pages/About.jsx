@@ -73,18 +73,18 @@ const About = () => {
   const securityFeatures = [
     {
       icon: Shield,
-      title: 'Bank-Level Security',
-      description: 'Your data is encrypted with AES-256 encryption, the same standard used by financial institutions worldwide.',
+      title: 'Export Data',
+      description: 'Download your fuel logs as PDF or Excel files anytime.',
     },
     {
       icon: Lock,
-      title: 'Privacy First',
-      description: 'All data is stored locally on your device. We never share or sell your information to third parties.',
+      title: 'Secure Storage',
+      description: 'All data is stored on firebase server and locally on your device.',
     },
     {
       icon: Server,
       title: 'Real-Time Protection',
-      description: 'Our advanced algorithms work 24/7 to detect and prevent unauthorized fuel consumption instantly.',
+      description: 'Smart algorithms analyze your fuel logs to detect suspicious consumption patterns and potential theft incidents.',
     },
   ];
 

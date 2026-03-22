@@ -218,9 +218,9 @@ export default function Home() {
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { Icon: Shield, title: 'Bank-Level Security', description: 'Your data is encrypted with AES-256 encryption, the same standard used by financial institutions worldwide.' },
-              { Icon: Lock, title: 'Privacy First', description: 'All data is stored locally on your device. We never share or sell your information to third parties.' },
-              { Icon: Server, title: 'Real-Time Protection', description: 'Our advanced algorithms work 24/7 to detect and prevent unauthorized fuel consumption instantly.' },
+              { Icon: Shield, title: 'Export Data', description: 'Download your fuel logs as PDF or Excel files anytime' },
+              { Icon: Lock, title: 'Secure Storage', description: 'All data is stored on firebase server and locally on your device.' },
+              { Icon: Server, title: 'Real-Time Protection', description: 'Smart algorithms analyze your fuel logs to detect suspicious consumption patterns and potential theft incidents.' },
             ].map((feature, index) => {
               const FeatureIcon = feature.Icon;
               return (
